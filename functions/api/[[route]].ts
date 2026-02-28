@@ -1,9 +1,15 @@
 import { Hono } from 'hono'
 import { handle } from 'hono/cloudflare-pages'
 import { createDb } from '../lib/db'
+import auth from './auth'
 
 type Bindings = {
   DATABASE_URL: string
+  GOOGLE_CLIENT_ID: string
+  GOOGLE_CLIENT_SECRET: string
+  GOOGLE_REDIRECT_URI: string
+  JWT_SECRET: string
+  APP_URL: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>().basePath('/api')
@@ -21,5 +27,7 @@ app.get('/health', async (c) => {
     return c.json({ status: 'error', db: 'disconnected', message: String(e) }, 500)
   }
 })
+
+app.route('/auth', auth)
 
 export const onRequest = handle(app)

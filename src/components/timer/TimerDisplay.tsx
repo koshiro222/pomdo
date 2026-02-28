@@ -3,6 +3,7 @@ interface TimerDisplayProps {
   totalSecs: number
   sessionType: 'work' | 'short_break' | 'long_break'
   onSessionTypeChange: (type: 'work' | 'short_break' | 'long_break') => void
+  controls?: React.ReactNode
 }
 
 export function TimerDisplay({
@@ -10,6 +11,7 @@ export function TimerDisplay({
   totalSecs,
   sessionType,
   onSessionTypeChange,
+  controls,
 }: TimerDisplayProps) {
   const minutes = Math.floor(remainingSecs / 60)
   const seconds = remainingSecs % 60
@@ -54,7 +56,7 @@ export function TimerDisplay({
       </div>
 
       {/* SVGリングタイマー */}
-      <div className="relative flex items-center justify-center">
+      <div className="relative flex items-center justify-center -mt-4">
         <svg className="size-80">
           <circle
             className="text-white/10"
@@ -87,6 +89,9 @@ export function TimerDisplay({
           </span>
         </div>
       </div>
+
+      {/* Controls */}
+      {controls && <div className="mt-8">{controls}</div>}
     </div>
   )
 }

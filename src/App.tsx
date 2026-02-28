@@ -58,19 +58,21 @@ function TimerWidget({
   }
 
   return (
-    <>
+    <div className="flex flex-col h-full items-center p-6">
       <TimerDisplay
         remainingSecs={remainingSecs}
         totalSecs={totalSecs}
         sessionType={sessionType}
         onSessionTypeChange={handleSessionTypeChange}
-      />
-      <TimerControls
-        isActive={isActive}
-        onStart={handleStart}
-        onPause={pause}
-        onReset={reset}
-        onSkip={skip}
+        controls={
+          <TimerControls
+            isActive={isActive}
+            onStart={handleStart}
+            onPause={pause}
+            onReset={reset}
+            onSkip={skip}
+          />
+        }
       />
 
       <audio
@@ -78,7 +80,7 @@ function TimerWidget({
         src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
         preload="auto"
       />
-    </>
+    </div>
   )
 }
 

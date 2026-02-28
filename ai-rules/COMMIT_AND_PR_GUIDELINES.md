@@ -9,7 +9,7 @@
 
 <詳細な説明（任意）>
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 ```
 
 ### 種別一覧
@@ -29,31 +29,29 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
 ### スコープ（任意）
 
-- `settings` - 設定管理機能
-- `devices` - デバイス管理機能
-- `matches` - 戦績管理機能
-- `profile` - プロフィール機能
-- `auth` - 認証機能
+- `auth` - 認証機能（Google OAuth, JWT）
+- `todo` - Todo CRUD 機能
+- `timer` - ポモドーロタイマー
+- `bgm` - BGM 再生機能
+- `db` - データベース・スキーマ関連
 - `ui` - UIコンポーネント
-- `db` - データベース関連
-- `infra` - インフラ構成
+- `infra` - インフラ・設定
 
 ### 例
 
 ```
-feat(settings): 設定編集ページを実装
+feat(todo): Todo CRUD API を実装
 
-既存の設定を編集できる機能を追加。感度・DPI・eDPI等の更新に対応。
+GET/POST/PATCH/DELETE /api/todos を追加。
+ゲストモードは localStorage、ログイン時はDBに保存する二重構造。
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 ```
 
 ```
-fix(devices): デバイス画像が表示されない問題を修正
+fix(timer): タイマーリセット時にセッションが二重記録される問題を修正
 
-画像URLの取得ロジックを修正し、正しいパスから画像を表示するように変更。
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 ```
 
 ## PRタイトル・本文

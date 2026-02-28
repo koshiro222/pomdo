@@ -16,20 +16,21 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <div className="relative">
       <input
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="Add a todo..."
-        className="flex-1 bg-ctp-surface0 border border-ctp-surface1 rounded-lg px-3 py-2 text-ctp-text placeholder-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-mauve"
+        onKeyDown={(e) => e.key === 'Enter' && handleSubmit(e)}
+        placeholder="Add a new task..."
+        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none text-slate-100 placeholder:text-slate-500"
       />
       <button
-        type="submit"
-        className="bg-ctp-mauve hover:bg-ctp-mauve/80 text-ctp-base px-4 py-2 rounded-lg transition-colors cursor-pointer font-bold"
+        onClick={handleSubmit}
+        className="absolute right-2 top-1/2 -translate-y-1/2 size-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center hover:bg-primary hover:text-background-dark transition-colors"
       >
-        Add
+        <span className="material-symbols-outlined">add</span>
       </button>
-    </form>
+    </div>
   )
 }

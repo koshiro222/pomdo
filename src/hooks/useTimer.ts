@@ -25,6 +25,8 @@ export interface UseTimerReturn {
   remainingSecs: number
   totalSecs: number
   pomodoroCount: number
+  setSessionType: (type: SessionType) => void
+  changeSessionType: (type: SessionType) => void
   start: () => void
   pause: () => void
   reset: () => void
@@ -71,6 +73,12 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
     setRemainingSecs(SESSION_DURATIONS[nextSessionType])
   }, [sessionType])
 
+  const changeSessionType = useCallback((type: SessionType) => {
+    setIsActive(false)
+    setSessionType(type)
+    setRemainingSecs(SESSION_DURATIONS[type])
+  }, [])
+
   const getNextSessionType = useCallback((currentType: SessionType): SessionType => {
     const currentIndex = SESSION_ORDER.indexOf(currentType)
     const nextIndex = (currentIndex + 1) % SESSION_ORDER.length
@@ -114,6 +122,8 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
     remainingSecs,
     totalSecs,
     pomodoroCount,
+    setSessionType,
+    changeSessionType,
     start,
     pause,
     reset,

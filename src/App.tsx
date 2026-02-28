@@ -1,25 +1,76 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { useTodos } from './hooks/useTodos'
+import { useTimer } from './hooks/useTimer'
+import { usePomodoro } from './hooks/usePomodoro'
 import { storage } from './lib/storage'
 import TodoList from './components/todos/TodoList'
+import { TimerDisplay } from './components/timer/TimerDisplay'
+import { TimerControls } from './components/timer/TimerControls'
 import MigrateDialog from './components/dialogs/MigrateDialog'
 
-// Placeholder components for timer and BGM (will be implemented in future issues)
 function TimerWidget() {
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
+
+  const { isActive, sessionType, remainingSecs, totalSecs, start, pause, reset, skip } = useTimer({
+    onSessionComplete: async (type, durationSecs) => {
+      const session = await startSession(type, durationSecs)
+      if (session) {
+        setCurrentSessionId(session.id)
+      }
+    },
+  })
+
+  const { startSession, completeSession } = usePomodoro()
+
+  const handleStart = () => {
+    if (!isActive) {
+      start()
+    }
+  }
+
+  const playNotification = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0
+      audioRef.current.play().catch(() => {
+        console.warn('Autoplay prevented by browser policy')
+      })
+    }
+  }
+
+  useEffect(() => {
+    if (remainingSecs === 0 && currentSessionId) {
+      completeSession(currentSessionId)
+      playNotification()
+      setCurrentSessionId(null)
+    }
+  }, [remainingSecs, currentSessionId, completeSession])
+
   return (
-    <div className="widget p-6 w-80">
-      <h2 className="text-lg font-bold text-ctp-text mb-4">Pomodoro Timer</h2>
-      <div className="text-4xl font-mono font-bold text-ctp-mauve">25:00</div>
-      <div className="flex gap-2 mt-4">
-        <button className="flex-1 bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-text px-4 py-2 rounded-lg transition-colors cursor-pointer">
-          Start
-        </button>
-        <button className="flex-1 bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-text px-4 py-2 rounded-lg transition-colors cursor-pointer">
-          Reset
-        </button>
+    <>
+      <div className="widget p-6 w-80">
+        <TimerDisplay
+          remainingSecs={remainingSecs}
+          totalSecs={totalSecs}
+          sessionType={sessionType}
+          isActive={isActive}
+        />
+        <TimerControls
+          isActive={isActive}
+          onStart={handleStart}
+          onPause={pause}
+          onReset={reset}
+          onSkip={skip}
+        />
       </div>
-    </div>
+
+      <audio
+        ref={audioRef}
+        src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+        preload="auto"
+      />
+    </>
   )
 }
 

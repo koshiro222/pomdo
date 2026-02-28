@@ -85,6 +85,22 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
 
+    /* Calm Focus (Blue Navy) */
+    --cf-background: #101922;
+    --cf-surface: #1a2632;
+    --cf-border: #30363d;
+    --cf-text: #c9d1d9;
+    --cf-subtext: #8b949e;
+    --cf-primary: #137fec;
+    --cf-primary-hover: #1a90ff;
+    --cf-success: #86efac;
+    --cf-success-hover: #9bfbc5;
+    --cf-warning: #d29922;
+    --cf-danger: #f85149;
+    --cf-lavender: #a78bfa;
+    --cf-sage: #86efac;
+    --cf-overlay: rgba(16, 25, 34, 0.6);
+
     /* Catppuccin Mocha */
     --ctp-crust: #11111b;
     --ctp-mantle: #181825;
@@ -145,18 +161,18 @@
 
 /* Glassmorphism */
 .glass {
-  background: rgba(16, 31, 34, 0.7);
+  background: color-mix(in srgb, var(--cf-surface), transparent 40%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid color-mix(in srgb, var(--cf-border), transparent 50%);
 }
 
 /* Legacy widget classes (kept for backward compat during redesign) */
 .widget {
-  background: var(--ctp-mantle) / 80%;
+  background: var(--gh-card) / 80%;
   backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);
-  border: 1px solid var(--ctp-surface0);
+  border: 1px solid var(--gh-border);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
@@ -191,4 +207,27 @@
   direction: ltr;
   -webkit-font-smoothing: antialiased;
   user-select: none;
+}
+
+/* Timer ring animation */
+.timer-ring {
+  transition: stroke-dashoffset 0.5s ease-in-out;
+}
+
+/* Rotating album art */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.album-art-spinning {
+  animation: rotate 8s linear infinite;
+}
+
+.album-art-paused {
+  animation-play-state: paused;
 }

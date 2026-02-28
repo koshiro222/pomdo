@@ -51,7 +51,7 @@ export function useTodos() {
         }
       } else {
         // Guest mode: save to localStorage
-        const added = storage.addTodo(newTodo)
+        const added = storage.addTodo({ ...newTodo, completed: false })
         setTodos((prev) => [...prev, added])
         return added
       }

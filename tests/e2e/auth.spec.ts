@@ -1,62 +1,15 @@
 import { test, expect } from '@playwright/test'
-
-// モックユーザー
-const mockUser = {
-  sub: 'test-user-id',
-  email: 'test@example.com',
-  name: 'テストユーザー',
-  avatarUrl: 'https://example.com/avatar.png',
-  iat: Date.now(),
-  exp: Date.now() + 60 * 60 * 24 * 7,
-}
+import { mockAuthAPI, simulateLogin, mockUser } from '../helpers/auth-mock'
 
 test.describe('認証フロー', () => {
   test.beforeEach(async ({ page, context }) => {
-    // 認証APIをモック（デフォルトではログインしていない状態）
-    await page.route('**/api/auth/me', async (route) => {
-      // リクエストヘッダーからCookieを取得
-      const headers = route.request().headers()
-      const cookieHeader = headers['cookie'] || headers['Cookie'] || ''
-
-      // デバッグ: Cookieをログ出力
-      console.log('DEBUG: Cookie header:', cookieHeader)
-      console.log('DEBUG: hasAuthToken:', cookieHeader.includes('auth_token=mock-jwt-token'))
-
-      // Cookieにauth_tokenが含まれているか確認
-      const hasAuthToken = cookieHeader.includes('auth_token=mock-jwt-token')
-
-      if (hasAuthToken) {
-        await route.fulfill({
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user: mockUser }),
-        })
-      } else {
-        await route.fulfill({
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'Unauthorized' }),
-        })
-      }
-    })
-
-    // ログアウトAPIをモック
-    await page.route('**/api/auth/logout', async (route) => {
-      await route.fulfill({
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ok: true }),
-      })
-    })
+    // 認証APIをモック化
+    await mockAuthAPI(page)
 
     await page.goto('/')
   })
 
-  test.beforeAll(async () => {
-    // グローバルなAPIモック設定
-  })
-
-test('ゲストモードで起動できること', async ({ page }) => {
+  test('ゲストモードで起動できること', async ({ page }) => {
     // ログインアイコンボタンが表示されることを確認（Header.tsxのloginアイコン）
     const loginButton = page.getByTitle('Login with Google')
     await expect(loginButton).toBeVisible()
@@ -82,16 +35,8 @@ test('ゲストモードで起動できること', async ({ page }) => {
   test('ログイン後にユーザー情報が表示されること', async ({ page, context, browserName }) => {
     test.skip(browserName === 'webkit' || browserName === 'Mobile Safari', 'WebKitではCookie設定が不安定なためスキップ')
 
-    // 認証トークンCookieを設定してログイン状態をシミュレーション
-    await context.addCookies([
-      {
-        name: 'auth_token',
-        value: 'mock-jwt-token',
-        domain: 'localhost',
-        path: '/',
-        sameSite: 'Lax',
-      },
-    ])
+    // ログイン状態をシミュレーション
+    await simulateLogin(context)
 
     // ページをリロードしてAPI応答を待機
     await page.reload()
@@ -117,16 +62,8 @@ test('ゲストモードで起動できること', async ({ page }) => {
   test('ログアウトできること', async ({ page, context, browserName }) => {
     test.skip(browserName === 'webkit' || browserName === 'Mobile Safari', 'WebKitではCookie設定が不安定なためスキップ')
 
-    // 認証トークンCookieを設定してログイン状態をシミュレーション
-    await context.addCookies([
-      {
-        name: 'auth_token',
-        value: 'mock-jwt-token',
-        domain: 'localhost',
-        path: '/',
-        sameSite: 'Lax',
-      },
-    ])
+    // ログイン状態をシミュレーション
+    await simulateLogin(context)
 
     // ページをリロードしてAPI応答を待機
     await page.reload()

@@ -1,0 +1,13 @@
+# ワークフロー
+
+GitHub Flow採用。mainへの直接コミット禁止。
+
+開発フロー: issue作成 → feature ブランチ → PR（必ずこの順序で進める）
+
+1. 作業前に対応する GitHub Issue を確認する
+2. feature/xxx ブランチを main から作成する
+3. 実装・動作確認後にコミット・push
+4. issue を参照した PR を作成する
+
+- Issue作成: ai-rules/ISSUE_GUIDELINES.md を参照
+- コミット・PR: ai-rules/COMMIT_AND_PR_GUIDELINES.md を参照

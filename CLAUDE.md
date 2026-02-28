@@ -12,7 +12,12 @@ npm run build      # tsc + vite build → dist/
 
 ## ワークフロー
 
-(厳守)issue作成or確認 → `feature/xxx` ブランチ → PR。詳細: `ai-rules/COMMIT_AND_PR_GUIDELINES.md`
+(厳守)issue作成or確認 → `feature/xxx` ブランチ → 実装・動作確認パスしたらコミット → PR
+作業前に必ず `ai-rules/WORK_FLOW.md` を参照
+
+## テスト
+
+実装後は必ず `ai-rules/TESTING.md` を参照。
 
 ## ⚠️ 非自明な制約（ここを見落とすとバグになる）
 
@@ -31,9 +36,6 @@ npm run build      # tsc + vite build → dist/
 
 Hono のエントリポイントは `functions/api/[[route]].ts`。basePath は `/api`。
 
-## テスト
-
-実装後は必ず `ai-rules/TESTING.md` を参照。
 
 ## ガイドライン
 
@@ -41,6 +43,7 @@ Hono のエントリポイントは `functions/api/[[route]].ts`。basePath は 
 |------|---------|
 | Issue作成 | `ai-rules/ISSUE_GUIDELINES.md` |
 | コミット・PR | `ai-rules/COMMIT_AND_PR_GUIDELINES.md` |
+| ワークフロー | `ai-rules/WORK_FLOW.md` |
 | テスト | `ai-rules/TESTING.md` |
 | アーキテクチャ詳細 | `ai-rules/ARCHITECTURE.md` |
 | トラブルシューティング | `ai-rules/TROUBLESHOOTING.md` |

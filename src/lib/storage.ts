@@ -141,3 +141,64 @@ export const storage = {
     localStorage.removeItem(POMODORO_STORAGE_KEY)
   },
 }
+
+// Timer state persistence
+const TIMER_STORAGE_KEY = 'pomdo_timer'
+
+export type TimerState = {
+  isActive: boolean
+  sessionType: 'work' | 'short_break' | 'long_break'
+  remainingSecs: number
+  pomodoroCount: number
+}
+
+export function saveTimerState(state: TimerState): void {
+  try {
+    localStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(state))
+  } catch (e) {
+    console.error('Failed to save timer state to localStorage:', e)
+  }
+}
+
+export function getTimerState(): TimerState | null {
+  try {
+    const data = localStorage.getItem(TIMER_STORAGE_KEY)
+    return data ? JSON.parse(data) : null
+  } catch {
+    return null
+  }
+}
+
+export function clearTimerState(): void {
+  localStorage.removeItem(TIMER_STORAGE_KEY)
+}
+
+// BGM state persistence
+const BGM_STORAGE_KEY = 'pomdo_bgm'
+
+export type BgmState = {
+  isPlaying: boolean
+  currentIndex: number
+  volume: number
+}
+
+export function saveBgmState(state: BgmState): void {
+  try {
+    localStorage.setItem(BGM_STORAGE_KEY, JSON.stringify(state))
+  } catch (e) {
+    console.error('Failed to save BGM state to localStorage:', e)
+  }
+}
+
+export function getBgmState(): BgmState | null {
+  try {
+    const data = localStorage.getItem(BGM_STORAGE_KEY)
+    return data ? JSON.parse(data) : null
+  } catch {
+    return null
+  }
+}
+
+export function clearBgmState(): void {
+  localStorage.removeItem(BGM_STORAGE_KEY)
+}

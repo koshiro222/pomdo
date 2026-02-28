@@ -126,14 +126,43 @@ test.describe('エラー処理', () => {
       await expect(page.getByText('リロードテスト')).toBeVisible()
     })
 
-    test.skip('ページリロード後にタイマー状態が保持されていること', async ({ page }) => {
-      // 注: タイマー状態保持の実装が必要
-      test.info().annotations.push({ type: 'issue', description: 'タイマー状態保持機能未実装' })
+    test('ページリロード後にタイマー状態が保持されていること', async ({ page }) => {
+      // セッションタイプをShort Breakに変更（dispatchEvent使用）
+      await page.getByText('Short Break', { exact: true }).dispatchEvent('click')
+
+      // localStorageに保存されるのを待つ
+      await page.waitForFunction(() => {
+        const timer = window.localStorage.getItem('pomdo_timer')
+        return timer ? JSON.parse(timer).sessionType === 'short_break' : false
+      }, { timeout: 5000 })
+
+      // ページをリロード
+      await page.reload()
+
+      // Short Breakが選択されていることを確認
+      await expect(page.getByText('Short Break', { exact: true })).toHaveClass(/bg-primary\/20/)
     })
 
-    test.skip('ページリロード後にBGM再生状態が保持されていること', async ({ page }) => {
-      // 注: BGM再生状態保持の実装が必要
-      test.info().annotations.push({ type: 'issue', description: 'BGM再生状態保持機能未実装' })
+    test('ページリロード後にBGM再生状態が保持されていること', async ({ page }) => {
+      // BGMの音量スライダーを探して操作
+      const volumeSlider = page.locator('input[type="range"]').first()
+      await volumeSlider.fill('0.8')
+
+      // localStorageに保存されるのを待つ
+      await page.waitForFunction(() => {
+        const bgm = window.localStorage.getItem('pomdo_bgm')
+        return bgm ? Math.abs(JSON.parse(bgm).volume - 0.8) < 0.01 : false
+      }, { timeout: 5000 })
+
+      // ページをリロード
+      await page.reload()
+
+      // 音量スライダーを再度取得
+      const volumeSliderAfterReload = page.locator('input[type="range"]').first()
+
+      // 音量が0.8に設定されていることを確認
+      const volumeAfterReload = await volumeSliderAfterReload.evaluate((el: HTMLInputElement) => parseFloat(el.value))
+      expect(volumeAfterReload).toBe(0.8)
     })
 
     test.skip('ブラウザを閉じて再度開いても状態が復元されること', async ({ page, context }) => {

@@ -85,6 +85,22 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
 
+    /* Cozy Focus */
+    --cf-crust: #1a1512;
+    --cf-mantle: #2a2420;
+    --cf-base: #3a332e;
+    --cf-surface0: #4a423d;
+    --cf-surface1: #5a514c;
+    --cf-text: #f2e8de;
+    --cf-subtext1: #e0d5ca;
+    --cf-overlay0: #9a9085;
+    --cf-amber: #e8a87c;
+    --cf-amber-dark: #d4956a;
+    --cf-sienna: #c7856b;
+    --cf-cream: #f6f2ed;
+    --cf-sage: #a6bba6;
+    --cf-rose: #e8a0a0;
+
     /* Catppuccin Mocha */
     --ctp-crust: #11111b;
     --ctp-mantle: #181825;
@@ -145,10 +161,10 @@
 
 /* Glassmorphism */
 .glass {
-  background: rgba(16, 31, 34, 0.7);
+  background: color-mix(in srgb, var(--cf-base), transparent 30%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid color-mix(in srgb, var(--cf-text), transparent 90%);
 }
 
 /* Legacy widget classes (kept for backward compat during redesign) */
@@ -191,4 +207,27 @@
   direction: ltr;
   -webkit-font-smoothing: antialiased;
   user-select: none;
+}
+
+/* Timer ring animation */
+.timer-ring {
+  transition: stroke-dashoffset 0.5s ease-in-out;
+}
+
+/* Rotating album art */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.album-art-spinning {
+  animation: rotate 8s linear infinite;
+}
+
+.album-art-paused {
+  animation-play-state: paused;
 }

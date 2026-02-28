@@ -140,7 +140,7 @@ export default function App() {
   }
 
   return (
-    <div className="font-display bg-background-dark text-slate-100 min-h-screen relative overflow-hidden">
+    <div className="font-display bg-cf-crust text-cf-text min-h-screen relative overflow-hidden">
       {/* 背景画像 */}
       <div
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
@@ -148,7 +148,7 @@ export default function App() {
           backgroundImage: `url('/bg/room.jpg')`,
         }}
       >
-        <div className="absolute inset-0 bg-background-dark/60 backdrop-brightness-75" />
+        <div className="absolute inset-0 bg-cf-crust/60 backdrop-brightness-75" />
       </div>
 
       {/* メインコンテンツ */}

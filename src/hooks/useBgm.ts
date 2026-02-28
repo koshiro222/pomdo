@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
+import { getBgmState, saveBgmState } from '../lib/storage'
 
 export type Track = {
   id: string
@@ -28,8 +29,14 @@ export type BgmState = {
 export function useBgm(): BgmState {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [volume, setVolumeState] = useState(0.5)
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const saved = getBgmState()
+    return saved?.currentIndex ?? 0
+  })
+  const [volume, setVolumeState] = useState(() => {
+    const saved = getBgmState()
+    return saved?.volume ?? 0.5
+  })
   const [hasError, setHasError] = useState(false)
 
   // Initialize audio element on mount
@@ -64,6 +71,13 @@ export function useBgm(): BgmState {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Update audio volume when volume state changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume
+    }
+  }, [volume])
+
   // Handle track change: reload src and resume if was playing
   useEffect(() => {
     const audio = audioRef.current
@@ -78,6 +92,15 @@ export function useBgm(): BgmState {
       audio.play().catch(() => setIsPlaying(false))
     }
   }, [currentIndex]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Save BGM state to localStorage when it changes
+  useEffect(() => {
+    saveBgmState({
+      isPlaying: false, // Always save as false for safety
+      currentIndex,
+      volume,
+    })
+  }, [currentIndex, volume])
 
   const toggle = useCallback(() => {
     const audio = audioRef.current

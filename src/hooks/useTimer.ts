@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { getTimerState, saveTimerState } from '../lib/storage'
 
 export type SessionType = 'work' | 'short_break' | 'long_break'
 
@@ -38,16 +39,35 @@ interface UseTimerOptions {
   onSessionComplete?: (sessionType: SessionType, durationSecs: number) => void
 }
 
+function getInitialState(initialSessionType: SessionType) {
+  const saved = getTimerState()
+  if (saved) {
+    return {
+      isActive: false, // Reset isActive on page load for safety
+      sessionType: saved.sessionType,
+      remainingSecs: saved.remainingSecs,
+      pomodoroCount: saved.pomodoroCount,
+    }
+  }
+  return {
+    isActive: false,
+    sessionType: initialSessionType,
+    remainingSecs: SESSION_DURATIONS[initialSessionType],
+    pomodoroCount: 0,
+  }
+}
+
 export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
   const {
     initialSessionType = 'work',
     onSessionComplete,
   } = options
 
-  const [isActive, setIsActive] = useState(false)
-  const [sessionType, setSessionType] = useState<SessionType>(initialSessionType)
-  const [remainingSecs, setRemainingSecs] = useState(SESSION_DURATIONS[initialSessionType])
-  const [pomodoroCount, setPomodoroCount] = useState(0)
+  const initialState = getInitialState(initialSessionType)
+  const [isActive, setIsActive] = useState(initialState.isActive)
+  const [sessionType, setSessionType] = useState<SessionType>(initialState.sessionType)
+  const [remainingSecs, setRemainingSecs] = useState(initialState.remainingSecs)
+  const [pomodoroCount, setPomodoroCount] = useState(initialState.pomodoroCount)
 
   const totalSecs = SESSION_DURATIONS[sessionType]
 
@@ -84,6 +104,16 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
     const nextIndex = (currentIndex + 1) % SESSION_ORDER.length
     return SESSION_ORDER[nextIndex]
   }, [])
+
+  // Save timer state to localStorage when it changes
+  useEffect(() => {
+    saveTimerState({
+      isActive: false, // Always save as false for safety
+      sessionType,
+      remainingSecs,
+      pomodoroCount,
+    })
+  }, [sessionType, remainingSecs, pomodoroCount])
 
   useEffect(() => {
     let intervalId: number | null = null

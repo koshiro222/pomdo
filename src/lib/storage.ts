@@ -11,6 +11,15 @@ export type Todo = {
 export type NewTodo = Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>
 export type UpdateTodo = Partial<Pick<Todo, 'title' | 'completed'>>
 
+// Internal helper function (not exported)
+function saveTodos(todos: Todo[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
+  } catch (e) {
+    console.error('Failed to save todos to localStorage:', e)
+  }
+}
+
 export const storage = {
   getTodos(): Todo[] {
     try {
@@ -31,7 +40,7 @@ export const storage = {
       updatedAt: now,
     }
     const updated = [...todos, newTodo]
-    this.saveTodos(updated)
+    saveTodos(updated)
     return newTodo
   },
 
@@ -46,7 +55,7 @@ export const storage = {
       ...updates,
       updatedAt: new Date().toISOString(),
     }
-    this.saveTodos(updated)
+    saveTodos(updated)
     return updated[index]
   },
 
@@ -55,19 +64,11 @@ export const storage = {
     const filtered = todos.filter((t) => t.id !== id)
     if (filtered.length === todos.length) return false
 
-    this.saveTodos(filtered)
+    saveTodos(filtered)
     return true
   },
 
   clearTodos(): void {
     localStorage.removeItem(STORAGE_KEY)
-  },
-
-  private saveTodos(todos: Todo[]): void {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
-    } catch (e) {
-      console.error('Failed to save todos to localStorage:', e)
-    }
   },
 }

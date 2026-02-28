@@ -49,3 +49,4 @@ lerna-debug.log*
 .mcp.json
 HANDOVER.md
 memo.md
+.playwright-cli/

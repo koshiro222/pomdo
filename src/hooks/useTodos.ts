@@ -33,7 +33,7 @@ export function useTodos() {
 
   useEffect(() => {
     fetchTodos()
-  }, [fetchTodos])
+  }, [user])
 
   const addTodo = useCallback(
     async (title: string) => {

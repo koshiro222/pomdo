@@ -35,6 +35,7 @@ export function BgmPlayer() {
             onClick={prev}
             className="material-symbols-outlined text-lg text-slate-400 cursor-pointer hover:text-primary"
             title="前の曲"
+            aria-label="前の曲"
           >
             skip_previous
           </button>
@@ -43,6 +44,7 @@ export function BgmPlayer() {
             disabled={hasError}
             className="material-symbols-outlined text-2xl text-slate-100 cursor-pointer hover:scale-110 transition-transform"
             title={isPlaying ? '一時停止' : '再生'}
+            aria-label={isPlaying ? '一時停止' : '再生'}
           >
             {isPlaying ? 'pause_circle' : 'play_circle'}
           </button>
@@ -50,6 +52,7 @@ export function BgmPlayer() {
             onClick={next}
             className="material-symbols-outlined text-lg text-slate-400 cursor-pointer hover:text-primary"
             title="次の曲"
+            aria-label="次の曲"
           >
             skip_next
           </button>

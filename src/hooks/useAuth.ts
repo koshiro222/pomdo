@@ -45,5 +45,11 @@ export function useAuth() {
     setState({ user: null, loading: false })
   }, [])
 
-  return { ...state, login, logout, refetch: fetchMe }
+  return {
+    user: state.user,
+    loading: state.loading,
+    login,
+    logout,
+    refetch: fetchMe,
+  }
 }

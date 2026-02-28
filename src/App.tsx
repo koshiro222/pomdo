@@ -41,20 +41,22 @@ export default function App() {
   const [showMigrateDialog, setShowMigrateDialog] = useState(false)
   const [wasGuest, setWasGuest] = useState(false)
 
+  // Mark user as guest on mount if not logged in
+  useEffect(() => {
+    if (!user) {
+      setWasGuest(true)
+    }
+  }, []) // Run once on mount
+
   // Detect guest -> login transition and show migrate dialog if there are local todos
   useEffect(() => {
-    if (!wasGuest && user) {
-      // User just logged in
+    if (wasGuest && user) {
+      // User just logged in from guest mode
       const localTodos = storage.getTodos()
       if (localTodos.length > 0) {
         setShowMigrateDialog(true)
       }
-    } else if (wasGuest && !user) {
-      // User logged out
       setWasGuest(false)
-    } else if (!user) {
-      // User is guest
-      setWasGuest(true)
     }
   }, [user, wasGuest])
 

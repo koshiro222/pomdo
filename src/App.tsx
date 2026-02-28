@@ -12,26 +12,30 @@ import { BgmPlayer } from './components/bgm/BgmPlayer'
 import { Header } from './components/layout/Header'
 import { Footer } from './components/layout/Footer'
 
-function TimerWidget() {
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
+function TimerWidget({
+  isActive,
+  sessionType,
+  remainingSecs,
+  totalSecs,
+  setSessionType,
+  changeSessionType,
+  start,
+  pause,
+  reset,
+  skip,
+}: {
+  isActive: boolean
+  sessionType: 'work' | 'short_break' | 'long_break'
+  remainingSecs: number
+  totalSecs: number
+  setSessionType: (type: 'work' | 'short_break' | 'long_break') => void
+  changeSessionType: (type: 'work' | 'short_break' | 'long_break') => void
+  start: () => void
+  pause: () => void
+  reset: () => void
+  skip: () => void
+}) {
   const audioRef = useRef<HTMLAudioElement>(null)
-
-  const { isActive, sessionType, remainingSecs, totalSecs, start, pause, reset, skip } = useTimer({
-    onSessionComplete: async (type, durationSecs) => {
-      const session = await startSession(type, durationSecs)
-      if (session) {
-        setCurrentSessionId(session.id)
-      }
-    },
-  })
-
-  const { startSession, completeSession } = usePomodoro()
-
-  const handleStart = () => {
-    if (!isActive) {
-      start()
-    }
-  }
 
   const playNotification = () => {
     if (audioRef.current) {
@@ -42,31 +46,32 @@ function TimerWidget() {
     }
   }
 
-  useEffect(() => {
-    if (remainingSecs === 0 && currentSessionId) {
-      completeSession(currentSessionId)
+  const handleStart = () => {
+    if (!isActive) {
+      start()
       playNotification()
-      setCurrentSessionId(null)
     }
-  }, [remainingSecs, currentSessionId, completeSession])
+  }
+
+  const handleSessionTypeChange = (type: 'work' | 'short_break' | 'long_break') => {
+    changeSessionType(type)
+  }
 
   return (
     <>
-      <div className="p-6">
-        <TimerDisplay
-          remainingSecs={remainingSecs}
-          totalSecs={totalSecs}
-          sessionType={sessionType}
-          isActive={isActive}
-        />
-        <TimerControls
-          isActive={isActive}
-          onStart={handleStart}
-          onPause={pause}
-          onReset={reset}
-          onSkip={skip}
-        />
-      </div>
+      <TimerDisplay
+        remainingSecs={remainingSecs}
+        totalSecs={totalSecs}
+        sessionType={sessionType}
+        onSessionTypeChange={handleSessionTypeChange}
+      />
+      <TimerControls
+        isActive={isActive}
+        onStart={handleStart}
+        onPause={pause}
+        onReset={reset}
+        onSkip={skip}
+      />
 
       <audio
         ref={audioRef}
@@ -92,7 +97,20 @@ function getTodayFocusMinutes(sessions: ReturnType<typeof usePomodoro>['sessions
 export default function App() {
   const { user } = useAuth()
   const { refetch } = useTodos()
-  const { sessions } = usePomodoro()
+  const { sessions, startSession, completeSession } = usePomodoro()
+  const { isActive, sessionType, remainingSecs, totalSecs, setSessionType, changeSessionType, pomodoroCount, start, pause, reset, skip } = useTimer({
+    onSessionComplete: async (type, durationSecs) => {
+      const session = await startSession(type, durationSecs)
+      if (session) {
+        completeSession(session.id)
+        // Play notification sound
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3')
+        audio.play().catch(() => {
+          console.warn('Autoplay prevented by browser policy')
+        })
+      }
+    },
+  })
   const [showMigrateDialog, setShowMigrateDialog] = useState(false)
   const [wasGuest, setWasGuest] = useState(false)
 
@@ -141,7 +159,18 @@ export default function App() {
           {/* 左カラム: タイマー + BGM */}
           <div className="flex-[1.5] flex flex-col gap-6 h-full">
             <div className="glass flex-1 rounded-2xl overflow-hidden">
-              <TimerWidget />
+              <TimerWidget
+                isActive={isActive}
+                sessionType={sessionType}
+                remainingSecs={remainingSecs}
+                totalSecs={totalSecs}
+                setSessionType={setSessionType}
+                changeSessionType={changeSessionType}
+                start={start}
+                pause={pause}
+                reset={reset}
+                skip={skip}
+              />
             </div>
             <div className="glass rounded-2xl overflow-hidden">
               <BgmPlayer />
@@ -150,7 +179,7 @@ export default function App() {
 
           {/* 右カラム: Todo */}
           <aside className="flex-1 glass rounded-2xl overflow-hidden flex flex-col h-full">
-            <TodoList />
+            <TodoList pomodoroCount={pomodoroCount} />
           </aside>
         </main>
 

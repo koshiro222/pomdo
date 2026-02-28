@@ -11,12 +11,38 @@ export type Todo = {
 export type NewTodo = Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>
 export type UpdateTodo = Partial<Pick<Todo, 'title' | 'completed'>>
 
+export type PomodoroSession = {
+  id: string
+  todoId: string | null
+  type: 'work' | 'short_break' | 'long_break'
+  startedAt: string
+  completedAt: string | null
+  durationSecs: number
+  createdAt: string
+}
+
+export type NewPomodoroSession = Omit<PomodoroSession, 'id' | 'createdAt'>
+
+export type UpdatePomodoroSession = Partial<
+  Pick<PomodoroSession, 'completedAt'>
+>
+
 // Internal helper function (not exported)
 function saveTodos(todos: Todo[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
   } catch (e) {
     console.error('Failed to save todos to localStorage:', e)
+  }
+}
+
+const POMODORO_STORAGE_KEY = 'pomdo_pomodoro'
+
+function savePomodoroSessions(sessions: PomodoroSession[]): void {
+  try {
+    localStorage.setItem(POMODORO_STORAGE_KEY, JSON.stringify(sessions))
+  } catch (e) {
+    console.error('Failed to save pomodoro sessions to localStorage:', e)
   }
 }
 
@@ -70,5 +96,48 @@ export const storage = {
 
   clearTodos(): void {
     localStorage.removeItem(STORAGE_KEY)
+  },
+
+  getPomodoroSessions(): PomodoroSession[] {
+    try {
+      const data = localStorage.getItem(POMODORO_STORAGE_KEY)
+      return data ? JSON.parse(data) : []
+    } catch {
+      return []
+    }
+  },
+
+  addPomodoroSession(session: NewPomodoroSession): PomodoroSession {
+    const sessions = this.getPomodoroSessions()
+    const now = new Date().toISOString()
+    const newSession: PomodoroSession = {
+      id: crypto.randomUUID(),
+      ...session,
+      createdAt: now,
+    }
+    const updated = [...sessions, newSession]
+    savePomodoroSessions(updated)
+    return newSession
+  },
+
+  updatePomodoroSession(
+    id: string,
+    updates: UpdatePomodoroSession,
+  ): PomodoroSession | null {
+    const sessions = this.getPomodoroSessions()
+    const index = sessions.findIndex((s) => s.id === id)
+    if (index === -1) return null
+
+    const updated = [...sessions]
+    updated[index] = {
+      ...updated[index],
+      ...updates,
+    }
+    savePomodoroSessions(updated)
+    return updated[index]
+  },
+
+  clearPomodoroSessions(): void {
+    localStorage.removeItem(POMODORO_STORAGE_KEY)
   },
 }

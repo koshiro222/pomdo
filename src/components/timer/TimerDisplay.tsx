@@ -27,8 +27,8 @@ export function TimerDisplay({
           onClick={() => onSessionTypeChange('work')}
           className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
             sessionType === 'work'
-              ? 'bg-cf-amber/20 text-cf-amber border-cf-amber/30'
-              : 'bg-white/5 text-cf-overlay0 border-transparent hover:border-white/10'
+              ? 'bg-cf-primary/20 text-cf-primary border-cf-primary/30'
+              : 'bg-white/5 text-cf-subtext border-transparent hover:border-white/10'
           }`}
         >
           Focus
@@ -37,8 +37,8 @@ export function TimerDisplay({
           onClick={() => onSessionTypeChange('short_break')}
           className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
             sessionType === 'short_break'
-              ? 'bg-cf-amber/20 text-cf-amber border-cf-amber/30'
-              : 'bg-white/5 text-cf-overlay0 border-transparent hover:border-white/10'
+              ? 'bg-cf-primary/20 text-cf-primary border-cf-primary/30'
+              : 'bg-white/5 text-cf-subtext border-transparent hover:border-white/10'
           }`}
         >
           Short Break
@@ -47,8 +47,8 @@ export function TimerDisplay({
           onClick={() => onSessionTypeChange('long_break')}
           className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
             sessionType === 'long_break'
-              ? 'bg-cf-amber/20 text-cf-amber border-cf-amber/30'
-              : 'bg-white/5 text-cf-overlay0 border-transparent hover:border-white/10'
+              ? 'bg-cf-primary/20 text-cf-primary border-cf-primary/30'
+              : 'bg-white/5 text-cf-subtext border-transparent hover:border-white/10'
           }`}
         >
           Long Break
@@ -68,7 +68,7 @@ export function TimerDisplay({
             strokeWidth="6"
           />
           <circle
-            className="text-cf-amber timer-ring"
+            className="text-cf-primary timer-ring"
             cx="144"
             cy="144"
             fill="transparent"
@@ -84,7 +84,7 @@ export function TimerDisplay({
           <span className="text-7xl font-black tracking-tight text-cf-text">
             {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
           </span>
-          <span className="text-cf-overlay0 mt-2 tracking-widest uppercase text-xs">
+          <span className="text-cf-subtext mt-2 tracking-widest uppercase text-xs">
             Stay focused, you got this
           </span>
         </div>

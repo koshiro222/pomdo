@@ -16,7 +16,7 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
   if (loading) {
     return (
       <div className="glass rounded-2xl flex flex-col h-full overflow-hidden p-6">
-        <div className="text-cf-overlay0">Loading...</div>
+        <div className="text-cf-subtext">Loading...</div>
       </div>
     )
   }
@@ -27,10 +27,10 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
       <div className="p-6 border-b border-white/10">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold flex items-center gap-2 text-cf-text">
-            <span className="material-symbols-outlined text-cf-amber">checklist</span>
+            <span className="material-symbols-outlined text-cf-primary">checklist</span>
             Tasks
           </h3>
-          <span className="text-xs bg-cf-amber/20 text-cf-amber px-2 py-0.5 rounded-full font-bold">
+          <span className="text-xs bg-cf-primary/20 text-cf-primary px-2 py-0.5 rounded-full font-bold">
             {remainingTodos} Left
           </span>
         </div>
@@ -40,7 +40,7 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
       {/* Todoリスト */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         {todos.length === 0 ? (
-          <div className="text-cf-overlay0 text-center py-8">
+          <div className="text-cf-subtext text-center py-8">
             No tasks yet
           </div>
         ) : (
@@ -61,18 +61,18 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
       <div className="p-6 bg-white/5 mt-auto">
         <div className="flex justify-between items-end">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-cf-overlay0 font-bold mb-1">
+            <p className="text-[10px] uppercase tracking-widest text-cf-subtext font-bold mb-1">
               Session Progress
             </p>
             <h5 className="text-sm font-bold text-cf-text">
               {pomodoroCount} of {targetPomodoros} pomodoros done
             </h5>
           </div>
-          <span className="text-cf-amber font-bold text-xs">{Math.round(progress)}%</span>
+          <span className="text-cf-primary font-bold text-xs">{Math.round(progress)}%</span>
         </div>
         <div className="w-full h-1.5 bg-white/10 rounded-full mt-3 overflow-hidden">
           <div
-            className="h-full bg-cf-amber transition-all"
+            className="h-full bg-cf-primary transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>

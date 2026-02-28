@@ -85,21 +85,21 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
 
-    /* Cozy Focus */
-    --cf-crust: #1a1512;
-    --cf-mantle: #2a2420;
-    --cf-base: #3a332e;
-    --cf-surface0: #4a423d;
-    --cf-surface1: #5a514c;
-    --cf-text: #f2e8de;
-    --cf-subtext1: #e0d5ca;
-    --cf-overlay0: #9a9085;
-    --cf-amber: #e8a87c;
-    --cf-amber-dark: #d4956a;
-    --cf-sienna: #c7856b;
-    --cf-cream: #f6f2ed;
-    --cf-sage: #a6bba6;
-    --cf-rose: #e8a0a0;
+    /* Calm Focus (Blue Navy) */
+    --cf-background: #101922;
+    --cf-surface: #1a2632;
+    --cf-border: #30363d;
+    --cf-text: #c9d1d9;
+    --cf-subtext: #8b949e;
+    --cf-primary: #137fec;
+    --cf-primary-hover: #1a90ff;
+    --cf-success: #86efac;
+    --cf-success-hover: #9bfbc5;
+    --cf-warning: #d29922;
+    --cf-danger: #f85149;
+    --cf-lavender: #a78bfa;
+    --cf-sage: #86efac;
+    --cf-overlay: rgba(16, 25, 34, 0.6);
 
     /* Catppuccin Mocha */
     --ctp-crust: #11111b;
@@ -161,18 +161,18 @@
 
 /* Glassmorphism */
 .glass {
-  background: color-mix(in srgb, var(--cf-base), transparent 30%);
+  background: color-mix(in srgb, var(--cf-surface), transparent 40%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid color-mix(in srgb, var(--cf-text), transparent 90%);
+  border: 1px solid color-mix(in srgb, var(--cf-border), transparent 50%);
 }
 
 /* Legacy widget classes (kept for backward compat during redesign) */
 .widget {
-  background: var(--ctp-mantle) / 80%;
+  background: var(--gh-card) / 80%;
   backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);
-  border: 1px solid var(--ctp-surface0);
+  border: 1px solid var(--gh-border);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }

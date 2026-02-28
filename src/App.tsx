@@ -9,6 +9,8 @@ import { TimerDisplay } from './components/timer/TimerDisplay'
 import { TimerControls } from './components/timer/TimerControls'
 import MigrateDialog from './components/dialogs/MigrateDialog'
 import { BgmPlayer } from './components/bgm/BgmPlayer'
+import { Header } from './components/layout/Header'
+import { Footer } from './components/layout/Footer'
 
 function TimerWidget() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
@@ -50,7 +52,7 @@ function TimerWidget() {
 
   return (
     <>
-      <div className="widget p-6 w-80">
+      <div className="p-6">
         <TimerDisplay
           remainingSecs={remainingSecs}
           totalSecs={totalSecs}
@@ -75,24 +77,37 @@ function TimerWidget() {
   )
 }
 
+function getTodayFocusMinutes(sessions: ReturnType<typeof usePomodoro>['sessions']): number {
+  const today = new Date().toDateString()
+  return sessions
+    .filter(
+      (s) =>
+        s.type === 'work' &&
+        s.completedAt !== null &&
+        new Date(s.startedAt).toDateString() === today,
+    )
+    .reduce((sum, s) => sum + Math.floor(s.durationSecs / 60), 0)
+}
 
 export default function App() {
-  const { user, login, logout } = useAuth()
-  const { todos, refetch } = useTodos()
+  const { user } = useAuth()
+  const { refetch } = useTodos()
+  const { sessions } = usePomodoro()
   const [showMigrateDialog, setShowMigrateDialog] = useState(false)
   const [wasGuest, setWasGuest] = useState(false)
 
-  // Mark user as guest on mount if not logged in
+  const todayFocusMinutes = getTodayFocusMinutes(sessions)
+
+  // ゲスト状態を記録
   useEffect(() => {
     if (!user) {
       setWasGuest(true)
     }
-  }, []) // Run once on mount
+  }, [])
 
-  // Detect guest -> login transition and show migrate dialog if there are local todos
+  // ゲスト → ログイン遷移でマイグレーションダイアログを表示
   useEffect(() => {
     if (wasGuest && user) {
-      // User just logged in from guest mode
       const localTodos = storage.getTodos()
       if (localTodos.length > 0) {
         setShowMigrateDialog(true)
@@ -101,47 +116,48 @@ export default function App() {
     }
   }, [user, wasGuest])
 
-  // Refresh todos after migration
   const handleMigrateClose = () => {
     setShowMigrateDialog(false)
     refetch()
   }
 
   return (
-    <div className="min-h-screen bg-ctp-base font-mono overflow-hidden relative">
-      {/* Background GIF - User can replace this URL */}
-      <div className="fixed inset-0 z-widget-bg opacity-20">
-        <img
-          src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Z5eGZ5eGZ5eGZ5eGZ5eGZ5eGZ5eGZ5eGZ5eGZ5eGZ5eGZ5eGZ5eGZ5eGZ5eGZ5eGZ5eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26BGjXcNQw8tW4c/giphy.gif"
-          alt="Background"
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      {/* User Auth Button */}
-      <button
-        onClick={user ? logout : login}
-        className="fixed top-4 right-4 z-widget-overlay bg-ctp-mantle/80 hover:bg-ctp-surface0 text-ctp-text px-4 py-2 rounded-lg border border-ctp-surface0 backdrop-blur-md transition-colors cursor-pointer"
+    <div className="font-display bg-background-dark text-slate-100 min-h-screen relative overflow-hidden">
+      {/* 背景画像 */}
+      <div
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url('/bg/room.jpg')`,
+        }}
       >
-        {user ? 'Logout' : 'Login'}
-      </button>
-
-      {/* Timer Widget - Top Left */}
-      <div className="fixed top-4 left-4 z-widget">
-        <TimerWidget />
+        <div className="absolute inset-0 bg-background-dark/60 backdrop-brightness-75" />
       </div>
 
-      {/* Todo Widget - Top Right (below auth button) */}
-      <div className="fixed top-16 right-4 z-widget w-96">
-        <TodoList />
+      {/* メインコンテンツ */}
+      <div className="relative z-10 flex h-screen flex-col">
+        <Header todayFocusMinutes={todayFocusMinutes} />
+
+        <main className="flex-1 flex gap-6 p-4 pt-4 overflow-hidden">
+          {/* 左カラム: タイマー + BGM */}
+          <div className="flex-[1.5] flex flex-col gap-6 h-full">
+            <div className="glass flex-1 rounded-2xl overflow-hidden">
+              <TimerWidget />
+            </div>
+            <div className="glass rounded-2xl overflow-hidden">
+              <BgmPlayer />
+            </div>
+          </div>
+
+          {/* 右カラム: Todo */}
+          <aside className="flex-1 glass rounded-2xl overflow-hidden flex flex-col h-full">
+            <TodoList />
+          </aside>
+        </main>
+
+        <Footer />
       </div>
 
-      {/* BGM Widget - Bottom Center */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-widget">
-        <BgmPlayer />
-      </div>
-
-      {/* Migration Dialog */}
+      {/* マイグレーションダイアログ */}
       {showMigrateDialog && (
         <MigrateDialog onClose={handleMigrateClose} />
       )}

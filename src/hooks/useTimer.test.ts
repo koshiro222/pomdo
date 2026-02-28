@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useTimer } from './useTimer'
 import type { SessionType } from './useTimer'
 
@@ -161,7 +161,7 @@ describe('useTimer', () => {
       sessionOrder.push(type)
     }
 
-    const { rerender } = renderHook(() =>
+    renderHook(() =>
       useTimer({
         onSessionComplete: (type) => trackSession(type),
       }),

@@ -22,7 +22,7 @@ export function useAuth() {
     try {
       const res = await fetch('/api/auth/me')
       if (res.ok) {
-        const { user } = await res.json<{ user: AuthUser }>()
+        const { user } = (await res.json()) as { user: AuthUser }
         setState({ user, loading: false })
       } else {
         setState({ user: null, loading: false })

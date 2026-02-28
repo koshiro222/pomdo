@@ -44,3 +44,4 @@ lerna-debug.log*
 .claude/settings.local.json
 .mcp.json
 HANDOVER.md
+memo.md

@@ -8,6 +8,7 @@ import TodoList from './components/todos/TodoList'
 import { TimerDisplay } from './components/timer/TimerDisplay'
 import { TimerControls } from './components/timer/TimerControls'
 import MigrateDialog from './components/dialogs/MigrateDialog'
+import { BgmPlayer } from './components/bgm/BgmPlayer'
 
 function TimerWidget() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
@@ -74,17 +75,6 @@ function TimerWidget() {
   )
 }
 
-function BgmWidget() {
-  return (
-    <div className="widget p-6 w-96">
-      <h2 className="text-lg font-bold text-ctp-text mb-4">BGM</h2>
-      <div className="text-ctp-subtext1 mb-4">Select Lo-Fi Track</div>
-      <button className="w-full bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-text px-4 py-2 rounded-lg transition-colors cursor-pointer">
-        Play / Pause
-      </button>
-    </div>
-  )
-}
 
 export default function App() {
   const { user, login, logout } = useAuth()
@@ -148,7 +138,7 @@ export default function App() {
 
       {/* BGM Widget - Bottom Center */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-widget">
-        <BgmWidget />
+        <BgmPlayer />
       </div>
 
       {/* Migration Dialog */}

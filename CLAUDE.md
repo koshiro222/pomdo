@@ -12,7 +12,7 @@ npm run build      # tsc + vite build → dist/
 
 ## ワークフロー
 
-issue → `feature/xxx` ブランチ → PR。詳細: `ai-rules/COMMIT_AND_PR_GUIDELINES.md`
+(厳守)issue作成or確認 → `feature/xxx` ブランチ → PR。詳細: `ai-rules/COMMIT_AND_PR_GUIDELINES.md`
 
 ## ⚠️ 非自明な制約（ここを見落とすとバグになる）
 

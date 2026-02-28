@@ -13,8 +13,8 @@ test.describe('タイマー機能', () => {
     // タイマーの時間表示が表示されることを確認
     await expect(page.locator('text=/\\d{2}:\\d{2}/')).toBeVisible()
 
-    // セッションタイプが表示されることを確認
-    await expect(page.getByText('Focus')).toBeVisible()
+    // セッションタイプが表示されることを確認（ボタンを指定）
+    await expect(page.getByRole('button', { name: 'Focus' })).toBeVisible()
   })
 
   test('STARTボタンでタイマーが開始できること', async ({ page }) => {
@@ -61,7 +61,7 @@ test.describe('タイマー機能', () => {
     await page.waitForTimeout(2000)
 
     // リセットボタンをクリック（refreshアイコンのボタン）
-    const refreshButton = page.locator('.material-symbols-outlined').filter({ hasText: 'refresh' }).locator('..')
+    const refreshButton = page.getByRole('button', { name: 'リセット' })
     await refreshButton.click()
 
     // タイマーが初期時間に戻っていることを確認
@@ -73,21 +73,21 @@ test.describe('タイマー機能', () => {
 
   test('SKIPボタンでセッションをスキップできること', async ({ page }) => {
     // 初期状態を記録
-    const initialSession = await page.getByText('Focus').isVisible()
+    const initialSession = await page.getByRole('button', { name: 'Focus' }).isVisible()
       ? 'Focus'
-      : await page.getByText('Short Break').or(page.getByText('Long Break')).isVisible()
+      : await page.getByRole('button', { name: 'Short Break' }).or(page.getByRole('button', { name: 'Long Break' })).isVisible()
       ? 'Break'
       : 'UNKNOWN'
 
     // スキップボタンをクリック（タイマーのskip_nextアイコンを持つボタン）
-    const skipButton = page.locator('button').filter({ hasText: 'skip_next', hasText: 'スキップ' })
+    const skipButton = page.getByRole('button', { name: 'スキップ' })
     await skipButton.click()
 
     // セッションタイプが切り替わっていることを確認
     await page.waitForTimeout(500)
-    const newSession = await page.getByText('Focus').isVisible()
+    const newSession = await page.getByRole('button', { name: 'Focus' }).isVisible()
       ? 'Focus'
-      : await page.getByText('Short Break').or(page.getByText('Long Break')).isVisible()
+      : await page.getByRole('button', { name: 'Short Break' }).or(page.getByRole('button', { name: 'Long Break' })).isVisible()
       ? 'Break'
       : 'UNKNOWN'
 
@@ -95,25 +95,28 @@ test.describe('タイマー機能', () => {
   })
 
   test('セッションタイプを切り替えられること', async ({ page }) => {
-    // セッションタイプ切り替えボタンをクリック
-    const sessionTypeButton = page.getByText('Focus')
-    await sessionTypeButton.click()
+    // 初期状態: Focus (25:00)
+    await expect(page.locator('text=/25:00/')).toBeVisible()
 
-    // セッション選択メニューが表示されることを確認
-    await expect(page.getByText('Focus')).toBeVisible()
-    await expect(page.getByText('Short Break')).toBeVisible()
+    // セッションタイプ切り替えボタンをクリック（タイマーテキストが重なっているためforce: true使用）
+    const shortBreakButton = page.getByRole('button', { name: 'Short Break' })
+    await shortBreakButton.click({ force: true })
+
+    // Short Break (5:00)に切り替わったことを確認
+    await expect(page.locator('text=/05:00/').or(page.locator('text=/5:00/'))).toBeVisible()
   })
 
   test('作業セッションから休憩セッションに切り替えられること', async ({ page }) => {
-    // 初期状態（作業セッション）を確認
-    await expect(page.getByText('Focus')).toBeVisible()
+    // 初期状態: Focus (25:00)
+    await expect(page.getByRole('button', { name: 'Focus' })).toBeVisible()
+    await expect(page.locator('text=/25:00/')).toBeVisible()
 
-    // セッションタイプを変更
-    const sessionTypeButton = page.getByText('Short Break')
-    await sessionTypeButton.click()
+    // セッションタイプを変更（タイマーテキストが重なっているためforce: true使用）
+    const shortBreakButton = page.getByRole('button', { name: 'Short Break' })
+    await shortBreakButton.click({ force: true })
 
-    // 休憩セッションが表示されることを確認
-    await expect(page.getByText('Short Break')).toBeVisible()
+    // Short Break (5:00)に切り替わったことを確認
+    await expect(page.locator('text=/05:00/').or(page.locator('text=/5:00/'))).toBeVisible()
   })
 
   test('タイマーの進捗が円グラフで表示されること', async ({ page }) => {

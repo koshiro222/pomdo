@@ -56,7 +56,7 @@ export function usePomodoro(): UsePomodoroReturn {
       setError(null)
 
       const newSession: NewPomodoroSession = {
-        todoId: todoId || null,
+        ...(todoId ? { todoId } : {}),
         type,
         startedAt: new Date().toISOString(),
         durationSecs,
@@ -73,7 +73,10 @@ export function usePomodoro(): UsePomodoroReturn {
         }
       } else {
         const created = storage.addPomodoroSession({
-          ...newSession,
+          todoId: newSession.todoId ?? null,
+          type: newSession.type,
+          startedAt: newSession.startedAt,
+          durationSecs: newSession.durationSecs,
           completedAt: null,
         })
         setSessions((prev) => [...prev, created])

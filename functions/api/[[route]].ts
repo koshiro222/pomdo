@@ -3,6 +3,7 @@ import { handle } from 'hono/cloudflare-pages'
 import { createDb } from '../lib/db'
 import auth from './auth'
 import todos from './todos'
+import pomodoro from './pomodoro'
 
 type Bindings = {
   DATABASE_URL: string
@@ -31,5 +32,6 @@ app.get('/health', async (c) => {
 
 app.route('/auth', auth)
 app.route('/todos', todos)
+app.route('/pomodoro', pomodoro)
 
 export const onRequest = handle(app)

@@ -14,6 +14,24 @@ export type Todo = {
 export type NewTodo = { title: string }
 export type UpdateTodo = Partial<{ title: string; completed: boolean }>
 
+export type PomodoroSession = {
+  id: string
+  userId: string
+  todoId: string | null
+  type: 'work' | 'short_break' | 'long_break'
+  startedAt: string
+  completedAt: string | null
+  durationSecs: number
+  createdAt: string
+}
+
+export type NewPomodoroSession = {
+  todoId?: string
+  type: 'work' | 'short_break' | 'long_break'
+  startedAt: string
+  durationSecs: number
+}
+
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 async function fetchApi<T>(
@@ -58,5 +76,21 @@ export const api = {
   deleteTodo: (id: string) =>
     fetchApi<{ id: string }>(`/todos/${id}`, {
       method: 'DELETE',
+    }),
+
+  getPomodoroSessions: () =>
+    fetchApi<PomodoroSession[]>('/pomodoro/sessions', {
+      method: 'GET',
+    }),
+
+  createPomodoroSession: (session: NewPomodoroSession) =>
+    fetchApi<PomodoroSession>('/pomodoro/sessions', {
+      method: 'POST',
+      body: JSON.stringify(session),
+    }),
+
+  completePomodoroSession: (id: string) =>
+    fetchApi<PomodoroSession>(`/pomodoro/sessions/${id}/complete`, {
+      method: 'PATCH',
     }),
 }

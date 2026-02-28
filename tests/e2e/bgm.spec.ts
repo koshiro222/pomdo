@@ -36,12 +36,12 @@ test.describe('BGM再生', () => {
   })
 
   test('次の曲・前の曲ボタンが機能すること', async ({ page }) => {
-    // 次の曲ボタンが表示されることを確認（BGMのskip_nextアイコンを持つbutton）
-    const nextButton = page.locator('button').filter({ hasText: 'skip_next', hasNotText: 'スキップ' })
+    // 次の曲ボタンが表示されることを確認（aria-label="次の曲"）
+    const nextButton = page.getByRole('button', { name: '次の曲' })
     await expect(nextButton).toBeVisible()
 
-    // 前の曲ボタンが表示されることを確認（skip_previousアイコンを持つbutton）
-    const prevButton = page.locator('button').filter({ hasText: 'skip_previous' })
+    // 前の曲ボタンが表示されることを確認（aria-label="前の曲"）
+    const prevButton = page.getByRole('button', { name: '前の曲' })
     await expect(prevButton).toBeVisible()
 
     // 次の曲をクリック

@@ -1,6 +1,11 @@
 # Design mockups
 design-concept.html
 
+# Audio files (download separately, see public/audio/README.md)
+public/audio/*.mp3
+public/audio/*.ogg
+public/audio/*.wav
+
 # Dependencies
 node_modules/
 .pnp

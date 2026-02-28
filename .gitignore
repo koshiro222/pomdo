@@ -62,3 +62,8 @@ lerna-debug.log*
 HANDOVER.md
 memo.md
 .playwright-cli/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/

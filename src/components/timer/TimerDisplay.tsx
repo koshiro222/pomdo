@@ -2,92 +2,91 @@ interface TimerDisplayProps {
   remainingSecs: number
   totalSecs: number
   sessionType: 'work' | 'short_break' | 'long_break'
-  isActive: boolean
+  onSessionTypeChange: (type: 'work' | 'short_break' | 'long_break') => void
 }
 
 export function TimerDisplay({
   remainingSecs,
   totalSecs,
   sessionType,
-  isActive,
+  onSessionTypeChange,
 }: TimerDisplayProps) {
   const minutes = Math.floor(remainingSecs / 60)
   const seconds = remainingSecs % 60
-  const progress = ((totalSecs - remainingSecs) / totalSecs) * 100
-
-  const sessionLabel = {
-    work: '作業',
-    short_break: '休憩',
-    long_break: '長休憩',
-  }[sessionType]
-
-  const sessionColor = {
-    work: 'bg-mauve',
-    short_break: 'bg-green',
-    long_break: 'bg-yellow',
-  }[sessionType]
-
-  const textColor = {
-    work: 'text-mauve',
-    short_break: 'text-green',
-    long_break: 'text-yellow',
-  }[sessionType]
+  const progress = remainingSecs / totalSecs
+  const circumference = 2 * Math.PI * 150
+  const dashOffset = circumference * (1 - progress)
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div
-        className={`px-4 py-1 rounded-full text-sm font-bold ${textColor} bg-surface0`}
-      >
-        {sessionLabel}
+    <div className="flex flex-col items-center h-full justify-center relative">
+      {/* モードタブ */}
+      <div className="absolute top-6 left-6 flex gap-2">
+        <button
+          onClick={() => onSessionTypeChange('work')}
+          className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
+            sessionType === 'work'
+              ? 'bg-primary/20 text-primary border-primary/30'
+              : 'bg-white/5 text-slate-400 border-transparent hover:border-white/10'
+          }`}
+        >
+          Focus
+        </button>
+        <button
+          onClick={() => onSessionTypeChange('short_break')}
+          className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
+            sessionType === 'short_break'
+              ? 'bg-primary/20 text-primary border-primary/30'
+              : 'bg-white/5 text-slate-400 border-transparent hover:border-white/10'
+          }`}
+        >
+          Short Break
+        </button>
+        <button
+          onClick={() => onSessionTypeChange('long_break')}
+          className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
+            sessionType === 'long_break'
+              ? 'bg-primary/20 text-primary border-primary/30'
+              : 'bg-white/5 text-slate-400 border-transparent hover:border-white/10'
+          }`}
+        >
+          Long Break
+        </button>
       </div>
 
-      <div className="relative w-64 h-64 flex items-center justify-center">
-        <svg className="absolute w-full h-full -rotate-90">
+      {/* SVGリングタイマー */}
+      <div className="relative flex items-center justify-center">
+        <svg className="size-80">
           <circle
-            cx="50%"
-            cy="50%"
-            r="48%"
-            stroke="var(--surface0)"
-            strokeWidth="4"
-            fill="none"
+            className="text-white/10"
+            cx="160"
+            cy="160"
+            fill="transparent"
+            r="150"
+            stroke="currentColor"
+            strokeWidth="8"
           />
           <circle
-            cx="50%"
-            cy="50%"
-            r="48%"
-            stroke={`var(--${sessionColor === 'bg-mauve' ? 'mauve' : sessionColor === 'bg-green' ? 'green' : 'yellow'})`}
-            strokeWidth="4"
-            fill="none"
+            className="text-primary timer-ring"
+            cx="160"
+            cy="160"
+            fill="transparent"
+            r="150"
+            stroke="currentColor"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
             strokeLinecap="round"
-            strokeDasharray={`${2 * Math.PI * 48}%`}
-            strokeDashoffset={`${2 * Math.PI * 48 * (1 - progress / 100)}%`}
-            className="transition-all duration-1000 ease-linear"
+            strokeWidth="8"
           />
         </svg>
-
-        <div className="text-6xl font-mono font-bold text-text">
-          {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+        <div className="absolute flex flex-col items-center">
+          <span className="text-8xl font-black tracking-tighter text-slate-100">
+            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+          </span>
+          <span className="text-slate-400 mt-2 tracking-[0.2em] uppercase text-xs">
+            Stay focused, you got this
+          </span>
         </div>
       </div>
-
-      <div className="h-2 w-full bg-surface0 rounded-full overflow-hidden">
-        <div
-          className={`h-full ${sessionColor} transition-all duration-1000 ease-linear`}
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
-      {isActive && (
-        <div className="flex gap-1">
-          {[...Array(3)].map((_, i) => (
-            <div
-              key={i}
-              className="w-1 h-1 bg-overlay0 rounded-full animate-pulse"
-              style={{ animationDelay: `${i * 0.2}s` }}
-            />
-          ))}
-        </div>
-      )}
     </div>
   )
 }

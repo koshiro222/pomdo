@@ -2,28 +2,46 @@ import { useTodos } from '../../hooks/useTodos'
 import TodoInput from './TodoInput'
 import TodoItem from './TodoItem'
 
-export default function TodoList() {
+interface TodoListProps {
+  pomodoroCount?: number
+  targetPomodoros?: number
+}
+
+export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: TodoListProps) {
   const { todos, loading, addTodo, updateTodo, deleteTodo } = useTodos()
+
+  const remainingTodos = todos.filter((t) => !t.completed).length
+  const progress = Math.min((pomodoroCount / targetPomodoros) * 100, 100)
 
   if (loading) {
     return (
-      <div className="widget p-6">
-        <h2 className="text-lg font-bold text-ctp-text mb-4">Todos</h2>
-        <div className="text-ctp-overlay0">Loading...</div>
+      <div className="glass rounded-2xl flex flex-col h-full overflow-hidden p-6">
+        <div className="text-slate-400">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="widget p-6">
-      <h2 className="text-lg font-bold text-ctp-text mb-4">
-        Todos ({todos.length})
-      </h2>
-      <TodoInput onAdd={addTodo} />
-      <div className="mt-4 space-y-2 max-h-96 overflow-y-auto">
+    <div className="glass rounded-2xl flex flex-col h-full overflow-hidden">
+      {/* ヘッダー */}
+      <div className="p-6 border-b border-white/10">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold flex items-center gap-2 text-slate-100">
+            <span className="material-symbols-outlined text-primary">checklist</span>
+            Tasks
+          </h3>
+          <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full font-bold">
+            {remainingTodos} Left
+          </span>
+        </div>
+        <TodoInput onAdd={addTodo} />
+      </div>
+
+      {/* Todoリスト */}
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         {todos.length === 0 ? (
-          <div className="text-ctp-overlay0 text-center py-8">
-            No todos yet
+          <div className="text-slate-500 text-center py-8">
+            No tasks yet
           </div>
         ) : (
           todos.map((todo) => (
@@ -37,6 +55,27 @@ export default function TodoList() {
             />
           ))
         )}
+      </div>
+
+      {/* セッション進捗バー */}
+      <div className="p-6 bg-white/5 mt-auto">
+        <div className="flex justify-between items-end">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">
+              Session Progress
+            </p>
+            <h5 className="text-sm font-bold text-slate-100">
+              {pomodoroCount} of {targetPomodoros} pomodoros done
+            </h5>
+          </div>
+          <span className="text-primary font-bold text-xs">{Math.round(progress)}%</span>
+        </div>
+        <div className="w-full h-1.5 bg-white/10 rounded-full mt-3 overflow-hidden">
+          <div
+            className="h-full bg-primary transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
     </div>
   )

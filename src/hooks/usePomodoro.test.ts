@@ -56,7 +56,7 @@ describe('usePomodoro', () => {
   it('ログイン時にセッションを開始できる', async () => {
     const { api } = await import('../lib/api')
     const { useAuth } = await import('./useAuth')
-    vi.mocked(useAuth).mockReturnValue({ user: { sub: 'user-123' } })
+    vi.mocked(useAuth).mockReturnValue({ user: { sub: 'user-123', email: '', name: '', iat: 0, exp: 0 }, loading: false, login: vi.fn(), logout: vi.fn(), refetch: vi.fn() })
 
     const mockCreate = vi.fn().mockResolvedValue({
       success: true,

@@ -6,7 +6,10 @@
 npm run dev        # vite (5173) + wrangler pages dev (8788) 同時起動
 npm run dev:vite   # vite のみ
 npm run build      # tsc + vite build → dist/
-npm test           # Playwright E2E
+npm test           # vitest（ユニットテスト）
+npm run test:e2e   # Playwright E2E テスト
+npm run db:generate  # Drizzle マイグレーションファイル生成
+npm run db:migrate   # マイグレーション適用
 ```
 
 ローカルAPI確認: `http://localhost:8788/api/*`
@@ -14,7 +17,7 @@ npm test           # Playwright E2E
 ## ワークフロー
 
 (厳守)issue作成or確認 → `feature/xxx` ブランチ → 実装・動作確認パスしたらコミット → PR
-作業前に必ず `ai-rules/WORK_FLOW.md` を参照
+詳細: `ai-rules/WORK_FLOW.md`
 
 ## テスト
 
@@ -28,11 +31,16 @@ npm test           # Playwright E2E
 - **TCP ソケット不可**: Neon は `drizzle-orm/neon-http` を使う（`neon-serverless` は不可）
 - **禁止パッケージ**: `@hono/oauth-providers`（Node.js 依存あり）
 
+### API ルーティング（2系統）
+- **REST**: `functions/api/[[route]].ts`（Hono, basePath `/api`）— 認証・ヘルスチェック等
+- **tRPC**: `functions/api/trpc/[[route]].ts`（endpoint `/api/trpc`）— Todo・Pomodoro・auth.me
+- tRPC ルーター定義は `src/app/routers/` に配置
+
 ### ゲストモード
 未ログインでも全機能が使える。localStorage に保存し、ログイン時にマイグレーションダイアログを表示。
 
-### API ルーティング
-Hono のエントリポイントは `functions/api/[[route]].ts`。basePath は `/api`。
+### tRPC エラーハンドリング
+`new Error()` をそのまま throw すると `INTERNAL_SERVER_ERROR(500)` になる。必ず `TRPCError` を使うこと。
 
 ## ドキュメント
 

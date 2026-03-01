@@ -12,4 +12,5 @@ GitHub Flow採用。mainへの直接コミット禁止。
 4. issue を参照した PR を作成する
 
 - Issue作成: ai-rules/ISSUE_GUIDELINES.md を参照
+- テスト: ai-rules/TESTING.md を参照
 - コミット・PR: ai-rules/COMMIT_AND_PR_GUIDELINES.md を参照

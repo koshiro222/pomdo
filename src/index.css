@@ -85,69 +85,52 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
 
-    /* Calm Focus (Blue Navy) */
-    --cf-background: #101922;
-    --cf-surface: #1a2632;
-    --cf-border: #30363d;
-    --cf-text: #c9d1d9;
-    --cf-subtext: #8b949e;
-    --cf-primary: #137fec;
-    --cf-primary-hover: #1a90ff;
-    --cf-success: #86efac;
-    --cf-success-hover: #9bfbc5;
-    --cf-warning: #d29922;
-    --cf-danger: #f85149;
-    --cf-lavender: #a78bfa;
-    --cf-sage: #86efac;
-    --cf-overlay: rgba(16, 25, 34, 0.6);
-
-    /* Catppuccin Mocha */
-    --ctp-crust: #11111b;
-    --ctp-mantle: #181825;
-    --ctp-base: #1e1e2e;
-    --ctp-surface0: #313244;
-    --ctp-surface1: #45475a;
-    --ctp-text: #cdd6f4;
-    --ctp-subtext1: #bac2de;
-    --ctp-overlay0: #6c7086;
-    --ctp-mauve: #cba6f7;
-    --ctp-sky: #89dceb;
-    --ctp-green: #a6e3a1;
-    --ctp-red: #f38ba8;
+    /* Deep Forest */
+    --df-bg-deep: #0a0f0d;
+    --df-bg-surface: #121814;
+    --df-bg-elevated: #1a211c;
+    --df-border-subtle: rgba(255,255,255,0.06);
+    --df-accent-primary: #22c55e;  /* Green: 完了・フォーカス */
+    --df-accent-focus: #3b82f6;    /* Blue: アクティブ */
+    --df-accent-break: #f59e0b;    /* Amber: 休憩 */
+    --df-accent-danger: #ef4444;    /* Red: 削除 */
+    --df-text-primary: #e5e7eb;     /* コントラスト7+ */
+    --df-text-secondary: #6b7280;
+    --df-text-muted: #4b5563;
 }
 
 .dark {
-    --background: var(--ctp-base);
-    --foreground: var(--ctp-text);
-    --card: var(--ctp-mantle);
-    --card-foreground: var(--ctp-text);
-    --popover: var(--ctp-mantle);
-    --popover-foreground: var(--ctp-text);
-    --primary: var(--ctp-mauve);
-    --primary-foreground: var(--ctp-base);
-    --secondary: var(--ctp-surface0);
-    --secondary-foreground: var(--ctp-text);
-    --muted: var(--ctp-surface0);
-    --muted-foreground: var(--ctp-overlay0);
-    --accent: var(--ctp-surface1);
-    --accent-foreground: var(--ctp-text);
-    --destructive: var(--ctp-red);
-    --border: var(--ctp-surface0);
-    --input: var(--ctp-surface1);
-    --ring: var(--ctp-mauve);
-    --chart-1: var(--ctp-mauve);
-    --chart-2: var(--ctp-sky);
-    --chart-3: var(--ctp-green);
-    --chart-4: var(--ctp-red);
-    --chart-5: var(--ctp-sky);
-    --sidebar: var(--ctp-mantle);
-    --sidebar-foreground: var(--ctp-text);
-    --sidebar-primary: var(--ctp-mauve);
-    --sidebar-primary-foreground: var(--ctp-base);
-    --sidebar-accent: var(--ctp-surface0);
-    --sidebar-accent-foreground: var(--ctp-text);
-    --sidebar-border: var(--ctp-surface0);
-    --sidebar-ring: var(--ctp-mauve);
+    --background: var(--df-bg-surface);
+    --foreground: var(--df-text-primary);
+    --card: var(--df-bg-elevated);
+    --card-foreground: var(--df-text-primary);
+    --popover: var(--df-bg-elevated);
+    --popover-foreground: var(--df-text-primary);
+    --primary: var(--df-accent-primary);
+    --primary-foreground: #0a0f0d;
+    --secondary: rgba(255,255,255,0.1);
+    --secondary-foreground: var(--df-text-primary);
+    --muted: rgba(255,255,255,0.08);
+    --muted-foreground: var(--df-text-secondary);
+    --accent: var(--df-accent-focus);
+    --accent-foreground: #ffffff;
+    --destructive: var(--df-accent-danger);
+    --border: var(--df-border-subtle);
+    --input: rgba(255,255,255,0.1);
+    --ring: var(--df-accent-focus);
+    --chart-1: var(--df-accent-primary);
+    --chart-2: var(--df-accent-focus);
+    --chart-3: var(--df-accent-break);
+    --chart-4: var(--df-accent-danger);
+    --chart-5: var(--df-accent-focus);
+    --sidebar: var(--df-bg-elevated);
+    --sidebar-foreground: var(--df-text-primary);
+    --sidebar-primary: var(--df-accent-primary);
+    --sidebar-primary-foreground: #0a0f0d;
+    --sidebar-accent: rgba(255,255,255,0.1);
+    --sidebar-accent-foreground: var(--df-text-primary);
+    --sidebar-border: var(--df-border-subtle);
+    --sidebar-ring: var(--df-accent-focus);
 }
 
 @layer base {
@@ -161,10 +144,10 @@
 
 /* Glassmorphism */
 .glass {
-  background: color-mix(in srgb, var(--cf-surface), transparent 40%);
+  background: color-mix(in srgb, var(--df-bg-elevated), transparent 40%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid color-mix(in srgb, var(--cf-border), transparent 50%);
+  border: 1px solid var(--df-border-subtle);
 }
 
 /* Legacy widget classes (kept for backward compat during redesign) */

@@ -6,8 +6,8 @@
 
 実装後は必ず `/playwright-cli` skills でブラウザ動作確認を行う。
 
-- `/playwright-cli` skills のみ使用（必ずSkill tool経由で呼び出す）
-- Python/JavaScript/Bash による直接ブラウザ操作
+- `/playwright-cli` skills 以外の使用は禁止（必ずSkill tool経由で呼び出す）
+- Python/JavaScript/Bash による直接ブラウザ操作禁止
 
 エラーが発生した場合は即座に報告し、修正してから再確認する。
 

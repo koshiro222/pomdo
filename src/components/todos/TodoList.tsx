@@ -25,14 +25,14 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
 
   if (loading) {
     return (
-      <div className="glass rounded-2xl flex flex-col h-full overflow-hidden p-6">
+      <div className="glass rounded-2xl flex flex-col min-h-64 sm:h-full overflow-hidden p-6">
         <div className="text-cf-subtext">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="glass rounded-2xl flex flex-col h-full overflow-hidden">
+    <div className="glass rounded-2xl flex flex-col min-h-64 sm:h-full overflow-hidden">
       {/* ヘッダー */}
       <div className="p-6 border-b border-white/10">
         <div className="flex items-center justify-between mb-6">

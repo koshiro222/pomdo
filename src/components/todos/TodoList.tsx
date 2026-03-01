@@ -1,4 +1,4 @@
-import { useTodos } from '../../hooks/useTodos'
+import { useTodos, type Todo } from '../../hooks/useTodos'
 import TodoInput from './TodoInput'
 import TodoItem from './TodoItem'
 
@@ -10,7 +10,7 @@ interface TodoListProps {
 export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: TodoListProps) {
   const { todos, loading, addTodo, updateTodo, deleteTodo } = useTodos()
 
-  const remainingTodos = todos.filter((t) => !t.completed).length
+  const remainingTodos = todos.filter((t: Todo) => !t.completed).length
   const progress = Math.min((pomodoroCount / targetPomodoros) * 100, 100)
 
   if (loading) {
@@ -44,7 +44,7 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
             No tasks yet
           </div>
         ) : (
-          todos.map((todo) => (
+          todos.map((todo: Todo) => (
             <TodoItem
               key={todo.id}
               id={todo.id}

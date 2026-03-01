@@ -1,118 +1,176 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { trpc } from '../lib/trpc'
 import { useAuth } from './useAuth'
-import { createTodoRepo, type ITodoRepository, type Todo, type UpdateTodo } from '../core/repo/todo.repo'
 import { storage, type Todo as StorageTodo } from '../lib/storage'
+
+export type Todo = {
+  id: string
+  userId?: string
+  title: string
+  completed: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type NewTodo = { title: string }
+export type UpdateTodo = Partial<{ title: string; completed: boolean }>
 
 export function useTodos() {
   const { user } = useAuth()
-  const [todos, setTodos] = useState<Todo[]>([])
+  const queryClient = useQueryClient()
+
+  // tRPC queries & mutations
+  const todosQuery = trpc.todos.getAll.useQuery(undefined, {
+    enabled: !!user,
+    refetchOnWindowFocus: false,
+  })
+
+  const createMutation = trpc.todos.create.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [['todos.getAll']] })
+    },
+  })
+
+  const updateMutation = trpc.todos.update.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [['todos.getAll']] })
+    },
+  })
+
+  const deleteMutation = trpc.todos.delete.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [['todos.getAll']] })
+    },
+  })
+
+  // ローカルストレージ用
+  const [localTodos, setLocalTodos] = useState<Todo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [repo, setRepo] = useState<ITodoRepository>(createTodoRepo(user))
 
-  // ユーザー状態が変わったらRepositoryを切り替え
-  useEffect(() => {
-    setRepo(createTodoRepo(user))
-  }, [user])
-
-  const fetchTodos = useCallback(async () => {
+  // ローカルストレージから初期データを読み込み
+  const initLocalTodos = useCallback(() => {
     setLoading(true)
-    setError(null)
-
     try {
-      const fetchedTodos = await repo.getAll()
-      setTodos(fetchedTodos)
+      const stored = storage.getTodos()
+      setLocalTodos(stored)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to fetch todos')
+      setError(e instanceof Error ? e.message : 'Failed to load todos')
     } finally {
       setLoading(false)
     }
-  }, [repo])
+  }, [])
 
-  useEffect(() => {
-    fetchTodos()
-  }, [fetchTodos])
+  // 初期化時にローカルストレージから読み込み
+  useState(() => {
+    initLocalTodos()
+  })
+
+  const todos = user ? (todosQuery.data ?? []) : localTodos
+  const currentError = user ? (todosQuery.error?.message || null) : error
+  const currentLoading = user ? todosQuery.isLoading : loading
 
   const addTodo = useCallback(
     async (title: string) => {
       try {
-        const added = await repo.add({ title })
-        if (added) {
-          setTodos((prev) => [...prev, added])
+        if (user) {
+          const created = await createMutation.mutateAsync({ title })
+          return created
+        } else {
+          const added = storage.addTodo({ title, completed: false })
+          if (added) {
+            setLocalTodos((prev) => [...prev, added])
+          }
+          return added
         }
-        return added
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to add todo')
+        const msg = e instanceof Error ? e.message : 'Failed to add todo'
+        if (!user) setError(msg)
         return null
       }
     },
-    [repo],
+    [user, createMutation],
   )
 
   const updateTodo = useCallback(
     async (id: string, updates: UpdateTodo) => {
       try {
-        const updated = await repo.update(id, updates)
-        if (updated) {
-          setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)))
+        if (user) {
+          const updated = await updateMutation.mutateAsync({ id, ...updates })
+          return updated
+        } else {
+          const updated = storage.updateTodo(id, updates)
+          if (updated) {
+            setLocalTodos((prev) => prev.map((t) => (t.id === id ? updated : t)))
+          }
+          return updated
         }
-        return updated
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to update todo')
+        const msg = e instanceof Error ? e.message : 'Failed to update todo'
+        if (!user) setError(msg)
         return null
       }
     },
-    [repo],
+    [user, updateMutation],
   )
 
   const deleteTodo = useCallback(
     async (id: string) => {
       try {
-        const deleted = await repo.delete(id)
-        if (deleted) {
-          setTodos((prev) => prev.filter((t) => t.id !== id))
+        if (user) {
+          await deleteMutation.mutateAsync({ id })
+          return true
+        } else {
+          const deleted = storage.deleteTodo(id)
+          if (deleted) {
+            setLocalTodos((prev) => prev.filter((t) => t.id !== id))
+          }
+          return deleted
         }
-        return deleted
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to delete todo')
+        const msg = e instanceof Error ? e.message : 'Failed to delete todo'
+        if (!user) setError(msg)
         return false
       }
     },
-    [repo],
+    [user, deleteMutation],
   )
 
   const migrateToApi = useCallback(
     async (localTodos: StorageTodo[]): Promise<boolean> => {
       if (!user) return false
 
-      // API用Repositoryを作成
-      const apiRepo = createTodoRepo(user)
-
       try {
         for (const todo of localTodos) {
-          await apiRepo.add({ title: todo.title })
+          await createMutation.mutateAsync({ title: todo.title })
         }
 
-        // Clear localStorage after successful migration
         storage.clearTodos()
-        await fetchTodos()
         return true
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to migrate todos')
+        const msg = e instanceof Error ? e.message : 'Failed to migrate todos'
+        setError(msg)
         return false
       }
     },
-    [user, fetchTodos],
+    [user, createMutation],
   )
 
   return {
     todos,
-    loading,
-    error,
+    loading: currentLoading,
+    error: currentError,
     addTodo,
     updateTodo,
     deleteTodo,
-    refetch: fetchTodos,
+    refetch: () => {
+      if (user) {
+        todosQuery.refetch()
+      } else {
+        initLocalTodos()
+      }
+    },
     migrateToApi,
   }
 }

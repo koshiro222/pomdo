@@ -3,7 +3,7 @@ import { setCookie, deleteCookie, getCookie } from 'hono/cookie'
 import { eq } from 'drizzle-orm'
 import { createDb } from '../lib/db'
 import { users } from '../lib/schema'
-import { jwt, sign } from 'hono/jwt'
+import { jwt, sign, verify } from 'hono/jwt'
 import { signHmac, verifyHmac } from '../lib/hmac'
 import { authMiddleware } from '../middleware/auth'
 
@@ -130,9 +130,14 @@ auth.get('/google/callback', async (c) => {
 
   // JWT 発行
   const token = await sign(
-    { sub: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl ?? undefined },
+    {
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      avatarUrl: user.avatarUrl ?? undefined,
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+    },
     c.env.JWT_SECRET,
-    { exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 },
   )
 
   setCookie(c, 'auth_token', token, {
@@ -149,7 +154,7 @@ auth.get('/google/callback', async (c) => {
 // GET /api/auth/me → ユーザー情報返却
 auth.get('/me', authMiddleware, async (c) => {
   const token = getCookie(c, 'auth_token')!
-  const payload = jwt.verify(token, c.env.JWT_SECRET) as jwt.JWTPayload
+  const payload = await verify(token, c.env.JWT_SECRET, 'HS256') as jwt.JWTPayload
   return c.json({ user: payload })
 })
 

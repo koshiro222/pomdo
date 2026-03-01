@@ -1,9 +1,10 @@
+import { TRPCError } from '@trpc/server'
 import { router, publicProcedure } from './context'
 
 export const authRouter = router({
   me: publicProcedure.query(async ({ ctx }) => {
     if (!ctx.user) {
-      throw new Error('Unauthorized')
+      throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Unauthorized' })
     }
 
     return {

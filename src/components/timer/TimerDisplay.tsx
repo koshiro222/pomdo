@@ -52,7 +52,7 @@ export function TimerDisplay({
 
       {/* デジタル時計タイマー */}
       <div className="flex flex-col items-center -mt-4">
-        <span className="text-9xl font-light text-text-primary tracking-tighter tabular-nums">
+        <span className="text-6xl sm:text-8xl lg:text-9xl font-light text-text-primary tracking-tighter tabular-nums">
           {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
         </span>
         <span className="mt-4 text-text-secondary text-sm uppercase tracking-widest">

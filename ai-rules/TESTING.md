@@ -6,9 +6,8 @@
 
 実装後は必ず `/playwright-cli` skills でブラウザ動作確認を行う。
 
-- **必須**: `/playwright-cli` skills のみ使用（Skill tool経由で呼び出す）
-- **禁止**: `npx playwright test` などPlaywright CLIコマンドの直接実行
-- **禁止**: Python/JavaScript/Bash による直接ブラウザ操作
+- `/playwright-cli` skills のみ使用（必ずSkill tool経由で呼び出す）
+- Python/JavaScript/Bash による直接ブラウザ操作
 
 エラーが発生した場合は即座に報告し、修正してから再確認する。
 

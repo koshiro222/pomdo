@@ -11,6 +11,15 @@ npm test           # Playwright E2E
 
 ローカルAPI確認: `http://localhost:8788/api/*`
 
+## ワークフロー
+
+(厳守)issue作成or確認 → `feature/xxx` ブランチ → 実装・動作確認パスしたらコミット → PR
+作業前に必ず `ai-rules/WORK_FLOW.md` を参照
+
+## テスト
+
+実装後は必ず `ai-rules/TESTING.md` を参照。
+
 ## ⚠️ 非自明な制約
 
 ### Edge Runtime（Cloudflare Workers）
@@ -24,15 +33,6 @@ npm test           # Playwright E2E
 
 ### API ルーティング
 Hono のエントリポイントは `functions/api/[[route]].ts`。basePath は `/api`。
-
-## ワークフロー
-
-(厳守)issue作成or確認 → `feature/xxx` ブランチ → 実装・動作確認パスしたらコミット → PR
-作業前に必ず `ai-rules/WORK_FLOW.md` を参照
-
-## テスト
-
-実装後は必ず `ai-rules/TESTING.md` を参照。
 
 ## ドキュメント
 

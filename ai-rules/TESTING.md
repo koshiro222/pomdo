@@ -6,7 +6,8 @@
 
 実装後は必ず `/playwright-cli` skill でブラウザ動作確認を行う。
 
-- **必須**: `/playwright-cli` skill のみ使用
+- **必須**: `/playwright-cli` skill のみ使用（Skill tool経由で呼び出す）
+- **禁止**: `npx playwright test` などPlaywright CLIコマンドの直接実行
 - **禁止**: `mcp__playwright__*` ツール呼び出し
 - **禁止**: Python/JavaScript/Bash による直接ブラウザ操作
 

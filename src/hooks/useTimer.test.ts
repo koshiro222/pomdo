@@ -2,10 +2,18 @@ import { renderHook, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useTimer } from './useTimer'
 import type { SessionType } from './useTimer'
+import { useTimerStore } from '../core/store/timer'
 
 describe('useTimer', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    // 各テストの前にストアをリセット
+    useTimerStore.setState({
+      isActive: false,
+      sessionType: 'work',
+      remainingSecs: 25 * 60,
+      pomodoroCount: 0,
+    })
   })
 
   afterEach(() => {
@@ -153,15 +161,13 @@ describe('useTimer', () => {
   })
 
   it('4ポモドーロ後に長休憩になる', () => {
-    const { result } = renderHook(() => useTimer())
-
     const sessionOrder: SessionType[] = []
 
     const trackSession = (type: SessionType) => {
       sessionOrder.push(type)
     }
 
-    renderHook(() =>
+    const { result } = renderHook(() =>
       useTimer({
         onSessionComplete: (type) => trackSession(type),
       }),

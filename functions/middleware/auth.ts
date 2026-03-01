@@ -1,10 +1,10 @@
 import { createMiddleware } from 'hono/factory'
 import { getCookie } from 'hono/cookie'
-import { verifyJwt, type JwtPayload } from '../lib/jwt'
+import { jwt } from 'hono/jwt'
 
 type Env = {
   Bindings: { JWT_SECRET: string }
-  Variables: { user: JwtPayload }
+  Variables: { user: jwt.JWTPayload }
 }
 
 export const authMiddleware = createMiddleware<Env>(async (c, next) => {
@@ -13,11 +13,11 @@ export const authMiddleware = createMiddleware<Env>(async (c, next) => {
     return c.json({ error: 'Unauthorized' }, 401)
   }
 
-  const payload = await verifyJwt(token, c.env.JWT_SECRET)
-  if (!payload) {
+  try {
+    const payload = jwt.verify(token, c.env.JWT_SECRET) as jwt.JWTPayload
+    c.set('user', payload)
+    await next()
+  } catch {
     return c.json({ error: 'Unauthorized' }, 401)
   }
-
-  c.set('user', payload)
-  await next()
 })

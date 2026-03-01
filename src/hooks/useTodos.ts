@@ -1,24 +1,27 @@
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { trpc } from '../lib/trpc'
 import { useAuth } from './useAuth'
-import { storage, type Todo as StorageTodo } from '../lib/storage'
+import { storage } from '../lib/storage'
+import { useTodosStore, type Todo, type NewTodo, type UpdateTodo } from '../core/store/todos'
 
-export type Todo = {
-  id: string
-  userId?: string
-  title: string
-  completed: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-export type NewTodo = { title: string }
-export type UpdateTodo = Partial<{ title: string; completed: boolean }>
+export type { Todo, NewTodo, UpdateTodo }
 
 export function useTodos() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
+  const {
+    localTodos,
+    loading: localLoading,
+    error: localError,
+    addLocalTodo,
+    updateLocalTodo,
+    removeLocalTodo,
+    setLoading,
+    setError,
+    initFromStorage,
+    clearLocalTodos,
+  } = useTodosStore()
 
   // tRPC queries & mutations
   const todosQuery = trpc.todos.getAll.useQuery(undefined, {
@@ -44,32 +47,20 @@ export function useTodos() {
     },
   })
 
-  // ローカルストレージ用
-  const [localTodos, setLocalTodos] = useState<Todo[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
   // ローカルストレージから初期データを読み込み
   const initLocalTodos = useCallback(() => {
     setLoading(true)
-    try {
-      const stored = storage.getTodos()
-      setLocalTodos(stored)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load todos')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+    initFromStorage()
+  }, [setLoading, initFromStorage])
 
   // 初期化時にローカルストレージから読み込み
-  useState(() => {
+  if (!user && localTodos.length === 0 && localLoading) {
     initLocalTodos()
-  })
+  }
 
   const todos = user ? (todosQuery.data ?? []) : localTodos
-  const currentError = user ? (todosQuery.error?.message || null) : error
-  const currentLoading = user ? todosQuery.isLoading : loading
+  const currentError = user ? (todosQuery.error?.message || null) : localError
+  const currentLoading = user ? todosQuery.isLoading : localLoading
 
   const addTodo = useCallback(
     async (title: string) => {
@@ -80,7 +71,7 @@ export function useTodos() {
         } else {
           const added = storage.addTodo({ title, completed: false })
           if (added) {
-            setLocalTodos((prev) => [...prev, added])
+            addLocalTodo(added)
           }
           return added
         }
@@ -90,7 +81,7 @@ export function useTodos() {
         return null
       }
     },
-    [user, createMutation],
+    [user, createMutation, addLocalTodo, setError],
   )
 
   const updateTodo = useCallback(
@@ -102,7 +93,7 @@ export function useTodos() {
         } else {
           const updated = storage.updateTodo(id, updates)
           if (updated) {
-            setLocalTodos((prev) => prev.map((t) => (t.id === id ? updated : t)))
+            updateLocalTodo(id, updates)
           }
           return updated
         }
@@ -112,7 +103,7 @@ export function useTodos() {
         return null
       }
     },
-    [user, updateMutation],
+    [user, updateMutation, updateLocalTodo, setError],
   )
 
   const deleteTodo = useCallback(
@@ -124,7 +115,7 @@ export function useTodos() {
         } else {
           const deleted = storage.deleteTodo(id)
           if (deleted) {
-            setLocalTodos((prev) => prev.filter((t) => t.id !== id))
+            removeLocalTodo(id)
           }
           return deleted
         }
@@ -134,11 +125,11 @@ export function useTodos() {
         return false
       }
     },
-    [user, deleteMutation],
+    [user, deleteMutation, removeLocalTodo, setError],
   )
 
   const migrateToApi = useCallback(
-    async (localTodos: StorageTodo[]): Promise<boolean> => {
+    async (localTodos: Todo[]): Promise<boolean> => {
       if (!user) return false
 
       try {
@@ -147,6 +138,7 @@ export function useTodos() {
         }
 
         storage.clearTodos()
+        clearLocalTodos()
         return true
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'Failed to migrate todos'
@@ -154,7 +146,7 @@ export function useTodos() {
         return false
       }
     },
-    [user, createMutation],
+    [user, createMutation, clearLocalTodos, setError],
   )
 
   return {

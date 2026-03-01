@@ -1,6 +1,7 @@
 import { useTodos, type Todo } from '../../hooks/useTodos'
 import TodoInput from './TodoInput'
 import TodoItem from './TodoItem'
+import { useState } from 'react'
 
 interface TodoListProps {
   pomodoroCount?: number
@@ -9,9 +10,18 @@ interface TodoListProps {
 
 export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: TodoListProps) {
   const { todos, loading, addTodo, updateTodo, deleteTodo } = useTodos()
+  const [newTodoId, setNewTodoId] = useState<string | null>(null)
 
   const remainingTodos = todos.filter((t: Todo) => !t.completed).length
   const progress = Math.min((pomodoroCount / targetPomodoros) * 100, 100)
+
+  const handleAddTodo = async (title: string) => {
+    const result = await addTodo(title)
+    if (result?.id) {
+      setNewTodoId(result.id)
+      setTimeout(() => setNewTodoId(null), 200)
+    }
+  }
 
   if (loading) {
     return (
@@ -34,7 +44,7 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
             {remainingTodos} Left
           </span>
         </div>
-        <TodoInput onAdd={addTodo} />
+        <TodoInput onAdd={handleAddTodo} />
       </div>
 
       {/* Todoリスト */}
@@ -50,6 +60,7 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
               id={todo.id}
               title={todo.title}
               completed={todo.completed}
+              isNew={newTodoId === todo.id}
               onToggle={(id) => updateTodo(id, { completed: !todo.completed })}
               onDelete={deleteTodo}
             />

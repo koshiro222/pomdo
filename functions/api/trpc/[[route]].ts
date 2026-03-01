@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
 import { handle } from 'hono/cloudflare-pages'
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
+import { jwt } from 'hono/jwt'
 import { appRouter } from '../../../src/app/routers/root'
 import { authMiddleware } from '../../middleware/auth'
-import { verifyJwt } from '../../lib/jwt'
 import { createDb } from '../../lib/db'
-import schema from '../../lib/schema'
+import * as schema from '../../lib/schema'
 
 type Bindings = {
   DATABASE_URL: string
@@ -20,7 +20,11 @@ app.use('/*', async (c, next) => {
 
   let user = null
   if (token) {
-    user = await verifyJwt(token, c.env.JWT_SECRET)
+    try {
+      user = jwt.verify(token, c.env.JWT_SECRET) as jwt.JWTPayload
+    } catch {
+      user = null
+    }
   }
 
   // コンテキストにユーザーとDBを追加

@@ -149,12 +149,12 @@ export default function App() {
       </div>
 
       {/* メインコンテンツ */}
-      <div className="relative z-10 flex h-screen flex-col">
+      <div className="relative z-10 flex flex-col min-h-screen sm:h-screen">
         <Header todayFocusMinutes={todayFocusMinutes} />
 
-        <main className="flex-1 flex gap-6 p-4 pt-4 overflow-hidden">
+        <main className="flex-1 grid grid-cols-1 gap-4 p-4 overflow-y-auto sm:grid-cols-[1fr_300px] sm:overflow-hidden lg:grid-cols-[1fr_400px]">
           {/* 左カラム: タイマー + BGM */}
-          <div className="flex-[1.5] flex flex-col gap-6 h-full">
+          <div className="flex flex-col gap-4 sm:h-full sm:overflow-hidden">
             <div className="glass flex-1 rounded-2xl overflow-hidden">
               <TimerWidget
                 isActive={isActive}
@@ -173,7 +173,7 @@ export default function App() {
           </div>
 
           {/* 右カラム: Todo */}
-          <aside className="flex-1 glass rounded-2xl overflow-hidden flex flex-col h-full">
+          <aside className="sm:h-full sm:overflow-hidden">
             <TodoList pomodoroCount={pomodoroCount} />
           </aside>
         </main>

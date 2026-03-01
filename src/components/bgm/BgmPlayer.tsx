@@ -51,7 +51,7 @@ export function BgmPlayer() {
         </div>
 
         {/* 音量スライダー */}
-        <div className="w-32 flex items-center gap-2 flex-shrink-0">
+        <div className="w-20 sm:w-32 flex items-center gap-1 sm:gap-2 flex-shrink-0">
           <span className="material-symbols-outlined text-cf-subtext text-sm">volume_down</span>
           <div className="flex-1 h-1 bg-white/10 rounded-full relative cursor-pointer">
             <input

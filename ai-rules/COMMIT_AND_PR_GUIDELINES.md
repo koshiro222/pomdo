@@ -83,25 +83,3 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 Closes #<issue番号>
 ```
 
-## 作業手順
-
-1. mainからfeatureブランチを作成
-   ```bash
-   git checkout main
-   git pull origin main
-   git checkout -b feature/xxx
-   ```
-
-2. 作業・コミット
-
-3. リモートへpush
-   ```bash
-   git push -u origin feature/xxx
-   ```
-
-4. PRを作成（ghコマンド）
-   ```bash
-   gh pr create --title "[feat] 設定編集ページを実装" --body "本文..."
-   ```
-
-5. レビュー後にマージ

@@ -16,7 +16,6 @@ function TimerWidget({
   isActive,
   sessionType,
   remainingSecs,
-  totalSecs,
   changeSessionType,
   start,
   pause,
@@ -26,7 +25,6 @@ function TimerWidget({
   isActive: boolean
   sessionType: 'work' | 'short_break' | 'long_break'
   remainingSecs: number
-  totalSecs: number
   changeSessionType: (type: 'work' | 'short_break' | 'long_break') => void
   start: () => void
   pause: () => void
@@ -59,7 +57,6 @@ function TimerWidget({
     <div className="flex flex-col h-full items-center p-6">
       <TimerDisplay
         remainingSecs={remainingSecs}
-        totalSecs={totalSecs}
         sessionType={sessionType}
         onSessionTypeChange={handleSessionTypeChange}
         controls={
@@ -98,7 +95,7 @@ export default function App() {
   const { user } = useAuth()
   const { refetch } = useTodos()
   const { sessions, startSession, completeSession } = usePomodoro()
-  const { isActive, sessionType, remainingSecs, totalSecs, changeSessionType, pomodoroCount, start, pause, reset, skip } = useTimer({
+  const { isActive, sessionType, remainingSecs, changeSessionType, pomodoroCount, start, pause, reset, skip } = useTimer({
     onSessionComplete: async (type, durationSecs) => {
       const session = await startSession(type, durationSecs)
       if (session) {
@@ -163,7 +160,6 @@ export default function App() {
                 isActive={isActive}
                 sessionType={sessionType}
                 remainingSecs={remainingSecs}
-                totalSecs={totalSecs}
                 changeSessionType={changeSessionType}
                 start={start}
                 pause={pause}

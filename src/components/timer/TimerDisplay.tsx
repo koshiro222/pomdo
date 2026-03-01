@@ -1,6 +1,5 @@
 interface TimerDisplayProps {
   remainingSecs: number
-  totalSecs: number
   sessionType: 'work' | 'short_break' | 'long_break'
   onSessionTypeChange: (type: 'work' | 'short_break' | 'long_break') => void
   controls?: React.ReactNode
@@ -8,16 +7,12 @@ interface TimerDisplayProps {
 
 export function TimerDisplay({
   remainingSecs,
-  totalSecs,
   sessionType,
   onSessionTypeChange,
   controls,
 }: TimerDisplayProps) {
   const minutes = Math.floor(remainingSecs / 60)
   const seconds = remainingSecs % 60
-  const progress = remainingSecs / totalSecs
-  const circumference = 2 * Math.PI * 140
-  const dashOffset = circumference * (1 - progress)
 
   return (
     <div className="flex flex-col items-center h-full justify-center relative">
@@ -55,39 +50,14 @@ export function TimerDisplay({
         </button>
       </div>
 
-      {/* SVGリングタイマー */}
-      <div className="relative flex items-center justify-center -mt-4">
-        <svg className="size-72">
-          <circle
-            className="text-white/10"
-            cx="144"
-            cy="144"
-            fill="transparent"
-            r="140"
-            stroke="currentColor"
-            strokeWidth="6"
-          />
-          <circle
-            className="text-cf-primary timer-ring"
-            cx="144"
-            cy="144"
-            fill="transparent"
-            r="140"
-            stroke="currentColor"
-            strokeDasharray={circumference}
-            strokeDashoffset={dashOffset}
-            strokeLinecap="round"
-            strokeWidth="6"
-          />
-        </svg>
-        <div className="absolute flex flex-col items-center">
-          <span className="text-7xl font-black tracking-tight text-cf-text">
-            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-          </span>
-          <span className="text-cf-subtext mt-2 tracking-widest uppercase text-xs">
-            Stay focused, you got this
-          </span>
-        </div>
+      {/* デジタル時計タイマー */}
+      <div className="flex flex-col items-center -mt-4">
+        <span className="text-9xl font-light text-text-primary tracking-tighter tabular-nums">
+          {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+        </span>
+        <span className="mt-4 text-text-secondary text-sm uppercase tracking-widest">
+          {sessionType === 'work' ? 'Focus' : sessionType === 'short_break' ? 'Rest' : 'Break'}
+        </span>
       </div>
 
       {/* Controls */}

@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { handle } from 'hono/cloudflare-pages'
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
-import { jwt } from 'hono/jwt'
+import { jwt, verify } from 'hono/jwt'
 import { appRouter } from '../../../src/app/routers/root'
 import { authMiddleware } from '../../middleware/auth'
 import { createDb } from '../../lib/db'
@@ -21,7 +21,7 @@ app.use('/*', async (c, next) => {
   let user = null
   if (token) {
     try {
-      user = jwt.verify(token, c.env.JWT_SECRET) as jwt.JWTPayload
+      user = await verify(token, c.env.JWT_SECRET, 'HS256') as jwt.JWTPayload
     } catch {
       user = null
     }

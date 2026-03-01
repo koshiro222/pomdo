@@ -78,7 +78,7 @@ export function BgmPlayer() {
 
       {/* 拡張モード（展開時のみ表示） */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 flex items-center justify-center transition-all duration-300">
+        <div className="px-4 pb-4 pt-2 flex items-center justify-center bgm-expanded-enter transition-all duration-300">
           {/* アルバムアート */}
           <div className={`size-12 rounded-lg overflow-hidden flex-shrink-0 relative bg-cf-primary/20 flex items-center justify-center ${isPlaying && !hasError ? 'album-art-spinning' : 'album-art-paused'}`}>
             <span className="material-symbols-outlined text-cf-primary text-xl">music_note</span>

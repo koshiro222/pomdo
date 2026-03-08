@@ -21,8 +21,6 @@ export type BgmState = {
   hasError: boolean
   toggle: () => void
   selectTrack: (index: number) => void
-  next: () => void
-  prev: () => void
   setVolume: (vol: number) => void
 }
 
@@ -43,12 +41,10 @@ export function useBgm(): BgmState {
   useEffect(() => {
     const audio = new Audio()
     audio.volume = volume
+    audio.loop = true
     audio.preload = 'metadata'
     audioRef.current = audio
 
-    const handleEnded = () => {
-      setCurrentIndex(prev => (prev + 1) % TRACKS.length)
-    }
     const handleError = () => {
       setHasError(true)
       setIsPlaying(false)
@@ -56,13 +52,11 @@ export function useBgm(): BgmState {
     const handlePlay = () => setIsPlaying(true)
     const handlePause = () => setIsPlaying(false)
 
-    audio.addEventListener('ended', handleEnded)
     audio.addEventListener('error', handleError)
     audio.addEventListener('play', handlePlay)
     audio.addEventListener('pause', handlePause)
 
     return () => {
-      audio.removeEventListener('ended', handleEnded)
       audio.removeEventListener('error', handleError)
       audio.removeEventListener('play', handlePlay)
       audio.removeEventListener('pause', handlePause)
@@ -127,14 +121,6 @@ export function useBgm(): BgmState {
     setCurrentIndex(index)
   }, [currentIndex, toggle])
 
-  const next = useCallback(() => {
-    setCurrentIndex(prev => (prev + 1) % TRACKS.length)
-  }, [])
-
-  const prev = useCallback(() => {
-    setCurrentIndex(prev => (prev - 1 + TRACKS.length) % TRACKS.length)
-  }, [])
-
   const setVolume = useCallback((vol: number) => {
     const clamped = Math.max(0, Math.min(1, vol))
     setVolumeState(clamped)
@@ -152,8 +138,6 @@ export function useBgm(): BgmState {
     hasError,
     toggle,
     selectTrack,
-    next,
-    prev,
     setVolume,
   }
 }

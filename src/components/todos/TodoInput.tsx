@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Plus } from 'lucide-react'
 
 interface TodoInputProps {
   onAdd: (title: string) => void
@@ -29,7 +30,7 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
         onClick={() => setIsExpanded(true)}
         className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-dashed border-white/20 text-cf-subtext hover:text-cf-text hover:border-cf-primary/50 transition-all"
       >
-        <span className="material-symbols-outlined">add</span>
+        <Plus />
         <span className="text-sm">Add a new task...</span>
       </button>
     )
@@ -51,7 +52,7 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
         type="submit"
         className="size-10 rounded-lg bg-cf-primary text-white flex items-center justify-center hover:bg-cf-primary/90 transition-colors"
       >
-        <span className="material-symbols-outlined">add</span>
+        <Plus />
       </button>
     </form>
   )

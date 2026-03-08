@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/useAuth'
+import { Timer, LayoutDashboard, BarChart3, Settings, UserCircle, LogIn } from 'lucide-react'
 
 interface HeaderProps {
   todayFocusMinutes?: number
@@ -19,7 +20,7 @@ export function Header({ todayFocusMinutes = 0 }: HeaderProps) {
       {/* Logo */}
       <div className="flex items-center gap-3">
         <div className="bg-cf-primary p-1.5 rounded-lg flex items-center justify-center">
-          <span className="material-symbols-outlined text-white font-bold" style={{ fontSize: '20px' }}>timer</span>
+          <Timer className="text-white font-bold" size={20} />
         </div>
         <h1 className="text-xl font-extrabold tracking-tight text-cf-text font-display">Pomdo</h1>
       </div>
@@ -27,15 +28,15 @@ export function Header({ todayFocusMinutes = 0 }: HeaderProps) {
       {/* Nav */}
       <nav className="hidden md:flex items-center gap-8">
         <a href="#" className="text-cf-text hover:text-cf-primary transition-colors flex items-center gap-2 text-sm font-display">
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>dashboard</span>
+          <LayoutDashboard size={18} />
           Dashboard
         </a>
         <a href="#" className="text-cf-subtext hover:text-cf-primary transition-colors flex items-center gap-2 text-sm font-display">
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bar_chart</span>
+          <BarChart3 size={18} />
           Stats
         </a>
         <a href="#" className="text-cf-subtext hover:text-cf-primary transition-colors flex items-center gap-2 text-sm font-display">
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>settings</span>
+          <Settings size={18} />
           Settings
         </a>
       </nav>
@@ -57,9 +58,7 @@ export function Header({ todayFocusMinutes = 0 }: HeaderProps) {
           {user?.avatarUrl ? (
             <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
           ) : (
-            <span className="material-symbols-outlined text-cf-text" style={{ fontSize: '20px' }}>
-              {user ? 'account_circle' : 'login'}
-            </span>
+            user ? <UserCircle className="text-cf-text" size={20} /> : <LogIn className="text-cf-text" size={20} />
           )}
         </button>
       </div>

@@ -1,3 +1,5 @@
+import { RotateCcw, SkipForward } from 'lucide-react'
+
 interface TimerControlsProps {
   isActive: boolean
   onStart: () => void
@@ -20,7 +22,7 @@ export function TimerControls({
         className="size-14 rounded-full glass flex items-center justify-center text-cf-subtext hover:text-cf-text transition-all hover:bg-white/10"
         aria-label="リセット"
       >
-        <span className="material-symbols-outlined text-3xl">refresh</span>
+        <RotateCcw className="text-3xl" />
       </button>
 
       <button
@@ -35,7 +37,7 @@ export function TimerControls({
         className="size-14 rounded-full glass flex items-center justify-center text-cf-subtext hover:text-cf-text transition-all hover:bg-white/10"
         aria-label="スキップ"
       >
-        <span className="material-symbols-outlined text-3xl">skip_next</span>
+        <SkipForward className="text-3xl" />
       </button>
     </div>
   )

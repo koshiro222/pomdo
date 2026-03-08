@@ -7,16 +7,19 @@ export type Todo = {
   userId?: string
   title: string
   completed: boolean
+  completedPomodoros?: number
+  targetPomodoros?: number
   createdAt: string
   updatedAt: string
 }
 
-export type NewTodo = { title: string }
+export type NewTodo = { title: string; targetPomodoros?: number }
 
-export type UpdateTodo = Partial<{ title: string; completed: boolean }>
+export type UpdateTodo = Partial<{ title: string; completed: boolean; completedPomodoros: number; targetPomodoros: number }>
 
 interface TodosState {
   localTodos: Todo[]
+  selectedTodoId: string | null
   loading: boolean
   error: string | null
 }
@@ -30,6 +33,8 @@ interface TodosActions {
   setError: (error: string | null) => void
   clearLocalTodos: () => void
   initFromStorage: () => void
+  setSelectedTodoId: (id: string | null) => void
+  incrementCompletedPomodoros: (id: string) => void
 }
 
 export type TodosStore = TodosState & TodosActions
@@ -38,6 +43,7 @@ export const useTodosStore = create<TodosStore>()(
   persist(
     (set) => ({
       localTodos: [],
+      selectedTodoId: null,
       loading: true,
       error: null,
       setLocalTodos: (todos) => set({ localTodos: todos }),
@@ -47,6 +53,7 @@ export const useTodosStore = create<TodosStore>()(
       })),
       removeLocalTodo: (id) => set((state) => ({
         localTodos: state.localTodos.filter((t) => t.id !== id),
+        selectedTodoId: state.selectedTodoId === id ? null : state.selectedTodoId,
       })),
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
@@ -59,10 +66,18 @@ export const useTodosStore = create<TodosStore>()(
           set({ error: e instanceof Error ? e.message : 'Failed to load todos', loading: false })
         }
       },
+      setSelectedTodoId: (id) => set({ selectedTodoId: id }),
+      incrementCompletedPomodoros: (id) => set((state) => ({
+        localTodos: state.localTodos.map((t) => (
+          t.id === id
+            ? { ...t, completedPomodoros: (t.completedPomodoros || 0) + 1 }
+            : t
+        )),
+      })),
     }),
     {
       name: 'todos-storage',
-      partialize: (state) => ({ localTodos: state.localTodos }),
+      partialize: (state) => ({ localTodos: state.localTodos, selectedTodoId: state.selectedTodoId }),
     },
   ),
 )

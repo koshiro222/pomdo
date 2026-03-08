@@ -25,6 +25,8 @@ export const todosRouter = router({
           userId: user.sub,
           title: input.title,
           completed: false,
+          completedPomodoros: 0,
+          targetPomodoros: input.targetPomodoros ?? 4,
         })
         .returning()
 
@@ -52,6 +54,12 @@ export const todosRouter = router({
       }
       if (input.completed !== undefined) {
         updateData.completed = input.completed
+      }
+      if (input.completedPomodoros !== undefined) {
+        updateData.completedPomodoros = input.completedPomodoros
+      }
+      if (input.targetPomodoros !== undefined) {
+        updateData.targetPomodoros = input.targetPomodoros
       }
 
       const updated = await db

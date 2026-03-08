@@ -181,19 +181,19 @@ export default function App() {
               <CurrentTaskCard />
             </div>
 
-            {/* Statsカード - デスクトップ2列×1行、タブレット2列×1行 */}
-            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-1 lg:col-span-2 lg:row-span-1">
-              <StatsCard />
-            </div>
-
-            {/* Todoカード - デスクトップ2列×2行、タブレット2列×2行 */}
-            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-2 lg:col-span-2 lg:row-span-2">
-              <TodoList pomodoroCount={pomodoroCount} />
-            </div>
-
             {/* BGMカード - デスクトップ2列×1行、タブレット2列×1行 */}
             <div className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-1 lg:col-span-2 lg:row-span-1">
               <BgmPlayer />
+            </div>
+
+            {/* Statsカード - デスクトップ4列×1行、タブレット2列×1行 */}
+            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-1 lg:col-span-4 lg:row-span-1">
+              <StatsCard />
+            </div>
+
+            {/* Todoカード - デスクトップ12列×1行、タブレット6列×1行 */}
+            <div className="glass rounded-3xl overflow-hidden sm:col-span-6 sm:row-span-1 lg:col-span-12 lg:row-span-1">
+              <TodoList pomodoroCount={pomodoroCount} />
             </div>
           </div>
         </main>

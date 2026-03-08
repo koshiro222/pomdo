@@ -62,6 +62,8 @@ lerna-debug.log*
 HANDOVER.md
 memo.md
 .playwright-cli/
+ai-rules/
+CLAUDE.md
 
 # Playwright
 test-results/

@@ -2,6 +2,7 @@ import { useTodos, type Todo } from '../../hooks/useTodos'
 import TodoInput from './TodoInput'
 import TodoItem from './TodoItem'
 import { useState } from 'react'
+import { CheckSquare } from 'lucide-react'
 
 interface TodoListProps {
   pomodoroCount?: number
@@ -37,7 +38,7 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
       <div className="p-6 border-b border-white/10">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold flex items-center gap-2 text-cf-text">
-            <span className="material-symbols-outlined text-cf-primary">checklist</span>
+            <CheckSquare className="text-cf-primary" />
             Tasks
           </h3>
           <span className="text-xs bg-cf-primary/20 text-cf-primary px-2 py-0.5 rounded-full font-bold">

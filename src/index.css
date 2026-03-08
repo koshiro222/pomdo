@@ -175,23 +175,6 @@
 .z-widget-overlay { z-index: 30; }
 .z-widget-modal { z-index: 50; }
 
-/* Material Symbols */
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  display: inline-block;
-  line-height: 1;
-  text-transform: none;
-  letter-spacing: normal;
-  word-wrap: normal;
-  white-space: nowrap;
-  direction: ltr;
-  -webkit-font-smoothing: antialiased;
-  user-select: none;
-}
-
 /* Timer ring animation */
 .timer-ring {
   transition: stroke-dashoffset 0.5s ease-in-out;

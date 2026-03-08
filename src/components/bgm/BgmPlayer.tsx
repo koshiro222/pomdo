@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { useBgm } from '../../hooks/useBgm'
+import type { Track } from '../../hooks/useBgm'
 
 export function BgmPlayer() {
   const {
+    tracks,
     currentTrack,
+    currentIndex,
     isPlaying,
     volume,
     hasError,
     toggle,
-    next,
-    prev,
+    selectTrack,
     setVolume,
   } = useBgm()
 
@@ -76,36 +78,33 @@ export function BgmPlayer() {
         </div>
       </div>
 
-      {/* 拡張モード（展開時のみ表示） */}
+      {/* トラックリスト（展開時のみ表示） */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 flex items-center justify-center bgm-expanded-enter transition-all duration-300">
-          {/* アルバムアート */}
-          <div className={`size-12 rounded-lg overflow-hidden flex-shrink-0 relative bg-cf-primary/20 flex items-center justify-center ${isPlaying && !hasError ? 'album-art-spinning' : 'album-art-paused'}`}>
-            <span className="material-symbols-outlined text-cf-primary text-xl">music_note</span>
-          </div>
-
-          {/* 詳細コントロール */}
-          <div className="flex-1 px-4">
-            <p className="text-xs text-cf-subtext">Lo-Fi Beats • Chill Beats</p>
-            <div className="flex items-center gap-4 mt-2">
-              <button
-                onClick={prev}
-                className="material-symbols-outlined text-lg text-cf-subtext cursor-pointer hover:text-cf-primary"
-                title="前の曲"
-                aria-label="前の曲"
-              >
-                skip_previous
-              </button>
-              <button
-                onClick={next}
-                className="material-symbols-outlined text-lg text-cf-subtext cursor-pointer hover:text-cf-primary"
-                title="次の曲"
-                aria-label="次の曲"
-              >
-                skip_next
-              </button>
-            </div>
-          </div>
+        <div className="px-4 pb-4 pt-2">
+          <ul className="space-y-2 max-h-[300px] overflow-y-auto">
+            {tracks.map((track: Track, index: number) => (
+              <li key={track.id}>
+                <button
+                  onClick={() => selectTrack(index)}
+                  className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 transition-colors ${
+                    currentIndex === index
+                      ? 'bg-cf-primary/20 text-cf-primary'
+                      : 'text-cf-text hover:bg-white/5'
+                  }`}
+                >
+                  <span className="material-symbols-outlined">
+                    {currentIndex === index && isPlaying ? 'graphic_eq' : 'music_note'}
+                  </span>
+                  <span className="flex-1 truncate">{track.title}</span>
+                  {currentIndex === index && isPlaying && (
+                    <span className="material-symbols-outlined text-sm animate-pulse">
+                      equalizer
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

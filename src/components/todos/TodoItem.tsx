@@ -8,6 +8,8 @@ interface TodoItemProps {
   title: string
   completed: boolean
   isNew?: boolean
+  isSelected?: boolean
+  onClick?: () => void
   onToggle: (id: string) => void
   onDelete: (id: string) => void
 }
@@ -17,6 +19,8 @@ export default function TodoItem({
   title,
   completed,
   isNew = false,
+  isSelected = false,
+  onClick,
   onToggle,
   onDelete,
 }: TodoItemProps) {
@@ -32,13 +36,18 @@ export default function TodoItem({
   }, [completed])
 
   return (
-    <div className={`group flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/5 hover:border-cf-primary/30 transition-all ${isNew ? 'todo-item-enter' : ''} ${
-      completed ? 'opacity-60' : ''
-    }`}>
+    <div
+      onClick={onClick}
+      className={`group flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/5 hover:border-cf-primary/30 transition-all ${isNew ? 'todo-item-enter' : ''} ${
+        completed ? 'opacity-60' : ''
+      } ${isSelected && !completed ? 'bg-cf-primary/20 border-cf-primary/50' : ''} ${onClick && !completed ? 'cursor-pointer' : ''}`}
+    >
       <Checkbox
         ref={checkboxRef}
         checked={completed}
-        onCheckedChange={() => onToggle(id)}
+        onCheckedChange={() => {
+          onToggle(id)
+        }}
         className="data-[state=checked]:bg-cf-success data-[state=checked]:border-cf-success transition-transform"
       />
       <p className={cn(
@@ -48,7 +57,10 @@ export default function TodoItem({
         {title}
       </p>
       <button
-        onClick={() => onDelete(id)}
+        onClick={(e) => {
+          e.stopPropagation()
+          onDelete(id)
+        }}
         className="opacity-0 group-hover:opacity-100 transition-opacity text-cf-subtext hover:text-cf-danger"
       >
         <Trash2 className="text-lg" />

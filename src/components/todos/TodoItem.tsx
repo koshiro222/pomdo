@@ -1,6 +1,7 @@
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import { useEffect, useRef } from 'react'
+import { Trash2 } from 'lucide-react'
 
 interface TodoItemProps {
   id: string
@@ -50,7 +51,7 @@ export default function TodoItem({
         onClick={() => onDelete(id)}
         className="opacity-0 group-hover:opacity-100 transition-opacity text-cf-subtext hover:text-cf-danger"
       >
-        <span className="material-symbols-outlined text-lg">delete</span>
+        <Trash2 className="text-lg" />
       </button>
     </div>
   )

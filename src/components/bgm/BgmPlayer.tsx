@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useBgm } from '../../hooks/useBgm'
 import type { Track } from '../../hooks/useBgm'
+import { ChevronDown, PauseCircle, PlayCircle, Volume1, Volume2, Music, BarChart3 } from 'lucide-react'
 
 export function BgmPlayer() {
   const {
@@ -28,23 +29,23 @@ export function BgmPlayer() {
         {/* 展開/縮小ボタン */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="material-symbols-outlined text-cf-subtext hover:text-cf-primary cursor-pointer transition-transform"
+          className="text-cf-subtext hover:text-cf-primary cursor-pointer transition-transform"
           style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
           title={isExpanded ? '縮小' : '展開'}
           aria-label={isExpanded ? '縮小' : '展開'}
         >
-          expand_more
+          <ChevronDown />
         </button>
 
         {/* 再生/停止ボタン */}
         <button
           onClick={toggle}
           disabled={hasError}
-          className="material-symbols-outlined text-2xl text-cf-text cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
+          className="text-2xl text-cf-text cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
           title={isPlaying ? '一時停止' : '再生'}
           aria-label={isPlaying ? '一時停止' : '再生'}
         >
-          {isPlaying ? 'pause_circle' : 'play_circle'}
+          {isPlaying ? <PauseCircle /> : <PlayCircle />}
         </button>
 
         {/* 曲名 */}
@@ -54,7 +55,7 @@ export function BgmPlayer() {
 
         {/* 音量スライダー */}
         <div className="w-32 flex items-center gap-2 flex-shrink-0">
-          <span className="material-symbols-outlined text-cf-subtext text-sm">volume_down</span>
+          <Volume1 className="text-cf-subtext text-sm" />
           <div className="flex-1 h-1 bg-white/10 rounded-full relative cursor-pointer">
             <input
               type="range"
@@ -74,7 +75,7 @@ export function BgmPlayer() {
               style={{ left: `calc(${volume * 100}% - 4px)` }}
             />
           </div>
-          <span className="material-symbols-outlined text-cf-subtext text-sm">volume_up</span>
+          <Volume2 className="text-cf-subtext text-sm" />
         </div>
       </div>
 
@@ -92,14 +93,10 @@ export function BgmPlayer() {
                       : 'text-cf-text hover:bg-white/5'
                   }`}
                 >
-                  <span className="material-symbols-outlined">
-                    {currentIndex === index && isPlaying ? 'graphic_eq' : 'music_note'}
-                  </span>
+                  {currentIndex === index && isPlaying ? <BarChart3 /> : <Music />}
                   <span className="flex-1 truncate">{track.title}</span>
                   {currentIndex === index && isPlaying && (
-                    <span className="material-symbols-outlined text-sm animate-pulse">
-                      equalizer
-                    </span>
+                    <BarChart3 className="text-sm animate-pulse" />
                   )}
                 </button>
               </li>

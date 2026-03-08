@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth'
 import { useTodos } from './hooks/useTodos'
 import { useTimer } from './hooks/useTimer'
 import { usePomodoro } from './hooks/usePomodoro'
+import { getSessionTotalSecs } from './core/store/timer'
 import { storage } from './lib/storage'
 import TodoList from './components/todos/TodoList'
 import { TimerDisplay } from './components/timer/TimerDisplay'
@@ -16,6 +17,7 @@ function TimerWidget({
   isActive,
   sessionType,
   remainingSecs,
+  totalSecs,
   changeSessionType,
   start,
   pause,
@@ -25,6 +27,7 @@ function TimerWidget({
   isActive: boolean
   sessionType: 'work' | 'short_break' | 'long_break'
   remainingSecs: number
+  totalSecs: number
   changeSessionType: (type: 'work' | 'short_break' | 'long_break') => void
   start: () => void
   pause: () => void
@@ -57,6 +60,7 @@ function TimerWidget({
     <div className="flex flex-col h-full items-center p-6">
       <TimerDisplay
         remainingSecs={remainingSecs}
+        totalSecs={totalSecs}
         sessionType={sessionType}
         onSessionTypeChange={handleSessionTypeChange}
         controls={
@@ -161,6 +165,7 @@ export default function App() {
                 isActive={isActive}
                 sessionType={sessionType}
                 remainingSecs={remainingSecs}
+                totalSecs={getSessionTotalSecs(sessionType)}
                 changeSessionType={changeSessionType}
                 start={start}
                 pause={pause}

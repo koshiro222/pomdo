@@ -6,6 +6,7 @@ import { usePomodoro } from './hooks/usePomodoro'
 import { getSessionTotalSecs } from './core/store/timer'
 import { storage } from './lib/storage'
 import TodoList from './components/todos/TodoList'
+import CurrentTaskCard from './components/tasks/CurrentTaskCard'
 import { TimerDisplay } from './components/timer/TimerDisplay'
 import { TimerControls } from './components/timer/TimerControls'
 import MigrateDialog from './components/dialogs/MigrateDialog'
@@ -174,13 +175,18 @@ export default function App() {
               />
             </div>
 
-            {/* Todoカード - デスクトップ4列×2行、タブレット2列×2行 */}
-            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-2 lg:col-span-4 lg:row-span-2">
+            {/* Current Taskカード - デスクトップ2列×1行、タブレット2列×1行 */}
+            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-1 lg:col-span-2 lg:row-span-1">
+              <CurrentTaskCard />
+            </div>
+
+            {/* Todoカード - デスクトップ2列×2行、タブレット2列×2行 */}
+            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-2 lg:col-span-2 lg:row-span-2">
               <TodoList pomodoroCount={pomodoroCount} />
             </div>
 
-            {/* BGMカード - デスクトップ4列×1行、タブレット2列×1行 */}
-            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 lg:col-span-4">
+            {/* BGMカード - デスクトップ2列×1行、タブレット2列×1行 */}
+            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-1 lg:col-span-2 lg:row-span-1">
               <BgmPlayer />
             </div>
           </div>

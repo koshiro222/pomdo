@@ -137,25 +137,19 @@ export default function App() {
   }
 
   return (
-    <div className="font-display bg-cf-background text-cf-text min-h-screen relative overflow-hidden">
-      {/* 背景画像 */}
-      <div
-        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('/bg/room.jpg')`,
-        }}
-      >
-        <div className="absolute inset-0 bg-cf-overlay backdrop-brightness-75" />
-      </div>
+    <div className="font-display bg-background text-foreground min-h-screen relative overflow-hidden">
+      {/* 背景: グリッドパターン + スター効果 */}
+      <div className="absolute inset-0 z-0 grid-pattern" />
+      <div className="absolute inset-0 z-0 star-effect opacity-50" />
 
       {/* メインコンテンツ */}
       <div className="relative z-10 flex flex-col min-h-screen sm:h-screen">
         <Header todayFocusMinutes={todayFocusMinutes} />
 
-        <main className="flex-1 grid grid-cols-1 gap-4 p-4 overflow-y-auto sm:grid-cols-[1fr_300px] sm:overflow-hidden lg:grid-cols-[1fr_400px]">
-          {/* 左カラム: タイマー + BGM */}
-          <div className="flex flex-col gap-4 sm:h-full sm:overflow-hidden">
-            <div className="glass flex-1 rounded-2xl overflow-hidden">
+        <main className="flex-1 grid grid-cols-1 gap-4 p-4 overflow-y-auto sm:grid-cols-[1fr_400px] sm:overflow-hidden">
+          {/* 左カラム: タイマー */}
+          <div className="flex flex-col h-full overflow-hidden">
+            <div className="widget-light dark:widget flex-1 rounded-2xl overflow-hidden">
               <TimerWidget
                 isActive={isActive}
                 sessionType={sessionType}
@@ -167,16 +161,24 @@ export default function App() {
                 skip={skip}
               />
             </div>
-            <div className="glass rounded-2xl overflow-hidden">
-              <BgmPlayer />
-            </div>
           </div>
 
           {/* 右カラム: Todo */}
-          <aside className="sm:h-full sm:overflow-hidden">
+          <aside className="h-full overflow-hidden">
             <TodoList pomodoroCount={pomodoroCount} />
           </aside>
         </main>
+
+        {/* 右下: BGMプレイヤー（フローティング） */}
+        <div className="fixed bottom-4 right-4 z-50 hidden sm:block">
+          <BgmPlayer />
+        </div>
+        {/* モバイル用: BGMプレイヤー（画面下中央） */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:hidden">
+          <div className="flex justify-center">
+            <BgmPlayer />
+          </div>
+        </div>
 
         <Footer />
       </div>

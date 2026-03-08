@@ -27,7 +27,7 @@ export function Header({ todayFocusMinutes = 0 }: HeaderProps) {
   const effectiveTheme = getEffectiveTheme()
 
   return (
-    <header className="glass rounded-xl mx-4 mt-4 flex items-center justify-between px-8 py-4">
+    <header className="widget-light dark:widget rounded-xl mx-4 mt-4 flex items-center justify-between px-8 py-4">
       {/* Logo */}
       <div className="flex items-center gap-3">
         <div className="bg-cf-primary p-1.5 rounded-lg flex items-center justify-center">

@@ -22,7 +22,7 @@ export function BgmPlayer() {
   }
 
   return (
-    <div className="flex flex-col overflow-hidden transition-all duration-300">
+    <div className="widget-light dark:widget rounded-xl flex flex-col overflow-hidden transition-all duration-300 w-80 sm:w-80 md:w-80 lg:w-80 xl:w-80 max-w-[calc(100vw-2rem)]">
       {/* コンパクトバー（常時表示） */}
       <div className="flex items-center px-4 gap-4 h-12">
         {/* 展開/縮小ボタン */}

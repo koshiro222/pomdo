@@ -1,12 +1,17 @@
+import { TimerRing } from './TimerRing'
+import type { SessionType } from '../../hooks/useTimer'
+
 interface TimerDisplayProps {
   remainingSecs: number
-  sessionType: 'work' | 'short_break' | 'long_break'
-  onSessionTypeChange: (type: 'work' | 'short_break' | 'long_break') => void
+  totalSecs: number
+  sessionType: SessionType
+  onSessionTypeChange: (type: SessionType) => void
   controls?: React.ReactNode
 }
 
 export function TimerDisplay({
   remainingSecs,
+  totalSecs,
   sessionType,
   onSessionTypeChange,
   controls,
@@ -50,18 +55,28 @@ export function TimerDisplay({
         </button>
       </div>
 
-      {/* デジタル時計タイマー */}
-      <div className="flex flex-col items-center -mt-4">
-        <span className="text-6xl sm:text-8xl lg:text-9xl font-light text-text-primary tracking-tighter tabular-nums">
-          {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-        </span>
-        <span className="mt-4 text-text-secondary text-sm uppercase tracking-widest">
-          {sessionType === 'work' ? 'Focus' : sessionType === 'short_break' ? 'Rest' : 'Break'}
-        </span>
+      {/* 円形プログレスバータイマー */}
+      <div className="relative flex flex-col items-center">
+        <TimerRing
+          remainingSecs={remainingSecs}
+          totalSecs={totalSecs}
+          sessionType={sessionType}
+          size={280}
+          strokeWidth={8}
+        />
+        {/* 時刻表示 */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-5xl sm:text-6xl lg:text-7xl font-light text-text-primary tracking-tighter tabular-nums">
+            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+          </span>
+          <span className="mt-2 text-text-secondary text-sm uppercase tracking-widest">
+            {sessionType === 'work' ? 'Focus' : sessionType === 'short_break' ? 'Rest' : 'Break'}
+          </span>
+        </div>
       </div>
 
       {/* Controls */}
-      {controls && <div className="mt-8">{controls}</div>}
+      {controls && <div className="mt-6">{controls}</div>}
     </div>
   )
 }

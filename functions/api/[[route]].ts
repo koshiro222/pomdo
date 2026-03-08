@@ -4,6 +4,7 @@ import { createDb } from '../lib/db'
 import auth from './auth'
 import todos from './todos'
 import pomodoro from './pomodoro'
+import bgm from './bgm'
 
 type Bindings = {
   DATABASE_URL: string
@@ -12,6 +13,7 @@ type Bindings = {
   GOOGLE_REDIRECT_URI: string
   JWT_SECRET: string
   APP_URL: string
+  BGM_BUCKET: R2Bucket
 }
 
 const app = new Hono<{ Bindings: Bindings }>().basePath('/api')
@@ -33,5 +35,6 @@ app.get('/health', async (c) => {
 app.route('/auth', auth)
 app.route('/todos', todos)
 app.route('/pomodoro', pomodoro)
+app.route('/bgm', bgm)
 
 export const onRequest = handle(app)

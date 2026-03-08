@@ -8,8 +8,8 @@ export type Track = {
 }
 
 export const TRACKS: Track[] = [
-  { id: '1', title: 'Lo-Fi Study 01', src: '/audio/lofi-01.mp3' },
-  { id: '2', title: 'Lo-Fi Study 02', src: '/audio/lofi-02.mp3' },
+  { id: '1', title: 'Lo-Fi Study 01', src: '/api/bgm/lofi-01.mp3' },
+  { id: '2', title: 'Lo-Fi Study 02', src: '/api/bgm/lofi-02.mp3' },
 ]
 
 export type BgmState = {

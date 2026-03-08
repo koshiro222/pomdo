@@ -15,6 +15,8 @@ export const todos = pgTable("todos", {
   userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   completed: boolean("completed").notNull().default(false),
+  completedPomodoros: integer("completed_pomodoros").notNull().default(0),
+  targetPomodoros: integer("target_pomodoros").notNull().default(4),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

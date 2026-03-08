@@ -12,6 +12,7 @@ export function useTodos() {
   const queryClient = useQueryClient()
   const {
     localTodos,
+    selectedTodoId,
     loading: localLoading,
     error: localError,
     addLocalTodo,
@@ -21,6 +22,8 @@ export function useTodos() {
     setError,
     initFromStorage,
     clearLocalTodos,
+    setSelectedTodoId,
+    incrementCompletedPomodoros,
   } = useTodosStore()
 
   // tRPC queries & mutations
@@ -63,13 +66,13 @@ export function useTodos() {
   const currentLoading = user ? todosQuery.isLoading : localLoading
 
   const addTodo = useCallback(
-    async (title: string) => {
+    async (title: string, targetPomodoros?: number) => {
       try {
         if (user) {
-          const created = await createMutation.mutateAsync({ title })
+          const created = await createMutation.mutateAsync({ title, targetPomodoros })
           return created
         } else {
-          const added = storage.addTodo({ title, completed: false })
+          const added = storage.addTodo({ title, completed: false, targetPomodoros })
           if (added) {
             addLocalTodo(added)
           }
@@ -151,11 +154,14 @@ export function useTodos() {
 
   return {
     todos,
+    selectedTodoId,
     loading: currentLoading,
     error: currentError,
     addTodo,
     updateTodo,
     deleteTodo,
+    setSelectedTodoId,
+    incrementCompletedPomodoros,
     refetch: () => {
       if (user) {
         todosQuery.refetch()

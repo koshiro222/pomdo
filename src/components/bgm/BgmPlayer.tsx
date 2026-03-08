@@ -1,7 +1,45 @@
 import { useState } from 'react'
-import { useBgm } from '../../hooks/useBgm'
-import type { Track } from '../../hooks/useBgm'
-import { ChevronDown, PauseCircle, PlayCircle, Volume1, Volume2, Music, BarChart3 } from 'lucide-react'
+import { useBgm, type Track } from '../../hooks/useBgm'
+import { Play, Pause, SkipBack, SkipForward, List, Volume2, Music } from 'lucide-react'
+
+interface AlbumArtProps {
+  isPlaying: boolean
+  color: string
+}
+
+function AlbumArt({ isPlaying, color }: AlbumArtProps) {
+  return (
+    <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
+      {/* アルバムアート背景 */}
+      <div
+        className={`w-full h-full rounded-2xl flex items-center justify-center ${isPlaying ? 'album-art-spinning' : ''}`}
+        style={{
+          background: `linear-gradient(135deg, ${color}40, ${color}20)`,
+          boxShadow: `0 8px 24px ${color}40`,
+        }}
+      >
+        {/* アイコンまたは回転するディスク */}
+        <div
+          className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center ${isPlaying ? 'album-art-spinning' : ''}`}
+          style={{
+            background: `linear-gradient(135deg, ${color}60, ${color}30)`,
+            animationDuration: '12s',
+          }}
+        >
+          <Music className={`w-8 h-8 sm:w-10 sm:h-10 text-white ${isPlaying ? '' : 'album-art-paused'}`} />
+        </div>
+      </div>
+
+      {/* 再生インジケーター（中心の点） */}
+      <div
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white transition-all ${isPlaying ? 'scale-100' : 'scale-50'}`}
+        style={{
+          boxShadow: `0 0 12px ${color}`,
+        }}
+      />
+    </div>
+  )
+}
 
 export function BgmPlayer() {
   const {
@@ -22,81 +60,165 @@ export function BgmPlayer() {
     setVolume(Number(e.target.value))
   }
 
+  const handlePrevTrack = () => {
+    const newIndex = currentIndex === 0 ? tracks.length - 1 : currentIndex - 1
+    selectTrack(newIndex)
+  }
+
+  const handleNextTrack = () => {
+    const newIndex = (currentIndex + 1) % tracks.length
+    selectTrack(newIndex)
+  }
+
   return (
-    <div className="flex flex-col overflow-hidden transition-all duration-300">
-      {/* コンパクトバー（常時表示） */}
-      <div className="flex items-center px-4 gap-4 h-12">
-        {/* 展開/縮小ボタン */}
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-cf-subtext hover:text-cf-primary cursor-pointer transition-transform"
-          style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
-          title={isExpanded ? '縮小' : '展開'}
-          aria-label={isExpanded ? '縮小' : '展開'}
-        >
-          <ChevronDown />
-        </button>
-
-        {/* 再生/停止ボタン */}
-        <button
-          onClick={toggle}
-          disabled={hasError}
-          className="text-2xl text-cf-text cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-          title={isPlaying ? '一時停止' : '再生'}
-          aria-label={isPlaying ? '一時停止' : '再生'}
-        >
-          {isPlaying ? <PauseCircle /> : <PlayCircle />}
-        </button>
-
-        {/* 曲名 */}
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-cf-text text-sm truncate">{hasError ? '音源なし' : currentTrack.title}</p>
+    <div className="relative flex flex-col h-full overflow-hidden">
+      {/* コンパクト表示（常時表示） */}
+      <div className="flex-1 flex flex-col p-4 sm:p-6">
+        {/* ヘッダー */}
+        <div className="flex items-center justify-between mb-3">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-cf-subtext hover:text-cf-primary cursor-pointer transition-transform"
+            title={isExpanded ? '縮小' : 'プレイリスト'}
+            aria-label={isExpanded ? '縮小' : 'プレイリスト'}
+          >
+            <List className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+          </button>
+          <p className="text-xs uppercase tracking-widest text-cf-subtext font-bold">
+            BGM
+          </p>
+          <div className="w-5" /> {/* スペーサー */}
         </div>
 
-        {/* 音量スライダー */}
-        <div className="w-32 flex items-center gap-2 flex-shrink-0">
-          <Volume1 className="text-cf-subtext text-sm" />
-          <div className="flex-1 h-1 bg-white/10 rounded-full relative cursor-pointer">
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={volume}
-              onChange={handleVolumeChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
-            <div
-              className="absolute left-0 top-0 bottom-0 bg-cf-primary rounded-full pointer-events-none"
-              style={{ width: `${volume * 100}%` }}
-            />
-            <div
-              className="absolute top-1/2 -translate-y-1/2 size-2 bg-cf-text rounded-full shadow-lg transition-all pointer-events-none"
-              style={{ left: `calc(${volume * 100}% - 4px)` }}
-            />
+        {/* アルバムアートと情報 */}
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <AlbumArt
+            isPlaying={isPlaying}
+            color={currentTrack.color || '#3b82f6'}
+          />
+
+          {/* 曲名とアーティスト */}
+          <div className="mt-4 text-center">
+            <h3 className={`text-lg sm:text-xl font-bold text-cf-text ${hasError ? 'text-cf-subtext' : ''}`}>
+              {hasError ? '音源なし' : currentTrack.title}
+            </h3>
+            {currentTrack.artist && !hasError && (
+              <p className="text-sm text-cf-subtext mt-1">{currentTrack.artist}</p>
+            )}
           </div>
-          <Volume2 className="text-cf-subtext text-sm" />
+
+          {/* 再生コントロール */}
+          <div className="flex items-center gap-4 mt-4">
+            <button
+              onClick={handlePrevTrack}
+              disabled={hasError}
+              className="text-cf-text hover:text-cf-primary transition-colors disabled:text-cf-subtext disabled:cursor-not-allowed"
+              title="前の曲"
+            >
+              <SkipBack className="w-6 h-6" />
+            </button>
+
+            <button
+              onClick={toggle}
+              disabled={hasError}
+              className="w-14 h-14 rounded-full bg-cf-primary hover:bg-cf-primary/80 text-white flex items-center justify-center transition-all active:scale-95 disabled:bg-cf-subtext/30 disabled:text-cf-subtext disabled:cursor-not-allowed shadow-lg"
+              title={isPlaying ? '一時停止' : '再生'}
+            >
+              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
+            </button>
+
+            <button
+              onClick={handleNextTrack}
+              disabled={hasError}
+              className="text-cf-text hover:text-cf-primary transition-colors disabled:text-cf-subtext disabled:cursor-not-allowed"
+              title="次の曲"
+            >
+              <SkipForward className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* 音量コントロール */}
+          <div className="flex items-center gap-2 mt-4 w-full max-w-[200px]">
+            <Volume2 className="w-5 h-5 text-cf-subtext" />
+            <div className="flex-1 h-2 bg-white/10 rounded-full relative">
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={volume}
+                onChange={handleVolumeChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              {/* プログレスバー */}
+              <div
+                className="absolute left-0 top-0 bottom-0 bg-cf-primary rounded-full pointer-events-none"
+                style={{ width: `${volume * 100}%` }}
+              />
+              {/* つまみ */}
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-cf-primary rounded-full border-2 border-cf-background shadow-lg pointer-events-none"
+                style={{ left: `calc(${volume * 100}% - 8px)` }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* トラックリスト（展開時のみ表示） */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2">
-          <ul className="space-y-2 max-h-[300px] overflow-y-auto">
+        <div className="absolute bottom-0 left-0 right-0 bg-cf-background/95 backdrop-blur-sm border-t border-white/10 max-h-[200px] overflow-y-auto rounded-b-3xl bgm-expanded-enter z-10">
+          <ul className="divide-y divide-white/10">
             {tracks.map((track: Track, index: number) => (
               <li key={track.id}>
                 <button
-                  onClick={() => selectTrack(index)}
-                  className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 transition-colors ${
+                  onClick={() => {
+                    selectTrack(index)
+                    if (index === currentIndex) {
+                      setIsExpanded(false)
+                    }
+                  }}
+                  className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${
                     currentIndex === index
-                      ? 'bg-cf-primary/20 text-cf-primary'
-                      : 'text-cf-text hover:bg-white/5'
+                      ? 'bg-cf-primary/20'
+                      : 'hover:bg-white/5'
                   }`}
                 >
-                  {currentIndex === index && isPlaying ? <BarChart3 /> : <Music />}
-                  <span className="flex-1 truncate">{track.title}</span>
+                  {/* アルバムアートサムネイル */}
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background: `linear-gradient(135deg, ${track.color || '#3b82f6'}40, ${track.color || '#3b82f6'}20)`,
+                    }}
+                  >
+                    {currentIndex === index && isPlaying ? (
+                      <div className="w-2 h-2 rounded-full bg-cf-primary animate-pulse" />
+                    ) : (
+                      <Music className="w-4 h-4 text-cf-subtext" />
+                    )}
+                  </div>
+
+                  {/* 曲情報 */}
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className={`text-sm font-medium truncate ${
+                        currentIndex === index ? 'text-cf-primary' : 'text-cf-text'
+                      }`}
+                    >
+                      {track.title}
+                    </p>
+                    {track.artist && (
+                      <p className="text-xs text-cf-subtext truncate">{track.artist}</p>
+                    )}
+                  </div>
+
+                  {/* 再生中インジケーター */}
                   {currentIndex === index && isPlaying && (
-                    <BarChart3 className="text-sm animate-pulse" />
+                    <div className="flex items-end gap-0.5 h-3">
+                      <div className="w-1 bg-cf-primary animate-[bounce_1s_infinite]" style={{ animationDelay: '0ms' }} />
+                      <div className="w-1 bg-cf-primary animate-[bounce_1s_infinite]" style={{ animationDelay: '200ms' }} />
+                      <div className="w-1 bg-cf-primary animate-[bounce_1s_infinite]" style={{ animationDelay: '400ms' }} />
+                    </div>
                   )}
                 </button>
               </li>

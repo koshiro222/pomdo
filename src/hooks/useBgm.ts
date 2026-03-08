@@ -5,11 +5,13 @@ export type Track = {
   id: string
   title: string
   src: string
+  artist?: string
+  color?: string // アルバムアート用の色
 }
 
 export const TRACKS: Track[] = [
-  { id: '1', title: 'Lo-Fi Study 01', src: '/api/bgm/lofi-01.mp3' },
-  { id: '2', title: 'Lo-Fi Study 02', src: '/api/bgm/lofi-02.mp3' },
+  { id: '1', title: 'Lo-Fi Study 01', src: '/api/bgm/lofi-01.mp3', artist: 'Chill Beats', color: '#3b82f6' },
+  { id: '2', title: 'Lo-Fi Study 02', src: '/api/bgm/lofi-02.mp3', artist: 'Relax Sounds', color: '#8b5cf6' },
 ]
 
 export type BgmState = {

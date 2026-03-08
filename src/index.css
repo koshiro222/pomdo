@@ -246,3 +246,19 @@
 .bgm-expanded-enter {
   animation: slideUp 0.3s ease-out;
 }
+
+/* Bento Grid カードスタイル */
+.bento-card {
+  background: color-mix(in srgb, var(--df-bg-elevated), transparent 40%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--df-border-subtle);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.bento-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}

@@ -148,14 +148,15 @@ export default function App() {
         <div className="absolute inset-0 bg-cf-overlay backdrop-brightness-75" />
       </div>
 
-      {/* メインコンテンツ */}
+      {/* メインコンテンツ - Bento Grid */}
       <div className="relative z-10 flex flex-col min-h-screen sm:h-screen">
         <Header todayFocusMinutes={todayFocusMinutes} />
 
-        <main className="flex-1 grid grid-cols-1 gap-4 p-4 overflow-y-auto sm:grid-cols-[1fr_300px] sm:overflow-hidden lg:grid-cols-[1fr_400px]">
-          {/* 左カラム: タイマー + BGM */}
-          <div className="flex flex-col gap-4 sm:h-full sm:overflow-hidden">
-            <div className="glass flex-1 rounded-2xl overflow-hidden">
+        <main className="flex-1 p-4 overflow-y-auto sm:overflow-hidden">
+          {/* Bento Grid: 12列システム */}
+          <div className="h-full grid grid-cols-1 sm:grid-cols-6 lg:grid-cols-12 gap-4">
+            {/* タイマーカード - デスクトップ8列×2行、タブレット4列×2行 */}
+            <div className="glass rounded-3xl overflow-hidden sm:col-span-4 sm:row-span-2 lg:col-span-8 lg:row-span-2">
               <TimerWidget
                 isActive={isActive}
                 sessionType={sessionType}
@@ -167,15 +168,17 @@ export default function App() {
                 skip={skip}
               />
             </div>
-            <div className="glass rounded-2xl overflow-hidden">
+
+            {/* Todoカード - デスクトップ4列×2行、タブレット2列×2行 */}
+            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-2 lg:col-span-4 lg:row-span-2">
+              <TodoList pomodoroCount={pomodoroCount} />
+            </div>
+
+            {/* BGMカード - デスクトップ4列×1行、タブレット2列×1行 */}
+            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 lg:col-span-4">
               <BgmPlayer />
             </div>
           </div>
-
-          {/* 右カラム: Todo */}
-          <aside className="sm:h-full sm:overflow-hidden">
-            <TodoList pomodoroCount={pomodoroCount} />
-          </aside>
         </main>
 
         <Footer />

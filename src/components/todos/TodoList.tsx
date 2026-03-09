@@ -7,11 +7,9 @@ import { CheckSquare } from 'lucide-react'
 type FilterType = 'all' | 'active' | 'done'
 
 interface TodoListProps {
-  pomodoroCount?: number
-  targetPomodoros?: number
 }
 
-export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: TodoListProps) {
+export default function TodoList({ }: TodoListProps) {
   const { todos, selectedTodoId, loading, addTodo, updateTodo, deleteTodo, setSelectedTodoId } = useTodos()
   const [newTodoId, setNewTodoId] = useState<string | null>(null)
   const [filterType, setFilterType] = useState<FilterType>('all')
@@ -28,7 +26,6 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
   }, [todos, filterType])
 
   const remainingTodos = todos.filter((t: Todo) => !t.completed).length
-  const progress = Math.min((pomodoroCount / targetPomodoros) * 100, 100)
 
   const handleAddTodo = async (title: string) => {
     const result = await addTodo(title)
@@ -108,27 +105,6 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
             />
           ))
         )}
-      </div>
-
-      {/* セッション進捗バー */}
-      <div className="p-6 bg-white/5 mt-auto">
-        <div className="flex justify-between items-end">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-cf-subtext font-bold mb-1">
-              Session Progress
-            </p>
-            <h5 className="text-sm font-bold text-cf-text">
-              {pomodoroCount} of {targetPomodoros} pomodoros done
-            </h5>
-          </div>
-          <span className="text-cf-primary font-bold text-xs">{Math.round(progress)}%</span>
-        </div>
-        <div className="w-full h-1.5 bg-white/10 rounded-full mt-3 overflow-hidden">
-          <div
-            className="h-full bg-cf-primary transition-all"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
       </div>
     </div>
   )

@@ -1,6 +1,8 @@
 import { Check, MoreHorizontal } from 'lucide-react'
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useTodos, type Todo } from '../../hooks/useTodos'
+import { tapAnimation } from '@/lib/animation'
 
 interface CurrentTaskCardProps {
   onTodoClick?: (todo: Todo) => void
@@ -50,25 +52,35 @@ export default function CurrentTaskCard({}: CurrentTaskCardProps) {
                 {currentTodo.title}
               </h3>
             </div>
-            <button
+            <motion.button
+              {...tapAnimation}
               onClick={() => setShowMenu(!showMenu)}
               className="text-cf-subtext hover:text-cf-text transition-colors p-1"
             >
               <MoreHorizontal className="w-5 h-5" />
-            </button>
+            </motion.button>
           </div>
 
           {/* メニュー */}
-          {showMenu && (
-            <div className="absolute top-16 right-4 bg-cf-background/95 backdrop-blur-sm rounded-xl shadow-lg border border-white/10 py-2 min-w-[120px] z-10">
-              <button
-                onClick={handleDelete}
-                className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-400/10 transition-colors"
+          <AnimatePresence>
+            {showMenu && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-16 right-4 bg-cf-background/95 backdrop-blur-sm rounded-xl shadow-lg border border-white/10 py-2 min-w-[120px] z-10"
               >
-                Delete
-              </button>
-            </div>
-          )}
+                <motion.button
+                  {...tapAnimation}
+                  onClick={handleDelete}
+                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-400/10 transition-colors"
+                >
+                  Delete
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* プログレスセクション */}
           <div className="flex-1 flex flex-col justify-center mb-4">
@@ -87,36 +99,47 @@ export default function CurrentTaskCard({}: CurrentTaskCardProps) {
 
           {/* アクションボタン */}
           <div className="flex gap-2">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleComplete}
-              className="flex-1 bg-cf-primary hover:bg-cf-primary/80 text-white font-bold py-3 px-4 rounded-xl transition-all active:scale-95"
+              className="flex-1 bg-cf-primary hover:bg-cf-primary/80 text-white font-bold py-3 px-4 rounded-xl transition-colors"
             >
               Complete
-            </button>
+            </motion.button>
             {hasMoreTodos && (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleSelectNext}
-                className="bg-white/10 hover:bg-white/20 text-cf-text font-bold py-3 px-4 rounded-xl transition-all active:scale-95"
+                className="bg-white/10 hover:bg-white/20 text-cf-text font-bold py-3 px-4 rounded-xl transition-colors"
               >
                 Next
-              </button>
+              </motion.button>
             )}
           </div>
         </>
       ) : (
         /* タスク未選択時の表示 */
         <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4"
+          >
             <Check className="w-8 h-8 text-cf-subtext" />
-          </div>
+          </motion.div>
           <p className="text-cf-subtext mb-4">No task selected</p>
-          <button
+          <motion.button
+            whileHover={{ scale: todos.some((t: Todo) => !t.completed) ? 1.02 : 1 }}
+            whileTap={{ scale: todos.some((t: Todo) => !t.completed) ? 0.98 : 1 }}
             onClick={handleSelectNext}
             disabled={!todos.some((t: Todo) => !t.completed)}
-            className="bg-white/10 hover:bg-white/20 disabled:bg-white/5 disabled:text-cf-subtext text-cf-text font-bold py-2 px-6 rounded-xl transition-all active:scale-95 disabled:cursor-not-allowed"
+            className="bg-white/10 hover:bg-white/20 disabled:bg-white/5 disabled:text-cf-subtext text-cf-text font-bold py-2 px-6 rounded-xl transition-colors disabled:cursor-not-allowed"
           >
             Select Task
-          </button>
+          </motion.button>
         </div>
       )}
     </div>

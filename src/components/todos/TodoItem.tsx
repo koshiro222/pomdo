@@ -1,7 +1,9 @@
+import { motion } from 'framer-motion'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import { useEffect, useRef } from 'react'
 import { Trash2, GripVertical } from 'lucide-react'
+import { slideInVariants, tapAnimation, hoverAnimation } from '@/lib/animation'
 
 interface TodoItemProps {
   id: string
@@ -38,19 +40,24 @@ export default function TodoItem({
   }, [completed])
 
   return (
-    <div
+    <motion.div
       onClick={onClick}
-      className={`group flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/5 hover:border-cf-primary/30 transition-all ${isNew ? 'todo-item-enter' : ''} ${
+      {...hoverAnimation}
+      variants={slideInVariants}
+      initial={isNew ? 'hidden' : 'visible'}
+      animate="visible"
+      className={`group flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/5 hover:border-cf-primary/30 transition-colors ${
         completed ? 'opacity-60' : ''
       } ${isSelected && !completed ? 'bg-cf-primary/20 border-cf-primary/50' : ''} ${onClick && !completed ? 'cursor-pointer' : ''}`}
     >
       {/* ドラッグハンドル */}
-      <button
+      <motion.button
+        {...tapAnimation}
         onClick={(e) => e.stopPropagation()}
         className="opacity-0 group-hover:opacity-50 transition-opacity cursor-grab active:cursor-grabbing text-cf-subtext"
       >
         <GripVertical className="text-sm" />
-      </button>
+      </motion.button>
       <Checkbox
         ref={checkboxRef}
         checked={completed}
@@ -60,12 +67,19 @@ export default function TodoItem({
         className="data-[state=checked]:bg-cf-success data-[state=checked]:border-cf-success transition-transform"
       />
       <div className="flex-1 flex flex-col gap-1">
-        <p className={cn(
-          'text-sm font-medium transition-colors',
-          completed ? 'text-cf-subtext line-through' : 'text-cf-text'
-        )}>
+        <motion.p
+          animate={{
+            opacity: completed ? 0.6 : 1,
+            scaleX: completed ? 0.98 : 1,
+          }}
+          transition={{ duration: 0.3 }}
+          className={cn(
+            'text-sm font-medium transition-colors',
+            completed ? 'text-cf-subtext line-through' : 'text-cf-text'
+          )}
+        >
           {title}
-        </p>
+        </motion.p>
         {/* ポモドーロ表示 */}
         {(completedPomodoros || 0) > 0 && (
           <div className="flex gap-0.5">
@@ -78,7 +92,8 @@ export default function TodoItem({
           </div>
         )}
       </div>
-      <button
+      <motion.button
+        {...tapAnimation}
         onClick={(e) => {
           e.stopPropagation()
           onDelete(id)
@@ -86,7 +101,7 @@ export default function TodoItem({
         className="opacity-0 group-hover:opacity-100 transition-opacity text-cf-subtext hover:text-cf-danger"
       >
         <Trash2 className="text-lg" />
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   )
 }

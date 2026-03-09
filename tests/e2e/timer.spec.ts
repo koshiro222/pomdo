@@ -132,11 +132,57 @@ test.describe('タイマー機能', () => {
     // タイマーを開始
     await page.getByText('START').click()
 
-    // タイマーが0になるまで待つ（テスト用に短縮設定が必要）
-    // 注: 実際のテストでは設定で短時間のセッションを使用するか
-    // 時間をスキップする機能を使用する
+    // 残り時間を0に設定してセッションを完了させる
+    await page.evaluate(() => {
+      const state = JSON.parse(localStorage.getItem('timer-storage') || '{}')
+      if (state.state) {
+        state.state.remainingSecs = 0
+        localStorage.setItem('timer-storage', JSON.stringify(state))
+        // ページをリロードして反映
+        location.reload()
+      }
+    })
 
-    // セッション完了の通知が表示されることを確認（トーストやダイアログ）
-    // await expect(page.getByText('セッション完了')).toBeVisible()
+    // ページの読み込みを待つ
+    await page.waitForLoadState('networkidle')
+
+    // FocusからShort Breakに切り替わっていることを確認
+    await expect(page.getByRole('button', { name: 'Short Break' })).toBeVisible()
+    await expect(page.locator('text=/05:00/').or(page.locator('text=/5:00/'))).toBeVisible()
+
+    // STARTボタンが表示されている（一時停止状態）
+    await expect(page.getByText('START')).toBeVisible()
+    await expect(page.getByText('PAUSE')).not.toBeVisible()
+  })
+
+  test('セッション完了から3秒後に自動で開始されること', async ({ page }) => {
+    // タイマーを開始
+    await page.getByText('START').click()
+
+    // 残り時間を0に設定してセッションを完了させる
+    await page.evaluate(() => {
+      const state = JSON.parse(localStorage.getItem('timer-storage') || '{}')
+      if (state.state) {
+        state.state.remainingSecs = 0
+        localStorage.setItem('timer-storage', JSON.stringify(state))
+        location.reload()
+      }
+    })
+
+    // ページの読み込みを待つ
+    await page.waitForLoadState('networkidle')
+
+    // Short Breakに切り替わっていることを確認
+    await expect(page.getByRole('button', { name: 'Short Break' })).toBeVisible()
+
+    // STARTボタンが表示されている（一時停止状態）
+    await expect(page.getByText('START')).toBeVisible()
+
+    // 3秒待つ
+    await page.waitForTimeout(3500) // 少し余裕を持つ
+
+    // PAUSEボタンが表示されている（自動開始されている）
+    await expect(page.getByText('PAUSE')).toBeVisible()
+    await expect(page.getByText('START')).not.toBeVisible()
   })
 })

@@ -12,12 +12,12 @@ export function LoginButton() {
   if (user) {
     return (
       <div className="flex items-center gap-3">
-        {user.avatarUrl && (
+        {user.image && (
           <motion.img
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.3 }}
-            src={user.avatarUrl}
+            src={user.image}
             alt={user.name}
             className="h-8 w-8 rounded-full"
           />

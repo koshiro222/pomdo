@@ -4,7 +4,7 @@ export type AuthUser = {
   sub: string
   email: string
   name: string
-  avatarUrl?: string
+  image?: string
   iat: number
   exp: number
 }

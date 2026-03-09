@@ -83,8 +83,8 @@ export function Header({ todayFocusMinutes = 0 }: HeaderProps) {
             className="size-10 rounded-full border-2 border-cf-primary/30 overflow-hidden flex items-center justify-center bg-cf-surface hover:border-cf-primary/60 transition-colors cursor-pointer"
             title={user ? `Logout (${user.email})` : 'Login with Google'}
           >
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+            {user?.image ? (
+              <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
             ) : (
               user ? <UserCircle className="text-cf-text" size={20} /> : <LogIn className="text-cf-text" size={20} />
             )}

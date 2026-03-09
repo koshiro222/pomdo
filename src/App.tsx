@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
 import { useAuth } from './hooks/useAuth'
 import { useTodos } from './hooks/useTodos'
 import { useTimer } from './hooks/useTimer'
 import { usePomodoro } from './hooks/usePomodoro'
 import { getSessionTotalSecs } from './core/store/timer'
 import { storage } from './lib/storage'
+import { fadeInUpVariants } from './lib/animation'
 import TodoList from './components/todos/TodoList'
 import CurrentTaskCard from './components/tasks/CurrentTaskCard'
 import StatsCard from './components/stats/StatsCard'
@@ -162,7 +164,14 @@ export default function App() {
           {/* Bento Grid: 12列システム */}
           <div className="h-full grid grid-cols-1 sm:grid-cols-6 lg:grid-cols-12 gap-4">
             {/* タイマーカード - デスクトップ8列×2行、タブレット4列×2行 */}
-            <div className="glass rounded-3xl overflow-hidden sm:col-span-4 sm:row-span-2 lg:col-span-8 lg:row-span-2">
+            <motion.div
+              className="glass rounded-3xl overflow-hidden sm:col-span-4 sm:row-span-2 lg:col-span-8 lg:row-span-2"
+              variants={fadeInUpVariants}
+              initial="hidden"
+              animate="visible"
+              custom={0}
+              layout
+            >
               <TimerWidget
                 isActive={isActive}
                 sessionType={sessionType}
@@ -174,27 +183,55 @@ export default function App() {
                 reset={reset}
                 skip={skip}
               />
-            </div>
+            </motion.div>
 
             {/* Current Taskカード - デスクトップ2列×1行、タブレット2列×1行 */}
-            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-1 lg:col-span-2 lg:row-span-1">
+            <motion.div
+              className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-1 lg:col-span-2 lg:row-span-1"
+              variants={fadeInUpVariants}
+              initial="hidden"
+              animate="visible"
+              custom={1}
+              layout
+            >
               <CurrentTaskCard />
-            </div>
+            </motion.div>
 
             {/* BGMカード - デスクトップ2列×1行、タブレット2列×1行 */}
-            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-1 lg:col-span-2 lg:row-span-1">
+            <motion.div
+              className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-1 lg:col-span-2 lg:row-span-1"
+              variants={fadeInUpVariants}
+              initial="hidden"
+              animate="visible"
+              custom={2}
+              layout
+            >
               <BgmPlayer />
-            </div>
+            </motion.div>
 
             {/* Statsカード - デスクトップ4列×1行、タブレット2列×1行 */}
-            <div className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-1 lg:col-span-4 lg:row-span-1">
+            <motion.div
+              className="glass rounded-3xl overflow-hidden sm:col-span-2 sm:row-span-1 lg:col-span-4 lg:row-span-1"
+              variants={fadeInUpVariants}
+              initial="hidden"
+              animate="visible"
+              custom={3}
+              layout
+            >
               <StatsCard />
-            </div>
+            </motion.div>
 
             {/* Todoカード - デスクトップ12列×1行、タブレット6列×1行 */}
-            <div className="glass rounded-3xl overflow-hidden sm:col-span-6 sm:row-span-1 lg:col-span-12 lg:row-span-1">
+            <motion.div
+              className="glass rounded-3xl overflow-hidden sm:col-span-6 sm:row-span-1 lg:col-span-12 lg:row-span-1"
+              variants={fadeInUpVariants}
+              initial="hidden"
+              animate="visible"
+              custom={4}
+              layout
+            >
               <TodoList />
-            </div>
+            </motion.div>
           </div>
         </main>
 

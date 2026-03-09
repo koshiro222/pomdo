@@ -1,4 +1,5 @@
 import { Clock, Target } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { usePomodoro } from '../../hooks/usePomodoro'
 
 interface DailyStats {
@@ -101,24 +102,32 @@ export default function StatsCard() {
       <div className="flex-1 flex flex-col">
         <p className="text-xs text-cf-subtext mb-3">Last 7 Days</p>
         <div className="flex-1 flex items-end gap-1">
-          {weeklyData.map((data) => {
+          {weeklyData.map((data, index) => {
             const heightPercent = (data.focusMinutes / maxFocusMinutes) * 100
             const isToday = data.date === today
 
             return (
-              <div key={data.date} className="flex-1 flex flex-col items-center gap-1">
+              <motion.div
+                key={data.date}
+                className="flex-1 flex flex-col items-center gap-1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.3 }}
+              >
                 <div className="w-full flex items-end justify-center h-full">
-                  <div
-                    className={`w-full max-w-[20px] rounded-t-sm transition-all duration-300 ${
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: `${Math.max(heightPercent, 4)}%` }}
+                    transition={{ duration: 0.5, delay: index * 0.05 + 0.2 }}
+                    className={`w-full max-w-[20px] rounded-t-sm ${
                       isToday ? 'bg-cf-primary' : 'bg-white/20'
                     }`}
-                    style={{ height: `${Math.max(heightPercent, 4)}%` }}
                   />
                 </div>
                 <p className={`text-[10px] ${isToday ? 'text-cf-primary font-bold' : 'text-cf-subtext'}`}>
                   {getDayLabel(data.date)}
                 </p>
-              </div>
+              </motion.div>
             )
           })}
         </div>

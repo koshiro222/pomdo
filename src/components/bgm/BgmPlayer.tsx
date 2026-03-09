@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useBgm, type Track } from '../../hooks/useBgm'
 import { Play, Pause, SkipBack, SkipForward, List, Volume2, Music } from 'lucide-react'
+import { tapAnimation, hoverAnimation } from '@/lib/animation'
 
 interface AlbumArtProps {
   isPlaying: boolean
@@ -76,14 +78,17 @@ export function BgmPlayer() {
       <div className="flex-1 flex flex-col p-4 sm:p-6">
         {/* ヘッダー */}
         <div className="flex items-center justify-between mb-3">
-          <button
+          <motion.button
+            {...tapAnimation}
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-cf-subtext hover:text-cf-primary cursor-pointer transition-transform"
+            className="text-cf-subtext hover:text-cf-primary cursor-pointer transition-colors"
             title={isExpanded ? '縮小' : 'プレイリスト'}
             aria-label={isExpanded ? '縮小' : 'プレイリスト'}
           >
-            <List className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-          </button>
+            <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.3 }}>
+              <List className="w-5 h-5" />
+            </motion.div>
+          </motion.button>
           <p className="text-xs uppercase tracking-widest text-cf-subtext font-bold">
             BGM
           </p>
@@ -109,32 +114,38 @@ export function BgmPlayer() {
 
           {/* 再生コントロール */}
           <div className="flex items-center gap-4 mt-4">
-            <button
+            <motion.button
+              {...hoverAnimation}
+              {...tapAnimation}
               onClick={handlePrevTrack}
               disabled={hasError}
               className="text-cf-text hover:text-cf-primary transition-colors disabled:text-cf-subtext disabled:cursor-not-allowed"
               title="前の曲"
             >
               <SkipBack className="w-6 h-6" />
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={toggle}
               disabled={hasError}
-              className="w-14 h-14 rounded-full bg-cf-primary hover:bg-cf-primary/80 text-white flex items-center justify-center transition-all active:scale-95 disabled:bg-cf-subtext/30 disabled:text-cf-subtext disabled:cursor-not-allowed shadow-lg"
+              className="w-14 h-14 rounded-full bg-cf-primary hover:bg-cf-primary/80 text-white flex items-center justify-center transition-colors disabled:bg-cf-subtext/30 disabled:text-cf-subtext disabled:cursor-not-allowed shadow-lg shadow-cf-primary/30"
               title={isPlaying ? '一時停止' : '再生'}
             >
               {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              {...hoverAnimation}
+              {...tapAnimation}
               onClick={handleNextTrack}
               disabled={hasError}
               className="text-cf-text hover:text-cf-primary transition-colors disabled:text-cf-subtext disabled:cursor-not-allowed"
               title="次の曲"
             >
               <SkipForward className="w-6 h-6" />
-            </button>
+            </motion.button>
           </div>
 
           {/* 音量コントロール */}
@@ -166,66 +177,75 @@ export function BgmPlayer() {
       </div>
 
       {/* トラックリスト（展開時のみ表示） */}
-      {isExpanded && (
-        <div className="absolute bottom-0 left-0 right-0 bg-cf-background/95 backdrop-blur-sm border-t border-white/10 max-h-[200px] overflow-y-auto rounded-b-3xl bgm-expanded-enter z-10">
-          <ul className="divide-y divide-white/10">
-            {tracks.map((track: Track, index: number) => (
-              <li key={track.id}>
-                <button
-                  onClick={() => {
-                    selectTrack(index)
-                    if (index === currentIndex) {
-                      setIsExpanded(false)
-                    }
-                  }}
-                  className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${
-                    currentIndex === index
-                      ? 'bg-cf-primary/20'
-                      : 'hover:bg-white/5'
-                  }`}
-                >
-                  {/* アルバムアートサムネイル */}
-                  <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{
-                      background: `linear-gradient(135deg, ${track.color || '#3b82f6'}40, ${track.color || '#3b82f6'}20)`,
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="absolute bottom-0 left-0 right-0 bg-cf-background/95 backdrop-blur-sm border-t border-white/10 max-h-[200px] overflow-y-auto rounded-b-3xl z-10"
+          >
+            <ul className="divide-y divide-white/10">
+              {tracks.map((track: Track, index: number) => (
+                <li key={track.id}>
+                  <motion.button
+                    {...tapAnimation}
+                    onClick={() => {
+                      selectTrack(index)
+                      if (index === currentIndex) {
+                        setIsExpanded(false)
+                      }
                     }}
+                    className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${
+                      currentIndex === index
+                        ? 'bg-cf-primary/20'
+                        : 'hover:bg-white/5'
+                    }`}
                   >
-                    {currentIndex === index && isPlaying ? (
-                      <div className="w-2 h-2 rounded-full bg-cf-primary animate-pulse" />
-                    ) : (
-                      <Music className="w-4 h-4 text-cf-subtext" />
-                    )}
-                  </div>
-
-                  {/* 曲情報 */}
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={`text-sm font-medium truncate ${
-                        currentIndex === index ? 'text-cf-primary' : 'text-cf-text'
-                      }`}
+                    {/* アルバムアートサムネイル */}
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{
+                        background: `linear-gradient(135deg, ${track.color || '#3b82f6'}40, ${track.color || '#3b82f6'}20)`,
+                      }}
                     >
-                      {track.title}
-                    </p>
-                    {track.artist && (
-                      <p className="text-xs text-cf-subtext truncate">{track.artist}</p>
-                    )}
-                  </div>
-
-                  {/* 再生中インジケーター */}
-                  {currentIndex === index && isPlaying && (
-                    <div className="flex items-end gap-0.5 h-3">
-                      <div className="w-1 bg-cf-primary animate-[bounce_1s_infinite]" style={{ animationDelay: '0ms' }} />
-                      <div className="w-1 bg-cf-primary animate-[bounce_1s_infinite]" style={{ animationDelay: '200ms' }} />
-                      <div className="w-1 bg-cf-primary animate-[bounce_1s_infinite]" style={{ animationDelay: '400ms' }} />
+                      {currentIndex === index && isPlaying ? (
+                        <div className="w-2 h-2 rounded-full bg-cf-primary animate-pulse" />
+                      ) : (
+                        <Music className="w-4 h-4 text-cf-subtext" />
+                      )}
                     </div>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+
+                    {/* 曲情報 */}
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={`text-sm font-medium truncate ${
+                          currentIndex === index ? 'text-cf-primary' : 'text-cf-text'
+                        }`}
+                      >
+                        {track.title}
+                      </p>
+                      {track.artist && (
+                        <p className="text-xs text-cf-subtext truncate">{track.artist}</p>
+                      )}
+                    </div>
+
+                    {/* 再生中インジケーター */}
+                    {currentIndex === index && isPlaying && (
+                      <div className="flex items-end gap-0.5 h-3">
+                        <div className="w-1 bg-cf-primary animate-[bounce_1s_infinite]" style={{ animationDelay: '0ms' }} />
+                        <div className="w-1 bg-cf-primary animate-[bounce_1s_infinite]" style={{ animationDelay: '200ms' }} />
+                        <div className="w-1 bg-cf-primary animate-[bounce_1s_infinite]" style={{ animationDelay: '400ms' }} />
+                      </div>
+                    )}
+                  </motion.button>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

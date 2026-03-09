@@ -3,6 +3,8 @@ import TodoInput from './TodoInput'
 import TodoItem from './TodoItem'
 import { useState, useMemo } from 'react'
 import { CheckSquare } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { tapAnimation, hoverAnimation } from '@/lib/animation'
 
 type FilterType = 'all' | 'active' | 'done'
 
@@ -66,17 +68,19 @@ export default function TodoList({ }: TodoListProps) {
         {/* フィルタータブ */}
         <div className="flex gap-2 mb-4">
           {(['all', 'active', 'done'] as FilterType[]).map((type) => (
-            <button
+            <motion.button
               key={type}
+              {...hoverAnimation}
+              {...tapAnimation}
               onClick={() => setFilterType(type)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 filterType === type
                   ? 'bg-cf-primary text-white'
                   : 'bg-white/5 text-cf-subtext hover:bg-white/10 hover:text-cf-text'
               }`}
             >
               {type.charAt(0).toUpperCase() + type.slice(1)}
-            </button>
+            </motion.button>
           ))}
         </div>
 
@@ -90,20 +94,22 @@ export default function TodoList({ }: TodoListProps) {
             No tasks yet
           </div>
         ) : (
-          filteredTodos.map((todo: Todo) => (
-            <TodoItem
-              key={todo.id}
-              id={todo.id}
-              title={todo.title}
-              completed={todo.completed}
-              completedPomodoros={todo.completedPomodoros}
-              isNew={newTodoId === todo.id}
-              isSelected={selectedTodoId === todo.id}
-              onClick={() => handleTodoClick(todo)}
-              onToggle={(id) => updateTodo(id, { completed: !todo.completed })}
-              onDelete={deleteTodo}
-            />
-          ))
+          <AnimatePresence mode="popLayout">
+            {filteredTodos.map((todo: Todo) => (
+              <TodoItem
+                key={todo.id}
+                id={todo.id}
+                title={todo.title}
+                completed={todo.completed}
+                completedPomodoros={todo.completedPomodoros}
+                isNew={newTodoId === todo.id}
+                isSelected={selectedTodoId === todo.id}
+                onClick={() => handleTodoClick(todo)}
+                onToggle={(id) => updateTodo(id, { completed: !todo.completed })}
+                onDelete={deleteTodo}
+              />
+            ))}
+          </AnimatePresence>
         )}
       </div>
     </div>

@@ -1,5 +1,7 @@
+import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
 import { Timer, LayoutDashboard, BarChart3, Settings, UserCircle, LogIn } from 'lucide-react'
+import { tapAnimation, hoverAnimation } from '@/lib/animation'
 
 interface HeaderProps {
   todayFocusMinutes?: number
@@ -27,30 +29,52 @@ export function Header({ todayFocusMinutes = 0 }: HeaderProps) {
 
       {/* Nav */}
       <nav className="hidden md:flex items-center gap-8">
-        <a href="#" className="text-cf-text hover:text-cf-primary transition-colors flex items-center gap-2 text-sm font-display">
+        <motion.a
+          {...hoverAnimation}
+          {...tapAnimation}
+          href="#"
+          className="text-cf-text hover:text-cf-primary transition-colors flex items-center gap-2 text-sm font-display cursor-pointer"
+        >
           <LayoutDashboard size={18} />
           Dashboard
-        </a>
-        <a href="#" className="text-cf-subtext hover:text-cf-primary transition-colors flex items-center gap-2 text-sm font-display">
+        </motion.a>
+        <motion.a
+          {...hoverAnimation}
+          {...tapAnimation}
+          href="#"
+          className="text-cf-subtext hover:text-cf-primary transition-colors flex items-center gap-2 text-sm font-display cursor-pointer"
+        >
           <BarChart3 size={18} />
           Stats
-        </a>
-        <a href="#" className="text-cf-subtext hover:text-cf-primary transition-colors flex items-center gap-2 text-sm font-display">
+        </motion.a>
+        <motion.a
+          {...hoverAnimation}
+          {...tapAnimation}
+          href="#"
+          className="text-cf-subtext hover:text-cf-primary transition-colors flex items-center gap-2 text-sm font-display cursor-pointer"
+        >
           <Settings size={18} />
           Settings
-        </a>
+        </motion.a>
       </nav>
 
       {/* Right: Focus Time + User */}
       <div className="flex items-center gap-4">
         <div className="flex flex-col items-end mr-2">
           <span className="text-xs text-cf-subtext">Today's Focus</span>
-          <span className="text-sm font-bold text-cf-primary font-display">
+          <motion.span
+            key={todayFocusMinutes}
+            initial={{ scale: 1.2, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-sm font-bold text-cf-primary font-display"
+          >
             {todayFocusMinutes > 0 ? formatFocusTime(todayFocusMinutes) : '—'}
-          </span>
+          </motion.span>
         </div>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={user ? logout : login}
           className="size-10 rounded-full border-2 border-cf-primary/30 overflow-hidden flex items-center justify-center bg-cf-surface hover:border-cf-primary/60 transition-colors cursor-pointer"
           title={user ? `Logout (${user.email})` : 'Login with Google'}
@@ -60,7 +84,7 @@ export function Header({ todayFocusMinutes = 0 }: HeaderProps) {
           ) : (
             user ? <UserCircle className="text-cf-text" size={20} /> : <LogIn className="text-cf-text" size={20} />
           )}
-        </button>
+        </motion.button>
       </div>
     </header>
   )

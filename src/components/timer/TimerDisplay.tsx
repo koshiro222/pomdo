@@ -1,5 +1,7 @@
+import { motion } from 'framer-motion'
 import { TimerRing } from './TimerRing'
 import type { SessionType } from '../../hooks/useTimer'
+import { tapAnimation, hoverAnimation } from '@/lib/animation'
 
 interface TimerDisplayProps {
   remainingSecs: number
@@ -23,7 +25,9 @@ export function TimerDisplay({
     <div className="flex flex-col items-center h-full justify-center relative">
       {/* モードタブ */}
       <div className="absolute top-6 left-6 flex gap-2">
-        <button
+        <motion.button
+          {...hoverAnimation}
+          {...tapAnimation}
           onClick={() => onSessionTypeChange('work')}
           className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
             sessionType === 'work'
@@ -32,8 +36,10 @@ export function TimerDisplay({
           }`}
         >
           Focus
-        </button>
-        <button
+        </motion.button>
+        <motion.button
+          {...hoverAnimation}
+          {...tapAnimation}
           onClick={() => onSessionTypeChange('short_break')}
           className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
             sessionType === 'short_break'
@@ -42,8 +48,10 @@ export function TimerDisplay({
           }`}
         >
           Short Break
-        </button>
-        <button
+        </motion.button>
+        <motion.button
+          {...hoverAnimation}
+          {...tapAnimation}
           onClick={() => onSessionTypeChange('long_break')}
           className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
             sessionType === 'long_break'
@@ -52,7 +60,7 @@ export function TimerDisplay({
           }`}
         >
           Long Break
-        </button>
+        </motion.button>
       </div>
 
       {/* 円形プログレスバータイマー */}

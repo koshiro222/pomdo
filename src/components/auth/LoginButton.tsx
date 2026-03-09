@@ -1,4 +1,6 @@
+import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
+import { tapAnimation } from '@/lib/animation'
 
 export function LoginButton() {
   const { user, loading, login, logout } = useAuth()
@@ -11,31 +13,44 @@ export function LoginButton() {
     return (
       <div className="flex items-center gap-3">
         {user.avatarUrl && (
-          <img
+          <motion.img
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.3 }}
             src={user.avatarUrl}
             alt={user.name}
             className="h-8 w-8 rounded-full"
           />
         )}
-        <span className="text-sm">{user.name}</span>
-        <button
+        <motion.span
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="text-sm"
+        >
+          {user.name}
+        </motion.span>
+        <motion.button
+          {...tapAnimation}
           onClick={logout}
-          className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent"
+          className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         >
           ログアウト
-        </button>
+        </motion.button>
       </div>
     )
   }
 
   return (
-    <button
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       onClick={login}
-      className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+      className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
     >
       <GoogleIcon />
       Google でログイン
-    </button>
+    </motion.button>
   )
 }
 

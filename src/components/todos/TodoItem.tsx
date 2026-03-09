@@ -7,7 +7,6 @@ interface TodoItemProps {
   id: string
   title: string
   completed: boolean
-  targetPomodoros?: number
   completedPomodoros?: number
   isNew?: boolean
   isSelected?: boolean
@@ -20,7 +19,6 @@ export default function TodoItem({
   id,
   title,
   completed,
-  targetPomodoros = 0,
   completedPomodoros = 0,
   isNew = false,
   isSelected = false,
@@ -69,17 +67,12 @@ export default function TodoItem({
           {title}
         </p>
         {/* ポモドーロ表示 */}
-        {targetPomodoros > 0 && (
+        {(completedPomodoros || 0) > 0 && (
           <div className="flex gap-0.5">
-            {Array.from({ length: targetPomodoros }).map((_, i) => (
+            {Array.from({ length: completedPomodoros || 0 }).map((_, i) => (
               <div
                 key={i}
-                className={cn(
-                  'w-2 h-2 rounded-sm',
-                  i < (completedPomodoros || 0)
-                    ? 'bg-cf-primary'
-                    : 'bg-white/20'
-                )}
+                className="w-2 h-2 rounded-sm bg-cf-primary"
               />
             ))}
           </div>

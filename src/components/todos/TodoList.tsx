@@ -31,7 +31,7 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
   const progress = Math.min((pomodoroCount / targetPomodoros) * 100, 100)
 
   const handleAddTodo = async (title: string) => {
-    const result = await addTodo(title, targetPomodoros)
+    const result = await addTodo(title)
     if (result?.id) {
       setNewTodoId(result.id)
       setTimeout(() => setNewTodoId(null), 200)
@@ -99,7 +99,6 @@ export default function TodoList({ pomodoroCount = 0, targetPomodoros = 4 }: Tod
               id={todo.id}
               title={todo.title}
               completed={todo.completed}
-              targetPomodoros={todo.targetPomodoros}
               completedPomodoros={todo.completedPomodoros}
               isNew={newTodoId === todo.id}
               isSelected={selectedTodoId === todo.id}

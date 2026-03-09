@@ -8,14 +8,13 @@ export type Todo = {
   title: string
   completed: boolean
   completedPomodoros?: number
-  targetPomodoros?: number
   createdAt: string
   updatedAt: string
 }
 
-export type NewTodo = { title: string; targetPomodoros?: number }
+export type NewTodo = { title: string }
 
-export type UpdateTodo = Partial<{ title: string; completed: boolean; completedPomodoros: number; targetPomodoros: number }>
+export type UpdateTodo = Partial<{ title: string; completed: boolean; completedPomodoros: number }>
 
 interface TodosState {
   localTodos: Todo[]

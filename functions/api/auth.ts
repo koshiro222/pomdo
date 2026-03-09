@@ -115,14 +115,14 @@ auth.get('/google/callback', async (c) => {
       googleId: googleUser.sub,
       email: googleUser.email,
       name: googleUser.name,
-      avatarUrl: googleUser.picture,
+      image: googleUser.picture,
     })
     .onConflictDoUpdate({
       target: users.googleId,
       set: {
         email: googleUser.email,
         name: googleUser.name,
-        avatarUrl: googleUser.picture,
+        image: googleUser.picture,
         updatedAt: new Date(),
       },
     })
@@ -134,7 +134,7 @@ auth.get('/google/callback', async (c) => {
       sub: user.id,
       email: user.email,
       name: user.name,
-      avatarUrl: user.avatarUrl ?? undefined,
+      image: user.image ?? undefined,
       exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
     },
     c.env.JWT_SECRET,

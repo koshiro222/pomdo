@@ -180,7 +180,7 @@
 .z-widget-bg { z-index: 10; }
 .z-widget { z-index: 20; }
 .z-widget-overlay { z-index: 30; }
-.z-widget-modal { z-index: 50; }
+.z-widget-modal { z-index: 9999; }
 
 /* Timer ring animation */
 .timer-ring {

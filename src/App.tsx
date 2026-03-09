@@ -101,7 +101,7 @@ export default function App() {
   const { user } = useAuth()
   const { refetch } = useTodos()
   const { sessions, startSession, completeSession } = usePomodoro()
-  const { isActive, sessionType, remainingSecs, changeSessionType, pomodoroCount, start, pause, reset, skip } = useTimer({
+  const { isActive, sessionType, remainingSecs, changeSessionType, start, pause, reset, skip } = useTimer({
     onSessionComplete: async (type, durationSecs) => {
       const session = await startSession(type, durationSecs)
       if (session) {
@@ -193,7 +193,7 @@ export default function App() {
 
             {/* Todoカード - デスクトップ12列×1行、タブレット6列×1行 */}
             <div className="glass rounded-3xl overflow-hidden sm:col-span-6 sm:row-span-1 lg:col-span-12 lg:row-span-1">
-              <TodoList pomodoroCount={pomodoroCount} />
+              <TodoList />
             </div>
           </div>
         </main>

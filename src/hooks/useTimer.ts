@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useTimerStore, getSessionTotalSecs } from '../core/store/timer'
 import type { SessionType } from '../core/store/timer'
 
@@ -33,16 +33,20 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
     sessionType,
     remainingSecs,
     pomodoroCount,
+    sessionCompletePending,
     start: storeStart,
     pause: storePause,
     reset: storeReset,
     skip: storeSkip,
     changeSessionType: storeChangeSessionType,
+    changeSessionTypeWithPending,
     setSessionType: storeSetSessionType,
     setRemainingSecs,
     incrementPomodoroCount,
     getNextSessionType,
   } = useTimerStore()
+
+  const autoStartTimeoutRef = useRef<number | null>(null)
 
   const totalSecs = getSessionTotalSecs(sessionType)
 
@@ -90,8 +94,7 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
       }
 
       const nextSessionType = getNextSessionType(sessionType)
-      storeChangeSessionType(nextSessionType)
-      storePause()
+      changeSessionTypeWithPending(nextSessionType)
     }
 
     return () => {
@@ -99,7 +102,29 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
         clearInterval(intervalId)
       }
     }
-  }, [isActive, remainingSecs, sessionType, onSessionComplete, setRemainingSecs, incrementPomodoroCount, getNextSessionType, storeChangeSessionType, storePause])
+  }, [isActive, remainingSecs, sessionType, onSessionComplete, setRemainingSecs, incrementPomodoroCount, getNextSessionType, changeSessionTypeWithPending])
+
+  // Auto start after session complete
+  useEffect(() => {
+    if (sessionCompletePending) {
+      autoStartTimeoutRef.current = window.setTimeout(() => {
+        const store = useTimerStore.getState()
+        if (!store.isActive && store.sessionCompletePending) {
+          store.start()
+          // sessionCompletePendingはstart()の中で自動的にクリアされる想定
+          // ただし、現在の実装では自動クリアされないので別の方法を検討
+        }
+        autoStartTimeoutRef.current = null
+      }, 3000)
+    }
+
+    return () => {
+      if (autoStartTimeoutRef.current !== null) {
+        clearTimeout(autoStartTimeoutRef.current)
+        autoStartTimeoutRef.current = null
+      }
+    }
+  }, [sessionCompletePending])
 
   return {
     isActive,

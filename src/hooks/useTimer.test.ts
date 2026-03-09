@@ -183,4 +183,63 @@ describe('useTimer', () => {
 
     expect(result.current.sessionType).toBe('short_break')
   })
+
+  it('セッション完了時は一時停止状態である', () => {
+    const { result } = renderHook(() => useTimer())
+
+    act(() => {
+      result.current.start()
+    })
+
+    act(() => {
+      vi.advanceTimersByTime(25 * 60 * 1000)
+    })
+
+    expect(result.current.isActive).toBe(false)
+    expect(result.current.sessionType).toBe('short_break')
+  })
+
+  it('セッション完了から3秒後に自動で開始される', () => {
+    const { result } = renderHook(() => useTimer())
+
+    act(() => {
+      result.current.start()
+    })
+
+    act(() => {
+      vi.advanceTimersByTime(25 * 60 * 1000)
+    })
+
+    expect(result.current.isActive).toBe(false)
+
+    // 3秒経過
+    act(() => {
+      vi.advanceTimersByTime(3000)
+    })
+
+    expect(result.current.isActive).toBe(true)
+  })
+
+  it('skipした時は一時停止状態のまま', () => {
+    const { result } = renderHook(() => useTimer())
+
+    act(() => {
+      result.current.start()
+    })
+
+    // スキップ
+    act(() => {
+      result.current.skip()
+    })
+
+    expect(result.current.isActive).toBe(false)
+    expect(result.current.sessionType).toBe('short_break')
+
+    // 3秒待っても開始されない
+    act(() => {
+      vi.advanceTimersByTime(3000)
+    })
+
+    expect(result.current.isActive).toBe(false)
+  })
 })

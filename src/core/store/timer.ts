@@ -26,6 +26,7 @@ interface TimerState {
   sessionType: SessionType
   remainingSecs: number
   pomodoroCount: number
+  sessionCompletePending: boolean
 }
 
 interface TimerActions {
@@ -34,10 +35,13 @@ interface TimerActions {
   reset: () => void
   skip: () => void
   changeSessionType: (type: SessionType) => void
+  changeSessionTypeWithPending: (type: SessionType) => void
+  changeSessionTypeKeepActive: (type: SessionType) => void
   setSessionType: (type: SessionType) => void
   setRemainingSecs: (secs: number | ((prev: number) => number)) => void
   incrementPomodoroCount: () => void
   getNextSessionType: (currentType: SessionType) => SessionType
+  clearSessionCompletePending: () => void
 }
 
 export type TimerStore = TimerState & TimerActions
@@ -50,6 +54,7 @@ function getInitialState(): TimerState {
       sessionType: saved.sessionType,
       remainingSecs: saved.remainingSecs,
       pomodoroCount: saved.pomodoroCount,
+      sessionCompletePending: false,
     }
   }
   return {
@@ -57,6 +62,7 @@ function getInitialState(): TimerState {
     sessionType: 'work',
     remainingSecs: SESSION_DURATIONS.work,
     pomodoroCount: 0,
+    sessionCompletePending: false,
   }
 }
 
@@ -64,7 +70,7 @@ export const useTimerStore = create<TimerStore>()(
   persist(
     (set, get) => ({
       ...getInitialState(),
-      start: () => set({ isActive: true }),
+      start: () => set({ isActive: true, sessionCompletePending: false }),
       pause: () => set({ isActive: false }),
       reset: () => set((state) => ({ isActive: false, remainingSecs: SESSION_DURATIONS[state.sessionType] })),
       skip: () => {
@@ -76,10 +82,22 @@ export const useTimerStore = create<TimerStore>()(
           isActive: false,
           sessionType: nextSessionType,
           remainingSecs: SESSION_DURATIONS[nextSessionType],
+          sessionCompletePending: false,
         })
       },
       changeSessionType: (type: SessionType) => set({
         isActive: false,
+        sessionType: type,
+        remainingSecs: SESSION_DURATIONS[type],
+        sessionCompletePending: false,
+      }),
+      changeSessionTypeWithPending: (type: SessionType) => set({
+        isActive: false,
+        sessionType: type,
+        remainingSecs: SESSION_DURATIONS[type],
+        sessionCompletePending: true,
+      }),
+      changeSessionTypeKeepActive: (type: SessionType) => set({
         sessionType: type,
         remainingSecs: SESSION_DURATIONS[type],
       }),
@@ -91,6 +109,7 @@ export const useTimerStore = create<TimerStore>()(
         const nextIndex = (currentIndex + 1) % SESSION_ORDER.length
         return SESSION_ORDER[nextIndex]
       },
+      clearSessionCompletePending: () => set({ sessionCompletePending: false }),
     }),
     {
       name: 'timer-storage',

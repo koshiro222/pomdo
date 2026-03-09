@@ -34,8 +34,6 @@ export default function CurrentTaskCard({}: CurrentTaskCardProps) {
   }
 
   const completedPomodoros = currentTodo?.completedPomodoros || 0
-  const targetPomodoros = currentTodo?.targetPomodoros || 4
-  const progress = Math.min((completedPomodoros / targetPomodoros) * 100, 100)
   const hasMoreTodos = todos.some((t: Todo) => !t.completed && t.id !== selectedTodoId)
 
   return (
@@ -74,7 +72,7 @@ export default function CurrentTaskCard({}: CurrentTaskCardProps) {
 
           {/* プログレスセクション */}
           <div className="flex-1 flex flex-col justify-center mb-4">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-cf-primary/20 flex items-center justify-center">
                   <Check className="w-4 h-4 text-cf-primary" />
@@ -83,22 +81,8 @@ export default function CurrentTaskCard({}: CurrentTaskCardProps) {
                   {completedPomodoros}
                 </span>
               </div>
-              <span className="text-2xl text-cf-subtext">/</span>
-              <span className="text-3xl font-bold text-cf-text">
-                {targetPomodoros}
-              </span>
+              <span className="text-2xl text-cf-subtext">done</span>
             </div>
-
-            {/* プログレスバー */}
-            <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden mb-2">
-              <div
-                className="h-full bg-gradient-to-r from-cf-primary to-green-400 transition-all duration-500 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className="text-xs text-cf-subtext text-center">
-              {progress < 100 ? 'In Progress' : 'Completed!'}
-            </p>
           </div>
 
           {/* アクションボタン */}

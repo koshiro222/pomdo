@@ -59,6 +59,7 @@ lerna-debug.log*
 
 # Claude / AI
 .claude/settings.local.json
+.claude-zai/
 .mcp.json
 HANDOVER.md
 memo.md

@@ -66,13 +66,13 @@ export function useTodos() {
   const currentLoading = user ? todosQuery.isLoading : localLoading
 
   const addTodo = useCallback(
-    async (title: string, targetPomodoros?: number) => {
+    async (title: string) => {
       try {
         if (user) {
-          const created = await createMutation.mutateAsync({ title, targetPomodoros })
+          const created = await createMutation.mutateAsync({ title })
           return created
         } else {
-          const added = storage.addTodo({ title, completed: false, targetPomodoros })
+          const added = storage.addTodo({ title, completed: false })
           if (added) {
             addLocalTodo(added)
           }

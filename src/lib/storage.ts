@@ -5,13 +5,12 @@ export type Todo = {
   title: string
   completed: boolean
   completedPomodoros?: number
-  targetPomodoros?: number
   createdAt: string
   updatedAt: string
 }
 
-export type NewTodo = Omit<Todo, 'id' | 'createdAt' | 'updatedAt'> & { targetPomodoros?: number }
-export type UpdateTodo = Partial<Pick<Todo, 'title' | 'completed' | 'completedPomodoros' | 'targetPomodoros'>>
+export type NewTodo = Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>
+export type UpdateTodo = Partial<Pick<Todo, 'title' | 'completed' | 'completedPomodoros'>>
 
 export type PomodoroSession = {
   id: string

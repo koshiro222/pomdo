@@ -7,14 +7,12 @@ export const todoSchema = z.object({
   title: z.string(),
   completed: z.boolean(),
   completedPomodoros: z.number().default(0),
-  targetPomodoros: z.number().default(4),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 })
 
 export const newTodoSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  targetPomodoros: z.number().min(1).max(20).default(4).optional(),
 })
 
 export const updateTodoSchema = z.object({
@@ -22,7 +20,6 @@ export const updateTodoSchema = z.object({
   title: z.string().optional(),
   completed: z.boolean().optional(),
   completedPomodoros: z.number().optional(),
-  targetPomodoros: z.number().min(1).max(20).optional(),
 })
 
 export type Todo = z.infer<typeof todoSchema>

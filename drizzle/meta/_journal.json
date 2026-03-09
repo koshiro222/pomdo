@@ -15,6 +15,13 @@
       "when": 1773004881588,
       "tag": "0001_absurd_banshee",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773016021419,
+      "tag": "0002_volatile_donald_blake",
+      "breakpoints": true
     }
   ]
 }

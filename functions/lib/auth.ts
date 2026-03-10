@@ -32,5 +32,20 @@ export function createAuthInstance(env: AuthBindings) {
         clientSecret: env.GOOGLE_CLIENT_SECRET,
       },
     },
+    emailAndPassword: {
+      enabled: true,
+    },
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url }) => {
+        // Issue #119 でメール送信を実装予定
+        console.log(`[emailVerification] user=${user.email} url=${url}`)
+      },
+    },
+    advanced: {
+      database: {
+        // DB の id カラムが uuid 型のため、nanoid ではなく UUID を生成する
+        generateId: () => crypto.randomUUID(),
+      },
+    },
   })
 }

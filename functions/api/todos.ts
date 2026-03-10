@@ -4,12 +4,7 @@ import { todos, type NewTodo } from '../lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { authMiddleware, type Env } from '../middleware/auth'
 
-type Bindings = {
-  DATABASE_URL: string
-  JWT_SECRET: string
-}
-
-const app = new Hono<{ Bindings: Bindings; Variables: Env['Variables'] }>()
+const app = new Hono<Env>()
 
 // Apply auth middleware to all routes
 app.use('/*', authMiddleware)
@@ -22,7 +17,7 @@ app.get('/', async (c) => {
   const userTodos = await db
     .select()
     .from(todos)
-    .where(eq(todos.userId, user.sub))
+    .where(eq(todos.userId, user.id))
     .orderBy(todos.createdAt)
 
   return c.json({
@@ -49,7 +44,7 @@ app.post('/', async (c) => {
   }
 
   const newTodo: NewTodo = {
-    userId: user.sub,
+    userId: user.id,
     title: body.title.trim(),
     completed: false,
   }
@@ -84,7 +79,7 @@ app.patch('/:id', async (c) => {
   const [existing] = await db
     .select()
     .from(todos)
-    .where(and(eq(todos.id, id), eq(todos.userId, user.sub)))
+    .where(and(eq(todos.id, id), eq(todos.userId, user.id)))
 
   if (!existing) {
     return c.json(
@@ -107,7 +102,7 @@ app.patch('/:id', async (c) => {
   const [updated] = await db
     .update(todos)
     .set(updateData)
-    .where(and(eq(todos.id, id), eq(todos.userId, user.sub)))
+    .where(and(eq(todos.id, id), eq(todos.userId, user.id)))
     .returning()
 
   return c.json({
@@ -126,7 +121,7 @@ app.delete('/:id', async (c) => {
   const [existing] = await db
     .select()
     .from(todos)
-    .where(and(eq(todos.id, id), eq(todos.userId, user.sub)))
+    .where(and(eq(todos.id, id), eq(todos.userId, user.id)))
 
   if (!existing) {
     return c.json(
@@ -140,7 +135,7 @@ app.delete('/:id', async (c) => {
 
   await db
     .delete(todos)
-    .where(and(eq(todos.id, id), eq(todos.userId, user.sub)))
+    .where(and(eq(todos.id, id), eq(todos.userId, user.id)))
 
   return c.json({
     success: true,

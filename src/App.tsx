@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from './hooks/useAuth'
 import { VerifyEmailPage } from './components/pages/VerifyEmailPage'
+import { ResetPasswordPage } from './components/pages/ResetPasswordPage'
 import { useTodos } from './hooks/useTodos'
 import { useTimer } from './hooks/useTimer'
 import { usePomodoro } from './hooks/usePomodoro'
@@ -250,6 +251,9 @@ function AppMain() {
 export default function App() {
   if (window.location.pathname === '/verify-email') {
     return <VerifyEmailPage />
+  }
+  if (window.location.pathname === '/reset-password') {
+    return <ResetPasswordPage />
   }
   return <AppMain />
 }

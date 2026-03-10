@@ -9,6 +9,7 @@ export type AuthBindings = {
   GOOGLE_CLIENT_SECRET: string
   BETTER_AUTH_SECRET: string
   BETTER_AUTH_URL: string
+  FRONTEND_URL: string
 }
 
 export function createAuthInstance(env: AuthBindings) {
@@ -26,6 +27,7 @@ export function createAuthInstance(env: AuthBindings) {
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     basePath: '/api/auth',
+    trustedOrigins: [env.FRONTEND_URL || env.BETTER_AUTH_URL],
     socialProviders: {
       google: {
         clientId: env.GOOGLE_CLIENT_ID,

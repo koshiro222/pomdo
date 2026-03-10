@@ -1,9 +1,15 @@
 import { initTRPC, TRPCError } from '@trpc/server'
 import superjson from 'superjson'
-import type { JwtPayload } from '../types'
+
+type SessionUser = {
+  id: string
+  email: string
+  name: string
+  image: string | null
+}
 
 interface Context {
-  user: JwtPayload | null
+  user: SessionUser | null
   db: any
   schema: any
 }

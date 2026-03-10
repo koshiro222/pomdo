@@ -1,12 +1,10 @@
 import { create } from 'zustand'
 
 export type AuthUser = {
-  sub: string
+  id: string
   email: string
   name: string
-  image?: string
-  iat: number
-  exp: number
+  image: string | null
 }
 
 interface AuthState {

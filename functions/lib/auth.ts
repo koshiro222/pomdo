@@ -34,10 +34,14 @@ export function createAuthInstance(env: AuthBindings) {
     },
     emailAndPassword: {
       enabled: true,
+      sendResetPassword: async ({ user, url }) => {
+        // TODO: Issue #120 以降でメール送信サービスを統合する
+        console.log(`[resetPassword] user=${user.email} url=${url}`)
+      },
     },
     emailVerification: {
       sendVerificationEmail: async ({ user, url }) => {
-        // Issue #119 でメール送信を実装予定
+        // TODO: Issue #120 以降でメール送信サービスを統合する
         console.log(`[emailVerification] user=${user.email} url=${url}`)
       },
     },

@@ -12,7 +12,7 @@ interface LoginDialogProps {
   onClose: () => void
 }
 
-type Mode = 'top' | 'signin' | 'signup' | 'verify_sent'
+type Mode = 'top' | 'signin' | 'signup' | 'verify_sent' | 'reset_request' | 'reset_sent'
 
 export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
   const { login } = useAuth()
@@ -22,6 +22,7 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
 
   // ダイアログが閉じたらフォームをリセット
   useEffect(() => {
@@ -30,6 +31,7 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
       setEmail('')
       setPassword('')
       setName('')
+      setResetEmail('')
       setError(null)
       setLoading(false)
     }
@@ -76,6 +78,22 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
     }
   }
 
+  const handleResetRequest = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    const { error } = await authClient.requestPasswordReset({
+      email: resetEmail,
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    setLoading(false)
+    if (error) {
+      setError(error.message ?? 'リセットメールの送信に失敗しました')
+    } else {
+      setMode('reset_sent')
+    }
+  }
+
   return createPortal(
     <AnimatePresence>
       {isOpen && (
@@ -93,7 +111,11 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
           >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-cf-text">
-                {mode === 'signup' ? 'アカウント作成' : mode === 'verify_sent' ? '確認メール送信済み' : 'ログイン'}
+                {mode === 'signup' ? 'アカウント作成'
+                  : mode === 'verify_sent' ? '確認メール送信済み'
+                  : mode === 'reset_request' ? 'パスワードをリセット'
+                  : mode === 'reset_sent' ? 'リセットメール送信済み'
+                  : 'ログイン'}
               </h3>
               <motion.button
                 {...tapAnimation}
@@ -208,15 +230,79 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
                   >
                     ← 戻る
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => { setMode('signup'); setError(null) }}
-                    className="hover:text-cf-text transition-colors cursor-pointer"
-                  >
-                    新規登録はこちら
-                  </button>
+                  <div className="flex flex-col items-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => { setMode('signup'); setError(null) }}
+                      className="hover:text-cf-text transition-colors cursor-pointer"
+                    >
+                      新規登録はこちら
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setResetEmail(email); setMode('reset_request'); setError(null) }}
+                      className="hover:text-cf-text transition-colors cursor-pointer"
+                    >
+                      パスワードを忘れた方はこちら
+                    </button>
+                  </div>
                 </div>
               </form>
+            )}
+
+            {/* パスワードリセット申請 */}
+            {mode === 'reset_request' && (
+              <form onSubmit={handleResetRequest} className="flex flex-col gap-4">
+                {error && (
+                  <p className="text-red-400 text-sm bg-red-400/10 rounded-lg px-3 py-2">{error}</p>
+                )}
+                <p className="text-cf-subtext text-sm">
+                  登録済みのメールアドレスを入力してください。パスワードリセット用のリンクをお送りします。
+                </p>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-cf-subtext">メールアドレス</label>
+                  <input
+                    type="email"
+                    required
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    className="rounded-lg border border-cf-border bg-cf-surface px-3 py-2 text-sm text-cf-text outline-none focus:border-cf-primary transition-colors"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <motion.button
+                  {...tapAnimation}
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-lg bg-cf-primary px-4 py-3 text-sm font-medium text-white hover:bg-cf-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
+                >
+                  {loading ? '送信中…' : 'リセットリンクを送信'}
+                </motion.button>
+                <button
+                  type="button"
+                  onClick={() => { setMode('signin'); setError(null) }}
+                  className="text-xs text-cf-subtext hover:text-cf-text transition-colors cursor-pointer text-left"
+                >
+                  ← ログインに戻る
+                </button>
+              </form>
+            )}
+
+            {/* パスワードリセットメール送信済み */}
+            {mode === 'reset_sent' && (
+              <div className="text-center">
+                <p className="text-cf-text mb-2">リセットメールを送信しました。</p>
+                <p className="text-cf-subtext text-sm mb-6">
+                  メール内のリンクをクリックして新しいパスワードを設定してください。
+                </p>
+                <motion.button
+                  {...tapAnimation}
+                  onClick={onClose}
+                  className="w-full rounded-lg bg-cf-primary px-4 py-3 text-sm font-medium text-white hover:bg-cf-primary/90 transition-colors cursor-pointer"
+                >
+                  閉じる
+                </motion.button>
+              </div>
             )}
 
             {/* Email サインアップ */}

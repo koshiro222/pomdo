@@ -1,33 +1,23 @@
 import { Hono } from 'hono'
 import { handle } from 'hono/cloudflare-pages'
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
-import { jwt, verify } from 'hono/jwt'
 import { appRouter } from '../../../src/app/routers/root'
-import { authMiddleware } from '../../middleware/auth'
+import { createAuthInstance, type AuthBindings } from '../../lib/auth'
 import { createDb } from '../../lib/db'
 import * as schema from '../../lib/schema'
 
-type Bindings = {
+type Bindings = AuthBindings & {
   DATABASE_URL: string
-  JWT_SECRET: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
 
-// tRPC 用の認証ミドルウェア（簡易版）
 app.use('/*', async (c, next) => {
-  const token = c.req.header('cookie')?.match(/auth_token=([^;]+)/)?.[1]
+  const authInstance = createAuthInstance(c.env)
+  const session = await authInstance.api.getSession({ headers: c.req.raw.headers })
 
-  let user = null
-  if (token) {
-    try {
-      user = await verify(token, c.env.JWT_SECRET, 'HS256') as jwt.JWTPayload
-    } catch {
-      user = null
-    }
-  }
+  const user = session?.user ?? null
 
-  // コンテキストにユーザーとDBを追加
   c.set('user', user)
   c.set('db', createDb(c.env.DATABASE_URL))
   c.set('schema', schema)

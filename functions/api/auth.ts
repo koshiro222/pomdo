@@ -1,167 +1,52 @@
 import { Hono } from 'hono'
-import { setCookie, deleteCookie, getCookie } from 'hono/cookie'
-import { eq } from 'drizzle-orm'
-import { createDb } from '../lib/db'
-import { users } from '../lib/schema'
-import { jwt, sign, verify } from 'hono/jwt'
-import { signHmac, verifyHmac } from '../lib/hmac'
-import { authMiddleware } from '../middleware/auth'
+import { createAuthInstance, type AuthBindings } from '../lib/auth'
 
-type Bindings = {
-  DATABASE_URL: string
-  GOOGLE_CLIENT_ID: string
-  GOOGLE_CLIENT_SECRET: string
-  GOOGLE_REDIRECT_URI: string
-  JWT_SECRET: string
-  APP_URL: string
-}
+const auth = new Hono<{ Bindings: AuthBindings }>()
 
-type Variables = {
-  user: jwt.JWTPayload
-}
-
-const auth = new Hono<{ Bindings: Bindings; Variables: Variables }>()
-
-// GET /api/auth/google → Google 認証 URL へリダイレクト
+// 互換性 shim: GET /api/auth/google → Better Auth の social sign-in へ転送
 auth.get('/google', async (c) => {
-  const state = crypto.randomUUID()
-  const stateSig = await signHmac(state, c.env.JWT_SECRET)
-  const stateParam = `${state}.${stateSig}`
+  const authInstance = createAuthInstance(c.env)
+  const origin = new URL(c.req.url).origin
 
-  setCookie(c, 'oauth_state', stateParam, {
-    httpOnly: true,
-    secure: c.req.url.startsWith('https'),
-    sameSite: 'Lax',
-    maxAge: 60 * 10, // 10分
-    path: '/',
-  })
-
-  const params = new URLSearchParams({
-    client_id: c.env.GOOGLE_CLIENT_ID,
-    redirect_uri: c.env.GOOGLE_REDIRECT_URI,
-    response_type: 'code',
-    scope: 'openid email profile',
-    state: stateParam,
-    access_type: 'offline',
-    prompt: 'select_account',
-  })
-
-  return c.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`)
-})
-
-// GET /api/auth/google/callback → code → token 交換 → JWT 発行
-auth.get('/google/callback', async (c) => {
-  const { code, state, error } = c.req.query()
-  const appUrl = c.env.APP_URL
-
-  if (error || !code || !state) {
-    return c.redirect(`${appUrl}?auth_error=cancelled`)
-  }
-
-  // state 検証
-  const cookieState = getCookie(c, 'oauth_state')
-  if (!cookieState || cookieState !== state) {
-    return c.redirect(`${appUrl}?auth_error=invalid_state`)
-  }
-
-  const [stateValue, stateSig] = state.split('.')
-  const stateValid = await verifyHmac(stateValue, stateSig, c.env.JWT_SECRET)
-  if (!stateValid) {
-    return c.redirect(`${appUrl}?auth_error=invalid_state`)
-  }
-
-  deleteCookie(c, 'oauth_state', { path: '/' })
-
-  // Google に code を送って access_token 取得
-  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+  const req = new Request(`${origin}/api/auth/sign-in/social`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      code,
-      client_id: c.env.GOOGLE_CLIENT_ID,
-      client_secret: c.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri: c.env.GOOGLE_REDIRECT_URI,
-      grant_type: 'authorization_code',
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ provider: 'google', callbackURL: '/' }),
   })
 
-  if (!tokenRes.ok) {
-    return c.redirect(`${appUrl}?auth_error=token_exchange_failed`)
+  const res = await authInstance.handler(req)
+
+  // Better Auth は 200 + { url, redirect } を返すので、ブラウザ用に 302 に変換
+  if (res.status === 200) {
+    const data = await res.json<{ url?: string }>()
+    if (data.url) return c.redirect(data.url)
   }
 
-  const { access_token } = await tokenRes.json<{ access_token: string }>()
+  return res
+})
 
-  // Google ユーザー情報取得
-  const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-    headers: { Authorization: `Bearer ${access_token}` },
-  })
+// 互換性 shim: POST /api/auth/logout → Better Auth の sign-out へ転送
+auth.post('/logout', async (c) => {
+  const authInstance = createAuthInstance(c.env)
+  const origin = new URL(c.req.url).origin
 
-  if (!userInfoRes.ok) {
-    return c.redirect(`${appUrl}?auth_error=userinfo_failed`)
-  }
-
-  const googleUser = await userInfoRes.json<{
-    sub: string
-    email: string
-    name: string
-    picture?: string
-  }>()
-
-  // DB に UPSERT
-  const db = createDb(c.env.DATABASE_URL)
-  const [user] = await db
-    .insert(users)
-    .values({
-      googleId: googleUser.sub,
-      email: googleUser.email,
-      name: googleUser.name,
-      image: googleUser.picture,
-    })
-    .onConflictDoUpdate({
-      target: users.googleId,
-      set: {
-        email: googleUser.email,
-        name: googleUser.name,
-        image: googleUser.picture,
-        updatedAt: new Date(),
-      },
-    })
-    .returning()
-
-  // JWT 発行
-  const token = await sign(
-    {
-      sub: user.id,
-      email: user.email,
-      name: user.name,
-      image: user.image ?? undefined,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+  const req = new Request(`${origin}/api/auth/sign-out`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      origin,
+      cookie: c.req.header('cookie') ?? '',
     },
-    c.env.JWT_SECRET,
-  )
-
-  setCookie(c, 'auth_token', token, {
-    httpOnly: true,
-    secure: c.req.url.startsWith('https'),
-    sameSite: 'Lax',
-    maxAge: 60 * 60 * 24 * 7, // 7日
-    path: '/',
   })
 
-  return c.redirect(appUrl)
+  const res = await authInstance.handler(req)
+  return res.ok ? c.json({ ok: true }) : res
 })
 
-// GET /api/auth/me → ユーザー情報返却
-auth.get('/me', authMiddleware, async (c) => {
-  const token = getCookie(c, 'auth_token')!
-  const payload = await verify(token, c.env.JWT_SECRET, 'HS256') as jwt.JWTPayload
-  return c.json({ user: payload })
-})
-
-// POST /api/auth/logout → Cookie 削除
-auth.post('/logout', (c) => {
-  deleteCookie(c, 'auth_token', { path: '/' })
-  return c.json({ ok: true })
+// その他すべての /api/auth/* リクエストを Better Auth に委譲
+auth.all('/*', async (c) => {
+  const authInstance = createAuthInstance(c.env)
+  return authInstance.handler(c.req.raw)
 })
 
 export default auth

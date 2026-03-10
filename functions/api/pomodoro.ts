@@ -4,12 +4,7 @@ import { pomodoroSessions } from '../lib/schema'
 import { eq, and, desc } from 'drizzle-orm'
 import { authMiddleware, type Env } from '../middleware/auth'
 
-type Bindings = {
-  DATABASE_URL: string
-  JWT_SECRET: string
-}
-
-const app = new Hono<{ Bindings: Bindings; Variables: Env['Variables'] }>()
+const app = new Hono<Env>()
 
 app.use('/*', authMiddleware)
 
@@ -20,7 +15,7 @@ app.get('/sessions', async (c) => {
   const sessions = await db
     .select()
     .from(pomodoroSessions)
-    .where(eq(pomodoroSessions.userId, user.sub))
+    .where(eq(pomodoroSessions.userId, user.id))
     .orderBy(desc(pomodoroSessions.startedAt))
     .limit(30)
 
@@ -72,7 +67,7 @@ app.post('/sessions', async (c) => {
   }
 
   const newSession = {
-    userId: user.sub,
+    userId: user.id,
     todoId: body.todoId || null,
     type: body.type,
     startedAt: new Date(body.startedAt),
@@ -96,7 +91,7 @@ app.patch('/sessions/:id/complete', async (c) => {
   const [existing] = await db
     .select()
     .from(pomodoroSessions)
-    .where(and(eq(pomodoroSessions.id, id), eq(pomodoroSessions.userId, user.sub)))
+    .where(and(eq(pomodoroSessions.id, id), eq(pomodoroSessions.userId, user.id)))
 
   if (!existing) {
     return c.json(
@@ -111,7 +106,7 @@ app.patch('/sessions/:id/complete', async (c) => {
   const [updated] = await db
     .update(pomodoroSessions)
     .set({ completedAt: new Date() })
-    .where(and(eq(pomodoroSessions.id, id), eq(pomodoroSessions.userId, user.sub)))
+    .where(and(eq(pomodoroSessions.id, id), eq(pomodoroSessions.userId, user.id)))
     .returning()
 
   return c.json({

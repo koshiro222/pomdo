@@ -8,17 +8,14 @@ export const authRouter = router({
     }
 
     return {
-      sub: ctx.user.sub,
+      id: ctx.user.id,
       email: ctx.user.email,
       name: ctx.user.name,
       image: ctx.user.image,
-      iat: ctx.user.iat,
-      exp: ctx.user.exp,
     }
   }),
 
   logout: publicProcedure.mutation(() => {
-    // Cookie の削除はミドルウェア側で行う
     return { ok: true }
   }),
 })

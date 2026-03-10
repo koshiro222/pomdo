@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from './hooks/useAuth'
+import { VerifyEmailPage } from './components/pages/VerifyEmailPage'
 import { useTodos } from './hooks/useTodos'
 import { useTimer } from './hooks/useTimer'
 import { usePomodoro } from './hooks/usePomodoro'
@@ -99,7 +100,7 @@ function getTodayFocusMinutes(sessions: ReturnType<typeof usePomodoro>['sessions
     .reduce((sum, s) => sum + Math.floor(s.durationSecs / 60), 0)
 }
 
-export default function App() {
+function AppMain() {
   const { user } = useAuth()
   const { refetch } = useTodos()
   const { sessions, startSession, completeSession } = usePomodoro()
@@ -244,4 +245,11 @@ export default function App() {
       )}
     </div>
   )
+}
+
+export default function App() {
+  if (window.location.pathname === '/verify-email') {
+    return <VerifyEmailPage />
+  }
+  return <AppMain />
 }

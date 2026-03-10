@@ -72,3 +72,6 @@ test-results/
 playwright-report/
 playwright/.cache/
 *.png
+
+# Test Coverage
+coverage/

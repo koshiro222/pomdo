@@ -12,6 +12,7 @@ type Bindings = {
   GOOGLE_CLIENT_SECRET: string
   BETTER_AUTH_SECRET: string
   BETTER_AUTH_URL: string
+  FRONTEND_URL: string
   BGM_BUCKET: R2Bucket
 }
 

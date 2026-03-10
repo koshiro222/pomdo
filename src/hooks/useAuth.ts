@@ -1,54 +1,34 @@
-import { useEffect, useCallback } from 'react'
-import { trpc } from '../lib/trpc'
-import { useAuthStore, type AuthUser } from '../core/store/auth'
+import { useCallback } from 'react'
+import { authClient } from '../lib/auth'
+import type { AuthUser } from '../core/store/auth'
 
 export type { AuthUser }
 
 export function useAuth() {
-  const {
-    user,
-    loading,
-    setUser,
-    setLoading,
-    clearUser,
-  } = useAuthStore()
+  const { data: session, isPending } = authClient.useSession()
 
-  const meQuery = trpc.auth.me.useQuery(undefined, {
-    retry: false,
-    refetchOnWindowFocus: false,
-  })
-
-  useEffect(() => {
-    if (meQuery.data) {
-      setUser(meQuery.data)
-    } else if (meQuery.error) {
-      clearUser()
-    } else {
-      setLoading(meQuery.isLoading)
-    }
-  }, [meQuery.data, meQuery.error, meQuery.isLoading, setUser, setLoading, clearUser])
+  const user: AuthUser | null = session?.user
+    ? {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        image: session.user.image ?? null,
+        emailVerified: session.user.emailVerified,
+      }
+    : null
 
   const login = useCallback(() => {
-    window.location.href = '/api/auth/google'
+    authClient.signIn.social({ provider: 'google', callbackURL: '/' })
   }, [])
 
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
-      clearUser()
-      // Cookie をクリアするために直接APIを呼ぶ
-      fetch('/api/auth/logout', { method: 'POST' })
-    },
-  })
-
   const logout = useCallback(async () => {
-    await logoutMutation.mutateAsync()
-  }, [logoutMutation])
+    await authClient.signOut()
+  }, [])
 
   return {
     user,
-    loading,
+    loading: isPending,
     login,
     logout,
-    refetch: () => meQuery.refetch(),
   }
 }

@@ -9,7 +9,7 @@ export const todosRouter = router({
     const todos = await db
       .select()
       .from(ctx.schema.todos)
-      .where((t: any) => t.userId === user.sub)
+      .where((t: any) => t.userId === user.id)
 
     return todos
   }),
@@ -22,7 +22,7 @@ export const todosRouter = router({
       const [created] = await db
         .insert(ctx.schema.todos)
         .values({
-          userId: user.sub,
+          userId: user.id,
           title: input.title,
           completed: false,
           completedPomodoros: 0,
@@ -40,7 +40,7 @@ export const todosRouter = router({
       const existing = await db
         .select()
         .from(ctx.schema.todos)
-        .where((t: any) => t.id === input.id && t.userId === user.sub)
+        .where((t: any) => t.id === input.id && t.userId === user.id)
         .limit(1)
 
       if (!existing || existing.length === 0) {
@@ -61,7 +61,7 @@ export const todosRouter = router({
       const updated = await db
         .update(ctx.schema.todos)
         .set(updateData)
-        .where((t: any) => t.id === input.id && t.userId === user.sub)
+        .where((t: any) => t.id === input.id && t.userId === user.id)
         .returning()
 
       return updated[0]
@@ -75,7 +75,7 @@ export const todosRouter = router({
       const existing = await db
         .select()
         .from(ctx.schema.todos)
-        .where((t: any) => t.id === input.id && t.userId === user.sub)
+        .where((t: any) => t.id === input.id && t.userId === user.id)
         .limit(1)
 
       if (!existing || existing.length === 0) {
@@ -84,7 +84,7 @@ export const todosRouter = router({
 
       await db
         .delete(ctx.schema.todos)
-        .where((t: any) => t.id === input.id && t.userId === user.sub)
+        .where((t: any) => t.id === input.id && t.userId === user.id)
 
       return { id: input.id }
     }),

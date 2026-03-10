@@ -9,7 +9,7 @@ export const pomodoroRouter = router({
     const sessions = await db
       .select()
       .from(ctx.schema.pomodoroSessions)
-      .where((t: any) => t.userId === user.sub)
+      .where((t: any) => t.userId === user.id)
       .orderBy((t: any) => t.startedAt)
       .limit(30)
 
@@ -24,7 +24,7 @@ export const pomodoroRouter = router({
       const [created] = await db
         .insert(ctx.schema.pomodoroSessions)
         .values({
-          userId: user.sub,
+          userId: user.id,
           todoId: input.todoId || null,
           type: input.type,
           startedAt: new Date(input.startedAt),
@@ -44,7 +44,7 @@ export const pomodoroRouter = router({
       const existing = await db
         .select()
         .from(ctx.schema.pomodoroSessions)
-        .where((t: any) => t.id === input.id && t.userId === user.sub)
+        .where((t: any) => t.id === input.id && t.userId === user.id)
         .limit(1)
 
       if (!existing || existing.length === 0) {
@@ -54,7 +54,7 @@ export const pomodoroRouter = router({
       const updated = await db
         .update(ctx.schema.pomodoroSessions)
         .set({ completedAt: new Date() })
-        .where((t: any) => t.id === input.id && t.userId === user.sub)
+        .where((t: any) => t.id === input.id && t.userId === user.id)
         .returning()
 
       return updated[0]

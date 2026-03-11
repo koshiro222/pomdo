@@ -29,8 +29,8 @@ export function TimerRing({
   const color = sessionType === 'work' ? '#22c55e' : '#f59e0b'
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+    <div className="relative flex items-center justify-center pointer-events-none" style={{ width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', pointerEvents: 'none' }}>
         {/* 背景円 */}
         <circle
           cx={center}

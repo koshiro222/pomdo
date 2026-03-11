@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { eq, and } from 'drizzle-orm'
+import { TRPCError } from '@trpc/server'
 import { router, protectedProcedure } from './context'
 import { newTodoSchema, updateTodoSchema } from './_shared'
 
@@ -9,7 +11,7 @@ export const todosRouter = router({
     const todos = await db
       .select()
       .from(ctx.schema.todos)
-      .where((t: any) => t.userId === user.id)
+      .where(eq(ctx.schema.todos.userId, user.id))
 
     return todos
   }),
@@ -40,11 +42,11 @@ export const todosRouter = router({
       const existing = await db
         .select()
         .from(ctx.schema.todos)
-        .where((t: any) => t.id === input.id && t.userId === user.id)
+        .where(and(eq(ctx.schema.todos.id, input.id), eq(ctx.schema.todos.userId, user.id)))
         .limit(1)
 
       if (!existing || existing.length === 0) {
-        throw new Error('Todo not found')
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Todo not found' })
       }
 
       const updateData: any = {}
@@ -61,7 +63,7 @@ export const todosRouter = router({
       const updated = await db
         .update(ctx.schema.todos)
         .set(updateData)
-        .where((t: any) => t.id === input.id && t.userId === user.id)
+        .where(and(eq(ctx.schema.todos.id, input.id), eq(ctx.schema.todos.userId, user.id)))
         .returning()
 
       return updated[0]
@@ -75,16 +77,16 @@ export const todosRouter = router({
       const existing = await db
         .select()
         .from(ctx.schema.todos)
-        .where((t: any) => t.id === input.id && t.userId === user.id)
+        .where(and(eq(ctx.schema.todos.id, input.id), eq(ctx.schema.todos.userId, user.id)))
         .limit(1)
 
       if (!existing || existing.length === 0) {
-        throw new Error('Todo not found')
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Todo not found' })
       }
 
       await db
         .delete(ctx.schema.todos)
-        .where((t: any) => t.id === input.id && t.userId === user.id)
+        .where(and(eq(ctx.schema.todos.id, input.id), eq(ctx.schema.todos.userId, user.id)))
 
       return { id: input.id }
     }),

@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { trpc } from '../lib/trpc'
 import { useAuth } from './useAuth'
 import { storage } from '../lib/storage'
@@ -9,7 +8,7 @@ export type { Todo, NewTodo, UpdateTodo }
 
 export function useTodos() {
   const { user } = useAuth()
-  const queryClient = useQueryClient()
+  const utils = trpc.useUtils()
   const {
     localTodos,
     selectedTodoId,
@@ -34,19 +33,19 @@ export function useTodos() {
 
   const createMutation = trpc.todos.create.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [['todos.getAll']] })
+      utils.todos.getAll.invalidate()
     },
   })
 
   const updateMutation = trpc.todos.update.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [['todos.getAll']] })
+      utils.todos.getAll.invalidate()
     },
   })
 
   const deleteMutation = trpc.todos.delete.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [['todos.getAll']] })
+      utils.todos.getAll.invalidate()
     },
   })
 

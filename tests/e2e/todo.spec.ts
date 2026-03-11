@@ -1,97 +1,199 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
+import { signIn, cleanupTodos } from '../helpers/auth'
 
-test.describe('Todo CRUD', () => {
+// ---- ヘルパー ----
+
+async function addTodo(page: Page, title: string): Promise<void> {
+  await page.getByRole('button', { name: 'Add a new task...' }).click()
+  await page.getByRole('textbox', { name: 'Add a new task...' }).fill(title)
+  await page.keyboard.press('Enter')
+}
+
+function getTodoRow(page: Page, title: string) {
+  return page.locator('div.group').filter({ hasText: title })
+}
+
+async function deleteTodo(page: Page, title: string): Promise<void> {
+  const row = getTodoRow(page, title)
+  await row.hover()
+  await row.locator('button').last().click()
+}
+
+// ---- ゲストモード ----
+
+test.describe('Todo CRUD - ゲストモード', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
+    await page.evaluate(() => localStorage.clear())
+    await page.reload()
   })
 
-  test('Todoが追加できること', async ({ page }) => {
-    // Todo入力欄を取得
-    const todoInput = page.getByPlaceholder('Add a new task...')
-    await expect(todoInput).toBeVisible()
+  test('Todo追加: テキスト入力→Enterでリストに表示される', async ({ page }) => {
+    await addTodo(page, 'テストタスク')
 
-    // Todoを追加
-    await todoInput.fill('テストタスク')
+    await expect(getTodoRow(page, 'テストタスク')).toBeVisible()
+  })
+
+  test('Todo完了: チェックボタンクリックで打ち消し線が入る', async ({ page }) => {
+    await addTodo(page, '完了タスク')
+
+    await getTodoRow(page, '完了タスク').getByRole('checkbox').click()
+
+    await expect(page.locator('p.line-through').filter({ hasText: '完了タスク' })).toBeVisible()
+  })
+
+  test('Todo削除: 削除ボタンクリックで消える', async ({ page }) => {
+    await addTodo(page, '削除タスク')
+    await expect(getTodoRow(page, '削除タスク')).toBeVisible()
+
+    await deleteTodo(page, '削除タスク')
+
+    await expect(getTodoRow(page, '削除タスク')).not.toBeVisible()
+  })
+
+  test('残りタスク数: 追加・完了・削除に応じて変わる', async ({ page }) => {
+    await expect(page.getByText('0 Left')).toBeVisible()
+
+    await addTodo(page, 'タスクA')
+    await expect(page.getByText('1 Left')).toBeVisible()
+
+    await addTodo(page, 'タスクB')
+    await expect(page.getByText('2 Left')).toBeVisible()
+
+    await getTodoRow(page, 'タスクA').getByRole('checkbox').click()
+    await expect(page.getByText('1 Left')).toBeVisible()
+
+    await deleteTodo(page, 'タスクB')
+    await expect(page.getByText('0 Left')).toBeVisible()
+  })
+
+  test('空 Todo: 空文字では追加できない', async ({ page }) => {
+    await page.getByRole('button', { name: 'Add a new task...' }).click()
     await page.keyboard.press('Enter')
 
-    // Todoが表示されることを確認
-    await expect(page.getByText('テストタスク')).toBeVisible()
-  })
-
-  test('Todoが完了できること', async ({ page }) => {
-    // Todoを追加
-    const todoInput = page.getByPlaceholder('Add a new task...')
-    await todoInput.fill('完了テスト')
-    await page.keyboard.press('Enter')
-
-    // チェックボタンをクリック（checkアイコンを持つbutton）
-    const checkButton = page.locator('button').filter({ has: page.locator('.material-symbols-outlined').filter({ hasText: 'check' }) }).first()
-    await checkButton.click()
-
-    // 完了状態になっていることを確認
-    await expect(page.getByText('完了テスト')).toHaveCSS('text-decoration-line', 'line-through')
-  })
-
-  test('Todoを削除できること', async ({ page }) => {
-    // Todoを追加
-    const todoInput = page.getByPlaceholder('Add a new task...')
-    await todoInput.fill('削除テスト')
-    await page.keyboard.press('Enter')
-
-    // 削除ボタンをクリック（deleteアイコンを持つbutton）
-    const deleteButton = page.locator('button').filter({ has: page.locator('.material-symbols-outlined').filter({ hasText: 'delete' }) })
-    await deleteButton.hover() // 削除ボタンはhoverで表示される
-    await deleteButton.click()
-
-    // 削除されていることを確認
-    await expect(page.getByText('削除テスト')).not.toBeVisible()
-  })
-
-  test('複数のTodoを追加して管理できること', async ({ page }) => {
-    // 複数のTodoを追加
-    const todoInput = page.getByPlaceholder('Add a new task...')
-    const todos = ['タスク1', 'タスク2', 'タスク3']
-
-    for (const todo of todos) {
-      await todoInput.fill(todo)
-      await page.keyboard.press('Enter')
-    }
-
-    // 全てのTodoが表示されていることを確認
-    for (const todo of todos) {
-      await expect(page.getByText(todo)).toBeVisible()
-    }
-
-    // 残りタスク数が表示されることを確認
-    await expect(page.getByText('3 Left')).toBeVisible()
-  })
-
-  test('空のTodoは追加できないこと', async ({ page }) => {
-    const todoInput = page.getByPlaceholder('Add a new task...')
-
-    // 空のままEnterを押す
-    await page.keyboard.press('Enter')
-
-    // Todoが追加されていないことを確認（"No tasks yet"が表示されるはず）
     await expect(page.getByText('No tasks yet')).toBeVisible()
   })
 
-  test('タスク完了後に残りタスク数が減ること', async ({ page }) => {
-    // Todoを追加
-    const todoInput = page.getByPlaceholder('Add a new task...')
-    await todoInput.fill('タスク1')
-    await page.keyboard.press('Enter')
-    await todoInput.fill('タスク2')
-    await page.keyboard.press('Enter')
+  test('フィルター: Active/Done/All で絞り込みが機能する', async ({ page }) => {
+    await addTodo(page, 'アクティブタスク')
+    await addTodo(page, '完了タスク')
+    await getTodoRow(page, '完了タスク').getByRole('checkbox').click()
 
-    // 残り2タスクであることを確認
+    // Active フィルター
+    await page.getByRole('button', { name: 'Active' }).click()
+    await expect(getTodoRow(page, 'アクティブタスク')).toBeVisible()
+    await expect(getTodoRow(page, '完了タスク')).not.toBeVisible()
+
+    // Done フィルター
+    await page.getByRole('button', { name: 'Done' }).click()
+    await expect(getTodoRow(page, '完了タスク')).toBeVisible()
+    await expect(getTodoRow(page, 'アクティブタスク')).not.toBeVisible()
+
+    // All フィルター
+    await page.getByRole('button', { name: 'All' }).click()
+    await expect(getTodoRow(page, 'アクティブタスク')).toBeVisible()
+    await expect(getTodoRow(page, '完了タスク')).toBeVisible()
+  })
+
+  test('タスク選択: クリックで CurrentTaskCard に表示される', async ({ page }) => {
+    await addTodo(page, '選択タスク')
+
+    await getTodoRow(page, '選択タスク').click()
+
+    await expect(page.getByText('Current Task')).toBeVisible()
+    await expect(page.getByRole('heading', { name: '選択タスク', level: 3 })).toBeVisible()
+  })
+})
+
+// ---- ログインモード ----
+
+test.describe('Todo CRUD - ログインモード', () => {
+  test.beforeEach(async ({ page }) => {
+    // ゲストデータが残っているとマイグレーションダイアログが出るので先にクリア
+    await page.goto('/')
+    await page.evaluate(() => localStorage.clear())
+    await signIn(page)
+    await cleanupTodos(page)
+    // ログイン後に persist が DB Todos を todos-storage に保存するため明示的に削除
+    await page.evaluate(() => localStorage.removeItem('todos-storage'))
+    await page.goto('/')
+    // auth が再解決される前に addTodo が呼ばれるとゲストモードで動作するため待機
+    await page.getByRole('button', { name: /Logout/ }).waitFor({ timeout: 10000 })
+  })
+
+  test('Todo追加: テキスト入力→Enterでリストに表示される', async ({ page }) => {
+    await addTodo(page, 'テストタスク')
+
+    await expect(getTodoRow(page, 'テストタスク')).toBeVisible()
+  })
+
+  test('Todo完了: チェックボタンクリックで打ち消し線が入る', async ({ page }) => {
+    await addTodo(page, '完了タスク')
+
+    await getTodoRow(page, '完了タスク').getByRole('checkbox').click()
+
+    await expect(page.locator('p.line-through').filter({ hasText: '完了タスク' })).toBeVisible()
+  })
+
+  test('Todo削除: 削除ボタンクリックで消える', async ({ page }) => {
+    await addTodo(page, '削除タスク')
+    await expect(getTodoRow(page, '削除タスク')).toBeVisible()
+
+    await deleteTodo(page, '削除タスク')
+
+    await expect(getTodoRow(page, '削除タスク')).not.toBeVisible()
+  })
+
+  test('残りタスク数: 追加・完了・削除に応じて変わる', async ({ page }) => {
+    await expect(page.getByText('0 Left')).toBeVisible()
+
+    await addTodo(page, 'タスクA')
+    await expect(page.getByText('1 Left')).toBeVisible()
+
+    await addTodo(page, 'タスクB')
     await expect(page.getByText('2 Left')).toBeVisible()
 
-    // 1つ完了
-    const checkButton = page.locator('button').filter({ has: page.locator('.material-symbols-outlined').filter({ hasText: 'check' }) }).first()
-    await checkButton.click()
-
-    // 残り1タスクであることを確認
+    await getTodoRow(page, 'タスクA').getByRole('checkbox').click()
     await expect(page.getByText('1 Left')).toBeVisible()
+
+    await deleteTodo(page, 'タスクB')
+    await expect(page.getByText('0 Left')).toBeVisible()
+  })
+
+  test('空 Todo: 空文字では追加できない', async ({ page }) => {
+    await page.getByRole('button', { name: 'Add a new task...' }).click()
+    await page.keyboard.press('Enter')
+
+    await expect(page.getByText('No tasks yet')).toBeVisible()
+  })
+
+  test('フィルター: Active/Done/All で絞り込みが機能する', async ({ page }) => {
+    await addTodo(page, 'アクティブタスク')
+    await addTodo(page, '完了タスク')
+    await getTodoRow(page, '完了タスク').getByRole('checkbox').click()
+
+    // Active フィルター
+    await page.getByRole('button', { name: 'Active' }).click()
+    await expect(getTodoRow(page, 'アクティブタスク')).toBeVisible()
+    await expect(getTodoRow(page, '完了タスク')).not.toBeVisible()
+
+    // Done フィルター
+    await page.getByRole('button', { name: 'Done' }).click()
+    await expect(getTodoRow(page, '完了タスク')).toBeVisible()
+    await expect(getTodoRow(page, 'アクティブタスク')).not.toBeVisible()
+
+    // All フィルター
+    await page.getByRole('button', { name: 'All' }).click()
+    await expect(getTodoRow(page, 'アクティブタスク')).toBeVisible()
+    await expect(getTodoRow(page, '完了タスク')).toBeVisible()
+  })
+
+  test('タスク選択: クリックで CurrentTaskCard に表示される', async ({ page }) => {
+    await addTodo(page, '選択タスク')
+
+    await getTodoRow(page, '選択タスク').click()
+
+    await expect(page.getByText('Current Task')).toBeVisible()
+    await expect(page.getByRole('heading', { name: '選択タスク', level: 3 })).toBeVisible()
   })
 })

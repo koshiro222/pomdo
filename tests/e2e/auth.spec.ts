@@ -1,85 +1,77 @@
 import { test, expect } from '@playwright/test'
-import { mockAuthAPI, simulateLogin, mockUser } from '../helpers/auth-mock'
+import { signIn, TEST_USER } from '../helpers/auth'
 
 test.describe('認証フロー', () => {
-  test.beforeEach(async ({ page, context }) => {
-    // 認証APIをモック化
-    await mockAuthAPI(page)
-
+  test.beforeEach(async ({ page }) => {
     await page.goto('/')
   })
 
-  test('ゲストモードで起動できること', async ({ page }) => {
-    // ログインアイコンボタンが表示されることを確認（Header.tsxのloginアイコン）
-    const loginButton = page.getByTitle('Login with Google')
-    await expect(loginButton).toBeVisible()
-
-    // タイマーが表示されることを確認
-    await expect(page.locator('.glass').first()).toBeVisible()
-
-    // Todoリストが表示されることを確認（h3タグ内のTasks）
-    await expect(page.getByRole('heading', { name: /^checklist\s*Tasks$/s })).toBeVisible()
+  test('ゲストモード: ページが正常に読み込まれ、ログインボタンが表示される', async ({ page }) => {
+    await expect(page).toHaveTitle(/Pomdo/)
+    await expect(page.getByRole('button', { name: 'Login with Google' })).toBeVisible()
   })
 
-  test('ログインボタンがクリックできること', async ({ page }) => {
-    const loginButton = page.getByTitle('Login with Google')
-    await expect(loginButton).toBeVisible()
+  test('ログインダイアログ: ログインボタンクリックでダイアログが開く', async ({ page }) => {
+    await page.getByRole('button', { name: 'Login with Google' }).click()
 
-    // ログインボタンをクリック
-    await loginButton.click()
-
-    // APIエンドポイントに遷移することを確認（ローカル開発環境）
-    await expect(page).toHaveURL(/\/api\/auth\/google/)
+    await expect(page.getByRole('heading', { name: 'ログイン' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Google でログイン' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'メールアドレスでログイン' })).toBeVisible()
   })
 
-  test('ログイン後にユーザー情報が表示されること', async ({ page, context, browserName }) => {
-    test.skip(browserName === 'webkit' || browserName === 'Mobile Safari', 'WebKitではCookie設定が不安定なためスキップ')
+  test('ダイアログを閉じる: ×ボタンでダイアログが閉じる', async ({ page }) => {
+    await page.getByRole('button', { name: 'Login with Google' }).click()
+    await expect(page.getByRole('heading', { name: 'ログイン' })).toBeVisible()
 
-    // ログイン状態をシミュレーション
-    await simulateLogin(context)
+    await page.locator('button:has(svg.lucide-x)').click()
 
-    // ページをリロードしてAPI応答を待機
-    await page.reload()
-
-    // API応答を待機（タイムアウトを長めに設定）
-    try {
-      await page.waitForResponse('**/api/auth/me', { timeout: 10000 })
-    } catch (e) {
-      // タイムアウトしても続行（UIが更新されるのを待機）
-    }
-
-    // ログアウトボタンが表示されることを確認（アバター画像を持つボタン）
-    const logoutButton = page.locator('button').filter({ has: page.locator('img[alt="テストユーザー"]') })
-    await expect(logoutButton).toBeVisible()
-
-    // title属性を確認
-    await expect(page.locator('button[title*="test@example.com"]')).toBeVisible()
-
-    // アバター画像が表示されていることを確認
-    await expect(page.locator('img[alt="テストユーザー"]')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'ログイン' })).not.toBeVisible()
   })
 
-  test('ログアウトできること', async ({ page, context, browserName }) => {
-    test.skip(browserName === 'webkit' || browserName === 'Mobile Safari', 'WebKitではCookie設定が不安定なためスキップ')
+  test('ダイアログを閉じる: ESCキーでダイアログが閉じる', async ({ page }) => {
+    await page.getByRole('button', { name: 'Login with Google' }).click()
+    await expect(page.getByRole('heading', { name: 'ログイン' })).toBeVisible()
 
-    // ログイン状態をシミュレーション
-    await simulateLogin(context)
+    await page.keyboard.press('Escape')
 
-    // ページをリロードしてAPI応答を待機
-    await page.reload()
+    await expect(page.getByRole('heading', { name: 'ログイン' })).not.toBeVisible()
+  })
 
-    // API応答を待機（タイムアウトを長めに設定）
-    try {
-      await page.waitForResponse('**/api/auth/me', { timeout: 10000 })
-    } catch (e) {
-      // タイムアウトしても続行（UIが更新されるのを待機）
-    }
+  test('メール/パスワードフォーム: メールアドレスでログインをクリックするとフォームが表示される', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: 'Login with Google' }).click()
+    await page.getByRole('button', { name: 'メールアドレスでログイン' }).click()
 
-    // ログアウトボタンをクリック（アバター画像を持つボタン）
-    const logoutButton = page.locator('button').filter({ has: page.locator('img[alt="テストユーザー"]') })
-    await logoutButton.click()
+    await expect(page.getByRole('textbox', { name: 'you@example.com' })).toBeVisible()
+    await expect(page.getByRole('textbox', { name: '••••••••' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'ログイン' })).toBeVisible()
+  })
 
-    // ログインボタンが再表示されることを確認
-    await expect(page.getByTitle('Login with Google')).toBeVisible()
+  test('不正な認証情報: エラーメッセージが表示される', async ({ page }) => {
+    await page.getByRole('button', { name: 'Login with Google' }).click()
+    await page.getByRole('button', { name: 'メールアドレスでログイン' }).click()
+
+    await page.getByRole('textbox', { name: 'you@example.com' }).fill('wrong@example.com')
+    await page.getByRole('textbox', { name: '••••••••' }).fill('wrongpassword')
+    await page.getByRole('button', { name: 'ログイン' }).click()
+
+    await expect(page.getByText('Invalid email or password')).toBeVisible()
+  })
+
+  test('メール/パスワードでサインイン: 正しい認証情報でログインできる', async ({ page }) => {
+    await signIn(page)
+
+    await expect(page.getByRole('button', { name: /Logout/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Login with Google' })).not.toBeVisible()
+  })
+
+  test('ログアウト: ログアウトボタンクリックでゲスト状態に戻る', async ({ page }) => {
+    await signIn(page)
+
+    await page.getByRole('button', { name: /Logout/ }).click()
+
+    await expect(page.getByRole('button', { name: 'Login with Google' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Logout/ })).not.toBeVisible()
   })
 })

@@ -7,6 +7,7 @@ export const TEST_USER = {
 } as const
 
 const TRPC_BASE = 'http://localhost:8788/api/trpc'
+const TODOS_BASE = `${TRPC_BASE}/todos`
 
 /** テストユーザーでサインインし、認証済み状態にする */
 export async function signIn(page: Page): Promise<void> {
@@ -29,7 +30,7 @@ export async function signIn(page: Page): Promise<void> {
  */
 export async function cleanupTodos(page: Page): Promise<void> {
   const allResp = await page.request.get(
-    `${TRPC_BASE}/todo.getAll?input=%7B%22json%22%3Anull%7D`
+    `${TODOS_BASE}.getAll?input=%7B%22json%22%3Anull%7D`
   )
   if (!allResp.ok()) return
 
@@ -38,7 +39,7 @@ export async function cleanupTodos(page: Page): Promise<void> {
   const todos: Array<{ id: string }> = data?.result?.data?.json ?? []
 
   for (const todo of todos) {
-    await page.request.post(`${TRPC_BASE}/todo.delete`, {
+    await page.request.post(`${TODOS_BASE}.delete`, {
       data: { json: { id: todo.id } },
       headers: { 'Content-Type': 'application/json' },
     })

@@ -64,7 +64,7 @@ export function TimerDisplay({
       </div>
 
       {/* 円形プログレスバータイマー */}
-      <div className="relative flex flex-col items-center">
+      <div className="relative flex flex-col items-center pointer-events-none">
         <TimerRing
           remainingSecs={remainingSecs}
           totalSecs={totalSecs}
@@ -73,7 +73,7 @@ export function TimerDisplay({
           strokeWidth={8}
         />
         {/* 時刻表示 */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
           <span className="text-5xl sm:text-6xl lg:text-7xl font-light text-text-primary tracking-tighter tabular-nums">
             {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
           </span>

@@ -9,3 +9,9 @@ CREATE TABLE "bgm_tracks" (
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "bgm_tracks_filename_unique" UNIQUE("filename")
 );
+
+-- Seed existing tracks from hardcoded data
+INSERT INTO "bgm_tracks" ("id", "title", "artist", "color", "filename", "tier", "created_at", "updated_at")
+VALUES
+  (gen_random_uuid(), 'Lo-Fi Study 01', 'Chill Beats', '#3b82f6', 'bgm/lofi-01.mp3', 'free', now(), now()),
+  (gen_random_uuid(), 'Lo-Fi Study 02', 'Relax Sounds', '#8b5cf6', 'bgm/lofi-02.mp3', 'free', now(), now());

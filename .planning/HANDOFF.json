@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-03-19T21:33:11.245Z",
+  "phase": "02",
+  "phase_name": "authentication",
+  "phase_dir": ".planning/phases/02-authentication",
+  "plan": null,
+  "task": null,
+  "total_tasks": 10,
+  "status": "planned",
+  "completed_tasks": [],
+  "remaining_tasks": [
+    {"id": "02-01-01", "name": "schema.tsにrole/banned/banReason/banExpiresカラムを追加", "status": "not_started"},
+    {"id": "02-01-02", "name": "auth.tsにadmin pluginを追加", "status": "not_started"},
+    {"id": "02-01-03", "name": "context.tsのcreateContextにroleフィールドを追加", "status": "not_started"},
+    {"id": "02-01-04", "name": "adminProcedureミドルウェアを実装", "status": "not_started"},
+    {"id": "02-02-01", "name": "AuthUser型にroleフィールドを追加", "status": "not_started"},
+    {"id": "02-02-02", "name": "auth.tsクライアントにadminClientを追加", "status": "not_started"},
+    {"id": "02-02-03", "name": "useAuthフックにisAdmin判定を追加", "status": "not_started"},
+    {"id": "02-03-01", "name": "マイグレーションファイル生成", "status": "not_started"},
+    {"id": "02-03-02", "name": "初期管理者登録SQLを追記", "status": "not_started"},
+    {"id": "02-03-03", "name": "マイグレーション適用と検証", "status": "not_started"}
+  ],
+  "blockers": [],
+  "human_actions_pending": [],
+  "decisions": [
+    {"decision": "Better Auth Admin Plugin v1.5.4を使用", "rationale": "DBスキーマ、APIエンドポイント、型定義を自動生成するため", "phase": "02"},
+    {"decision": "tRPCミドルウェアパターンで権限チェック", "rationale": "既存のprotectedProcedureパターンを拡張し、adminProcedureを作成", "phase": "02"},
+    {"decision": "初期管理者はマイグレーションSQLで直接登録", "rationale": "UPDATE users SET role = 'admin' WHERE email = 'koshiro@mudef.net'", "phase": "02"},
+    {"decision": "Wave 1は並列実行可能", "rationale": "Plan 01と02はファイルの競合がないため並列実行可", "phase": "02"}
+  ],
+  "uncommitted_files": [],
+  "next_action": "/gsd:execute-phase 2 を実行して認証機能の実装を開始",
+  "context_notes": "フェーズ2の計画が完了。3つのプラン（Wave 1: Plan 01,02、Wave 2: Plan 03）が作成され、検証に合格。要件カバレッジも100%達成（AUTH-01, AUTH-02, AUTH-03, API-08）。/clear でコンテキストをクリアしてから実行を推奨。"
+}

@@ -71,3 +71,14 @@ export const pomodoroSessions = pgTable("pomodoro_sessions", {
   durationSecs: integer("duration_secs").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const bgmTracks = pgTable("bgm_tracks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title", { length: 32 }).notNull(),
+  artist: text("artist", { length: 32 }),
+  color: text("color"),
+  filename: text("filename", { length: 32 }).notNull().unique(),
+  tier: text("tier", { enum: ["free", "premium"] }).notNull().default("free"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

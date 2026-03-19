@@ -1,120 +1,88 @@
-# Technology Stack
+# STACK.md — Technology Stack
 
-**Analysis Date:** 2026-03-19
+## Language & Runtime
+- **TypeScript** 5.9.3 — フロントエンド・バックエンド共通
+- **Node.js** — ローカル開発環境（Vite/Wrangler）
+- **Cloudflare Workers (Edge Runtime)** — 本番バックエンド実行環境
+  - `nodejs_compat` フラグ有効
+  - Node.js API（crypto, fs, net）使用不可 → Web Crypto API / Neon HTTP を使用
 
-## Languages
+## Frontend
+- **React** 19.2.0 — UIフレームワーク
+- **Vite** 7.3.1 — ビルドツール・開発サーバー（ポート5173）
+- **Tailwind CSS** 4.2.1 — ユーティリティCSSフレームワーク（@tailwindcss/vite プラグイン）
+- **Framer Motion** 12.35.1 — アニメーションライブラリ
+- **Radix UI** 1.4.3 — ヘッドレスUIコンポーネント
+- **Lucide React** 0.575.0 — アイコンライブラリ
+- **class-variance-authority** 0.7.1 — CSSクラス生成
+- **tailwind-merge** 3.5.0 — Tailwindクラスマージング
+- **clsx** 2.1.1 — 条件付きクラス管理
 
-**Primary:**
-- TypeScript ~5.9.3 - All source code, API routes, and configuration
-- JSX/TSX - React component syntax with React 19.2.0
+## State Management
+- **Zustand** 5.0.11 — クライアントUI状態管理（persist ミドルウェアで localStorage 永続化）
+- **TanStack React Query** 5.90.21 — サーバー状態管理（tRPC と統合）
 
-**Secondary:**
-- JavaScript - ESLint configuration (eslint.config.js)
+## Backend
+- **Hono** 4.12.3 — Webフレームワーク（Edge Runtime 対応、basePath `/api`）
+- **tRPC** 11.0.0 — 型安全API層（`@trpc/server`, `@trpc/react-query`, `@trpc/client`）
+- **SuperJSON** 2.2.6 — JSON シリアライザー（Date/Map/Set対応）
 
-## Runtime
+## Authentication
+- **Better Auth** 1.5.4 — 認証フレームワーク
+  - Drizzle ORM アダプター（PostgreSQL）
+  - Google OAuth 2.0 プロバイダー
+  - メール/パスワード認証（メール送信は未実装 → Issue #120）
+  - JWT は `better-auth` 内部で Web Crypto API を使用
 
-**Environment:**
-- Node.js (version unspecified via .nvmrc)
-- Cloudflare Workers (Edge Runtime) - API execution via Wrangler
-- Browser (Web Crypto API for JWT signing)
+## Database
+- **PostgreSQL** — リレーショナルDB（Neon サーバーレス）
+- **Drizzle ORM** 0.45.1 — TypeScript ORM
+  - ドライバ: `drizzle-orm/neon-http`（HTTP経由、Edge Runtime対応）
+- **@neondatabase/serverless** 1.0.2 — Neon クライアント
+- **Drizzle Kit** 0.31.9 — マイグレーションツール
 
-**Package Manager:**
-- npm
-- Lockfile: `package-lock.json` (present)
+## Infrastructure
+- **Cloudflare Pages** — フロントエンドホスティング + Functions（バックエンド）
+- **Cloudflare R2** — BGM音声ファイルストレージ（バケット: `pomdo-bgm`）
+- **Wrangler** 4.69.0 — Cloudflare CLI（ローカル開発: ポート8788）
 
-## Frameworks
+## Testing
+- **Vitest** 4.0.18 — ユニットテストランナー
+- **@testing-library/react** 16.3.2 — React テストユーティリティ
+- **jsdom** 28.1.0 — DOM エミュレータ
+- **@vitest/coverage-v8** 4.0.18 — カバレッジ測定
+- **Playwright** 1.58.2 — E2Eテスト（Chromium/Firefox/WebKit）
 
-**Core:**
-- React 19.2.0 - UI framework
-- Hono 4.12.3 - HTTP framework for both REST and tRPC APIs
-- tRPC 11.0.0 (@trpc/server, @trpc/client, @trpc/react-query) - Type-safe RPC framework
+## Dev Tools
+- **ESLint** 9.39.1 — TypeScript ESLint推奨 + React Hooks + React Refresh
+- **Concurrently** 9.2.1 — 複数プロセス並行実行
+- **Shadcn** 3.8.5 — UIコンポーネントCLI
 
-**Styling:**
-- Tailwind CSS 4.2.1 - Utility-first CSS framework
-- @tailwindcss/vite 4.2.1 - Vite plugin for Tailwind
-- Class Variance Authority 0.7.1 - Component styling utilities
-- Radix UI 1.4.3 - Headless UI component library
-- shadcn - Component CLI/library
+## TypeScript Configuration
+```json
+// tsconfig.app.json
+{
+  "strict": true,
+  "noUnusedLocals": true,
+  "noUnusedParameters": true,
+  "noFallthroughCasesInSwitch": true,
+  "noUncheckedSideEffectImports": true,
+  "target": "ES2022",
+  "module": "ESNext"
+}
+```
 
-**Animations:**
-- Framer Motion 12.35.1 - Motion/animation library
-- tw-animate-css 1.4.0 - Tailwind animation utilities
+## Path Aliases
+```json
+"@/*": ["./src/*"]
+```
 
-**Icons:**
-- Lucide React 0.575.0 - React icon library
-
-**State Management:**
-- Zustand 5.0.11 - Lightweight state management
-- React Query (@tanstack/react-query) 5.90.21 - Server state management
-
-**Build/Dev:**
-- Vite 7.3.1 - Frontend build tool and dev server
-- Wrangler 4.69.0 - Cloudflare Workers CLI and Pages development
-- TypeScript Compiler (tsc) - Type checking
-- Concurrently 9.2.1 - Run multiple dev servers simultaneously
-
-## Key Dependencies
-
-**Critical:**
-- Drizzle ORM 0.45.1 - TypeScript-first SQL ORM
-- drizzle-kit 0.31.9 - Drizzle migration and schema management
-- @neondatabase/serverless 1.0.2 - HTTP client for Neon PostgreSQL (required for Edge Runtime)
-
-**Authentication & Authorization:**
-- better-auth 1.5.4 - Full-featured auth library with OAuth2 support
-- better-auth/adapters/drizzle - Drizzle adapter for better-auth
-
-**Data Serialization:**
-- superjson 2.2.6 - JSON serialization for complex types (Date, Map, etc.)
-
-**Utilities:**
-- clsx 2.1.1 - Conditional class name utility
-
-## Configuration
-
-**Environment:**
-- Environment variables configured via `wrangler.toml` bindings
-- Required env vars:
-  - `DATABASE_URL` - Neon PostgreSQL connection URL
-  - `GOOGLE_CLIENT_ID` - Google OAuth client ID
-  - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
-  - `BETTER_AUTH_SECRET` - Authentication secret for better-auth
-  - `BETTER_AUTH_URL` - Base URL for auth endpoints
-  - `FRONTEND_URL` - Frontend URL for CORS trust
-- Development environment: Wrangler loads `.dev.vars` file (not in repository)
-
-**Build:**
-- `tsconfig.json` - Root TypeScript configuration with path aliases
-- `tsconfig.app.json` - App-specific TypeScript config (strict mode, ES2022 target)
-- `vite.config.ts` - Frontend build configuration with React plugin, Tailwind plugin, path alias
-- `wrangler.toml` - Cloudflare Pages configuration (compatibility_date: 2025-01-01, nodejs_compat flag enabled)
-- `drizzle.config.ts` - Database schema and migration configuration
-
-## Platform Requirements
-
-**Development:**
-- Node.js (unspecified version, recommend LTS)
-- npm (bundled with Node.js)
-- Cloudflare account (for local Wrangler Pages development)
-
-**Production:**
-- Cloudflare Pages (Edge deployment)
-- Neon PostgreSQL (serverless SQL database)
-- Cloudflare R2 (object storage for BGM files)
-
-## Special Constraints (Edge Runtime)
-
-**Forbidden APIs:**
-- Node.js built-ins: `crypto`, `fs`, `net` modules
-- TCP sockets (Node.js stream protocol)
-- Packages requiring Node.js internals
-
-**Required Patterns:**
-- Use `Web Crypto API (crypto.subtle)` for JWT operations instead of Node.js crypto
-- Use `drizzle-orm/neon-http` with `@neondatabase/serverless` for database access (HTTP-only, no TCP)
-- Cannot use `@hono/oauth-providers` (Node.js dependency)
-- Cloudflare R2 bucket accessed via context bindings (`c.env.BGM_BUCKET`)
-
----
-
-*Stack analysis: 2026-03-19*
+## Key Commands
+```bash
+npm run dev        # Vite (5173) + Wrangler Pages Dev (8788) 同時起動
+npm run dev:vite   # Vite のみ
+npm run build      # tsc -b && vite build → dist/
+npm test           # Vitest ユニットテスト
+npm run db:generate  # Drizzle マイグレーションファイル生成
+npm run db:migrate   # マイグレーション適用
+```

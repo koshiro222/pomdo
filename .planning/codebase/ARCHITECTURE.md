@@ -1,239 +1,168 @@
-# Architecture
+# ARCHITECTURE.md — System Architecture
 
-**Analysis Date:** 2026-03-19
+## パターン
+**React SPA + Cloudflare Pages Functions（Edge Runtime）**
+- フロントエンド: React SPA（Vite ビルド）
+- バックエンド: Cloudflare Pages Functions（Hono + tRPC）
+- DB: Neon PostgreSQL（Drizzle ORM + HTTP接続）
+- 状態管理: Zustand（ローカルUI状態）+ TanStack Query（サーバーキャッシュ）
 
-## Pattern Overview
+## レイヤー構造
 
-**Overall:** Hybrid client-server with dual-API design
+```
+┌─────────────────────────────────────────────────────┐
+│                   フロントエンド (React)               │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────┐  │
+│  │  Components  │  │ Custom Hooks │  │  Zustand  │  │
+│  │  (UI層)      │  │ (ビジネスロジック)│  │  Stores   │  │
+│  └──────┬───────┘  └──────┬───────┘  └────┬──────┘  │
+│         │                  │               │          │
+│         └──────────────────┴───────────────┘          │
+│                            │                          │
+│                    tRPC Client                        │
+│              (httpBatchLink → /api/trpc)              │
+└────────────────────────────┬────────────────────────-─┘
+                             │ HTTP
+┌────────────────────────────▼────────────────────────-─┐
+│              バックエンド (Cloudflare Pages Functions)  │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │        Hono Router (functions/api/[[route]].ts)  │  │
+│  │  /api/auth/* → Better Auth                       │  │
+│  │  /api/bgm/*  → R2 Streaming                     │  │
+│  │  /api/trpc/* → tRPC Fetch Handler               │  │
+│  └──────────────────┬───────────────────────────────┘  │
+│                     │                                  │
+│  ┌──────────────────▼───────────────────────────────┐  │
+│  │           tRPC Router (src/app/routers/)          │  │
+│  │   appRouter: { todos, pomodoro }                  │  │
+│  │   Context: { user, db, schema }                   │  │
+│  └──────────────────┬───────────────────────────────┘  │
+│                     │                                  │
+│  ┌──────────────────▼───────────────────────────────┐  │
+│  │              Drizzle ORM                          │  │
+│  │         (drizzle-orm/neon-http)                   │  │
+│  └──────────────────┬───────────────────────────────┘  │
+└────────────────────-┼──────────────────────────────────┘
+                      │ HTTPS (Neon HTTP API)
+              ┌───────▼────────┐
+              │ Neon PostgreSQL │
+              └────────────────┘
+```
 
-**Key Characteristics:**
-- Frontend-first state management with localStorage fallback for guest mode
-- Dual API systems: tRPC for domain operations (todos, pomodoro), Hono REST for auth/health
-- Zustand stores as single source of truth with persistence middleware
-- Type-safe end-to-end with tRPC + TypeScript
-- Optional authentication - full app functionality without login
+## データフロー
 
-## Layers
+### 認証フロー
+```
+ユーザー → LoginButton → authClient.signIn.social({ provider: 'google' })
+    → /api/auth/* → Better Auth → Google OAuth
+    → セッション作成 → フロントエンドリダイレクト
+    → useAuth() で session 取得 → MigrateDialog（ゲストデータがある場合）
+```
 
-**Presentation Layer:**
-- Purpose: React components rendering UI with Tailwind CSS + shadcn/ui
-- Location: `src/components/`
-- Contains: Page layout (Header, Footer), cards (Timer, Todos, Stats, BGM), dialogs (Login, Migrate), individual task/timer controls
-- Depends on: Custom hooks (`useTodos`, `useTimer`, `usePomodoro`, `useAuth`, `useBgm`), Zustand stores
-- Used by: `src/App.tsx` main layout component
+### ゲスト → ログイン移行
+```
+ゲストモード: localTodos(localStorage) → ログイン → MigrateDialog
+    → "Migrate" 選択: todos.create × N (tRPC) → storage.clearTodos()
+    → "Skip & Clear" 選択: ローカルデータ破棄
+```
 
-**State Management Layer:**
-- Purpose: Centralized client state with localStorage persistence for guest mode
-- Location: `src/core/store/`
-- Contains: Zustand stores for auth, timer, todos, UI state with `persist` middleware
-- Depends on: `src/lib/storage.ts` for localStorage operations
-- Used by: Custom hooks that wrap store access and side effects
-- Pattern: Stores handle pure state mutations; hooks handle async operations and tRPC calls
+### Todoデータフロー（ログイン状態）
+```
+TodoInput → useTodos.addTodo() → tRPC todos.create mutation
+    → /api/trpc → tRPC Router → Drizzle → Neon DB
+    → invalidate todos query → TodoList 再レンダリング
+```
 
-**Hook Layer:**
-- Purpose: Business logic bridges between components and state/APIs
-- Location: `src/hooks/`
-- Contains: `useAuth` (session state), `useTodos` (CRUD + guest/server switching), `usePomodoro` (sessions), `useTimer` (interval logic + audio), `useBgm` (playback control)
-- Depends on: Zustand stores, tRPC client, storage utilities
-- Used by: Components for read/write operations
-- Pattern: Switch between localStorage and tRPC API based on authentication state
+### タイマーフロー
+```
+TimerControls → useTimer.start/pause/reset/skip()
+    → useTimerStore（Zustand）状態更新
+    → useTimer の setInterval でカウントダウン
+    → remainingSecs === 0 → onSessionComplete コールバック
+    → usePomodoro.handleSessionComplete() → tRPC pomodoro.createSession mutation
+    → 次セッションタイプへ自動遷移
+```
 
-**API Layer - tRPC:**
-- Purpose: Type-safe RPC for domain operations (todos, pomodoro sessions)
-- Location:
-  - Backend routers: `src/app/routers/` (todos.ts, pomodoro.ts, root.ts, context.ts)
-  - Frontend client: `src/lib/trpc.tsx`
-  - Endpoint handler: `functions/api/trpc/[[route]].ts`
-- Procedures: Protected (authenticated) and public
-- Uses: `httpBatchLink` for automatic request batching
-- Error handling: All errors wrapped in `TRPCError` (never raw `Error`)
+### BGMフロー
+```
+BgmPlayer → useBgm() → HTMLAudioElement
+    → /api/bgm/{filename} → Cloudflare R2 → オーディオストリーミング
+    → localStorage に再生状態永続化
+```
 
-**API Layer - REST (Hono):**
-- Purpose: Authentication flows and health checks
-- Location: `functions/api/[[route]].ts` (main), individual route handlers
-- Endpoints: `/api/auth/*` (Google OAuth callback), `/api/health` (DB connectivity check), `/api/todos`, `/api/pomodoro`, `/api/bgm`
-- Middleware: Auth verification via JWT tokens in session headers
-- Uses: Web Crypto API (`crypto.subtle`) for JWT operations (Edge Runtime compatible)
+## 二層 API 設計
 
-**Database Layer:**
-- Purpose: PostgreSQL persistence via Neon (serverless)
-- Location: `functions/lib/` (db.ts, schema.ts)
-- ORM: Drizzle ORM with HTTP driver (`drizzle-orm/neon-http`)
-- Schema: `functions/lib/schema.ts` defines `users`, `todos`, `pomodoro_sessions`, `sessions`, `accounts`, `verifications` tables
-- Connection: Uses `drizzle-orm/neon-http` (not `neon-serverless`) for Edge Runtime compatibility
+| API | エンドポイント | 用途 | 認証 |
+|-----|------------|------|------|
+| REST (Hono) | `/api/auth/*`, `/api/bgm/*`, `/api/health` | OAuth、ファイル配信 | Better Auth |
+| tRPC | `/api/trpc/*` | Todo・Pomodoroデータ | protectedProcedure |
 
-**Utilities Layer:**
-- Purpose: Shared helpers and configurations
-- Location: `src/lib/`
-- Contains: `storage.ts` (localStorage wrapper for todos/pomodoro/timer/bgm), `animation.ts` (Framer Motion variants), `auth.ts` (JWT handling), `utils.ts`, `trpc.tsx` (client setup)
+## ゲストモード vs ログイン状態の分岐
 
-## Data Flow
+`useTodos` での実装例:
+```typescript
+const todos = user
+  ? (todosQuery.data ?? [])        // ログイン: tRPC で DB から取得
+  : localTodos                      // ゲスト: localStorage から取得
 
-**Unauthenticated (Guest Mode):**
+const addTodo = async (title: string) => {
+  if (user) {
+    await createMutation.mutateAsync({ title })  // DB に追加
+  } else {
+    storage.addTodo({ title })                   // localStorage に追加
+  }
+}
+```
 
-1. User interacts with UI (add todo, start timer)
-2. Component calls hook (`useTodos`, `useTimer`)
-3. Hook detects `!user` and calls `storage.*` methods
-4. `storage.ts` reads/writes localStorage directly
-5. Zustand store updated via hook
-6. Component re-renders from store
+## Zustand Stores
 
-**Authenticated (Server Mode):**
+| Store | ファイル | 状態 | 永続化 |
+|-------|---------|------|--------|
+| `useTimerStore` | `src/core/store/timer.ts` | isActive, sessionType, remainingSecs, pomodoroCount | sessionType, remainingSecs, pomodoroCount |
+| `useTodosStore` | `src/core/store/todos.ts` | localTodos, selectedTodoId, loading, error | localTodos, selectedTodoId |
+| `useUiStore` | `src/core/store/ui.ts` | toasts[] | なし |
+| `useAuthStore` | `src/core/store/auth.ts` | 型定義のみ（AuthUser型） | N/A |
 
-1. User logs in via `/api/auth/google/callback` → JWT session created
-2. Component calls hook with `user` present
-3. Hook calls `trpc.todos.create.useMutation()` or `trpc.pomodoro.getSessions.useQuery()`
-4. tRPC sends batched HTTP POST to `/api/trpc` with auth headers
-5. Hono middleware extracts user from JWT token, passes to tRPC context
-6. tRPC procedure queries database via Drizzle ORM
-7. Response serialized via SuperJSON, returned to client
-8. Hook updates Zustand store
-9. Component re-renders
+## tRPC ルーター定義
 
-**Guest → Authenticated Transition:**
+```
+appRouter (src/app/routers/root.ts)
+├── todos (src/app/routers/todos.ts)
+│   ├── getAll  — Query, protectedProcedure
+│   ├── create  — Mutation, input: { title: string }
+│   ├── update  — Mutation, input: { id, title?, completed?, completedPomodoros? }
+│   └── delete  — Mutation, input: { id: string }
+└── pomodoro (src/app/routers/pomodoro.ts)
+    ├── getSessions   — Query, 最新30件逆順
+    ├── createSession — Mutation, input: { todoId?, type, startedAt, durationSecs }
+    └── completeSession — Mutation, input: { id: string }
+```
 
-1. User stored data in localStorage (guests can use full app)
-2. User clicks login, completes OAuth
-3. `App.tsx` detects `wasGuest && user` condition
-4. Shows `MigrateDialog` if `localStorage` has todos
-5. Dialog calls `useTodos().migrateToApi()`
-6. Todos bulk-inserted to database
-7. localStorage cleared, Zustand state synced with server data
-8. `refetch()` reloads todos from `/api/trpc`
+## エントリーポイント
 
-**Timer Completion Flow:**
+| 対象 | ファイル |
+|------|---------|
+| フロントエンド React エントリー | `src/main.tsx` |
+| メインアプリコンポーネント | `src/App.tsx` |
+| tRPC Provider・QueryClient | `src/lib/trpc.tsx` |
+| Hono REST バックエンド | `functions/api/[[route]].ts` |
+| tRPC バックエンドハンドラー | `functions/api/trpc/[[route]].ts` |
+| Better Auth サーバー | `functions/lib/auth.ts` |
+| DB インスタンス | `functions/lib/db.ts` |
+| DBスキーマ | `functions/lib/schema.ts` |
 
-1. `useTimer` hook runs `setInterval` while `isActive === true`
-2. When `remainingSecs === 0`:
-   - Calls `onSessionComplete` callback from `App.tsx`
-   - Calls `startSession(type, durationSecs)` → creates pomodoro_session record
-   - Calls `completeSession(sessionId)` → marks completedAt timestamp
-   - Increments `pomodoroCount` in timer store
-   - Auto-advances to next session type (work → short_break cycle)
-   - Plays notification sound via HTML5 Audio API
+## コンポーネント階層（概要）
 
-## Key Abstractions
-
-**Zustand Store Pattern:**
-- Purpose: Single source of truth for UI state with persistence
-- Examples: `useTimerStore`, `useTodosStore`, `useAuthStore`
-- Pattern: `create` + `persist` middleware; `partialize` selects which state to save
-- Mutations: Immer-like handler functions in store definition
-- Used by: Hooks that compose multiple stores
-
-**Dual Storage Interface:**
-- Purpose: Seamless guest/authenticated mode switching
-- `storage.ts` exports singleton object with methods: `getTodos()`, `addTodo()`, `updateTodo()`, `deleteTodo()`, `getPomodoroSessions()`, `addPomodoroSession()`, `updatePomodoroSession()`
-- Hooks check `user` presence and route calls to either `storage.*` or `trpc.*`
-- localStorage keys: `pomdo_todos`, `pomdo_pomodoro`, `pomdo_timer`, `pomdo_bgm`
-
-**tRPC Procedure with Protected Middleware:**
-- Purpose: Type-safe, auto-validated endpoints with auth enforcement
-- `protectedProcedure` throws `TRPCError({ code: 'UNAUTHORIZED' })` if `!ctx.user`
-- Input validation via Zod schemas in `src/app/routers/_shared.ts`
-- Database queries scoped to `user.id` (no cross-user data access)
-- Examples: `todos.create`, `todos.update`, `pomodoro.getSessions`
-
-**Session Type Ordering:**
-- Purpose: Enforce Pomodoro cycle (4 work + 3 breaks + 1 long break)
-- `SESSION_ORDER` array in `useTimerStore`: `['work', 'short_break', 'work', 'short_break', 'work', 'short_break', 'work', 'long_break']`
-- `skip()` advances through array with wraparound
-- `getNextSessionType()` used to auto-advance after session complete
-
-## Entry Points
-
-**Frontend Entry:**
-- Location: `src/main.tsx`
-- Triggers: Browser loads `/`
-- Responsibilities:
-  1. Creates React root with StrictMode
-  2. Wraps app in `TRPCProvider` (sets up query client + tRPC client)
-  3. Renders `App.tsx`
-
-**App Main:**
-- Location: `src/App.tsx`
-- Triggers: Rendering occurs after TRPCProvider setup
-- Responsibilities:
-  1. Routes: checks `window.location.pathname` for `/verify-email`, `/reset-password` (render special pages)
-  2. Initializes all hooks: `useAuth`, `useTodos`, `useTimer`, `usePomodoro`
-  3. Manages guest→login transition via `wasGuest` + `showMigrateDialog`
-  4. Renders Bento grid layout with all cards (Timer, Tasks, BGM, Stats, TodoList)
-  5. Handles audio notification on session complete
-
-**REST API Entry:**
-- Location: `functions/api/[[route]].ts`
-- Triggers: HTTP requests to `/api/*`
-- Responsibilities:
-  1. Creates Hono app with basePath `/api`
-  2. Routes: `/hello` (test), `/health` (DB check), `/auth/*`, `/todos/*`, `/pomodoro/*`, `/bgm/*`
-  3. Exports `onRequest` handler for Cloudflare Pages Functions
-
-**tRPC API Entry:**
-- Location: `functions/api/trpc/[[route]].ts`
-- Triggers: HTTP requests to `/api/trpc` with tRPC payload
-- Responsibilities:
-  1. Creates Hono app with auth middleware
-  2. Extracts session user from JWT via `better-auth` (or returns `null`)
-  3. Injects `user`, `db`, `schema` into tRPC context
-  4. Routes all `/api/trpc/*` requests to `appRouter`
-
-## Error Handling
-
-**Strategy:** Explicit error wrapping with context-appropriate codes
-
-**Patterns:**
-
-1. **tRPC Procedures:** Must throw `TRPCError` with code + message
-   - `UNAUTHORIZED` - auth required but user missing
-   - `NOT_FOUND` - database record not found
-   - Example: `throw new TRPCError({ code: 'NOT_FOUND', message: 'Todo not found' })`
-   - ❌ Never: `throw new Error()` (becomes INTERNAL_SERVER_ERROR)
-
-2. **Client Hooks:** Try/catch with fallback to localStorage state
-   - Example in `useTodos.addTodo()`: catches error, sets `setError()` for UI display, returns `null`
-   - Error state stored in Zustand: `error: string | null`
-
-3. **Storage Operations:** Silent failures with console.error
-   - Example: `saveTodos()` catches storage quota exceeded, logs warning, continues
-   - Prevents app crash from localStorage issues
-
-4. **Component Level:** Error boundaries via React (not shown but used for safety)
-   - Fallback: Show error message in UI from hook's error state
-
-## Cross-Cutting Concerns
-
-**Logging:**
-- Approach: `console.warn` for non-critical issues (autoplay blocked, storage failed)
-- No structured logging library; console used for browser debugging
-- No server-side logs captured (Cloudflare Workers have built-in request logs)
-
-**Validation:**
-- Input: Zod schemas on server side via `@trpc/server` automatic validation
-- Examples: `newTodoSchema`, `updateTodoSchema`, `newPomodoroSessionSchema` in `src/app/routers/_shared.ts`
-- Frontend: No validation before calling mutations (validation happens server-side)
-
-**Authentication:**
-- Session-based via JWT tokens (HS256 using Web Crypto API)
-- Provider: Google OAuth 2.0 integration via `better-auth`
-- Flow:
-  1. Google login button → redirects to `/api/auth/google/callback`
-  2. Callback creates JWT session token
-  3. Session token stored in httpOnly cookie (Cloudflare Pages)
-  4. Subsequent requests include cookie; Hono middleware verifies JWT
-  5. `user` object injected into tRPC context if valid
-- Scope: Email, name, profile picture from Google
-
-**Authorization:**
-- Pattern: `protectedProcedure` middleware checks `ctx.user` presence
-- Database scoping: All queries filtered by `userId` (e.g., `eq(ctx.schema.todos.userId, user.id)`)
-- Prevents: One user viewing/modifying another user's todos or sessions
-
-**BGM Playback:**
-- Constraint: Browser autoplay policy blocks audio without user interaction
-- Solution: Audio play() triggered only from event handlers (`handleStart` in TimerWidget)
-- HTML5 Audio element with `preload="auto"` for faster playback
-- Source: External CDN (mixkit.co) for notification sounds; local files for BGM
-
----
-
-*Architecture analysis: 2026-03-19*
+```
+App.tsx
+├── Header（LoginButton + todayFocusMinutes）
+├── main（Bento Grid 12列）
+│   ├── Timer Card（8列×2行）→ TimerDisplay + TimerControls
+│   ├── Current Task（2列×1行）→ CurrentTaskCard
+│   ├── BGM Player（2列×1行）→ BgmPlayer
+│   ├── Stats（4列×1行）→ StatsCard
+│   └── Todo List（12列×1行）→ TodoList（TodoInput + TodoItem×N）
+├── Footer
+├── MigrateDialog（ゲスト→ログイン時）
+└── ページルート（/verify-email, /reset-password）
+```

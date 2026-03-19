@@ -1,109 +1,106 @@
-# Concerns
+# CONCERNS.md — Technical Debt & Known Issues
 
-## Summary
+## 未実装機能
 
-Pomdo is a production-deployed app with generally clean code, but has several known gaps: email sending not implemented, BGM R2 migration partially complete, `any` types in tRPC routers, limited unit test coverage, and dual API system (REST + tRPC) with some legacy REST endpoints.
+### メール送信（Issue #120）
+- **場所**: `functions/lib/auth.ts` 行40, 46
+- **問題**: `sendResetPassword`, `sendVerificationEmail` が `console.log` のみ
+- **影響**: パスワードリセット・メール検証が実質機能しない
+- **対応**: Issue #120 でメール送信サービス（Resend等）の統合が必要
 
----
+## ロジック上の懸念
 
-## 1. Known TODOs / Unimplemented Features
+### sessionCompletePending のクリアタイミング不明確
+- **場所**: `src/hooks/useTimer.ts` 付近
+- **コード内コメント**:
+  ```typescript
+  // sessionCompletePendingはstart()の中で自動的にクリアされる想定
+  // ただし、現在の実装では自動クリアされないので別の方法を検討
+  ```
+- **影響**: 連続セッション時の自動開始が期待通りに動作しない可能性
+- **現状**: ユニットテスト（`useTimer.test.ts`）では自動開始は確認済み
 
-### Email Sending Not Implemented (High Priority)
-- **File**: `functions/lib/auth.ts:30,36`
-- **Issue**: Password reset and email verification currently only `console.log()` — no actual email delivery
-- **Impact**: `emailAndPassword` auth is enabled but password reset / email verification flows are broken in production
-- **Comment**: `// TODO: Issue #120 以降でメール送信サービスを統合する`
+## 未使用コード
 
-### BGM R2 Migration Incomplete
-- **File**: `functions/api/bgm.ts` — R2 proxy endpoint exists but `BGM_BUCKET` R2 binding not yet configured in Cloudflare
-- **File**: `src/hooks/useBgm.ts` — still references static `/audio/` paths OR API path (unclear if migrated)
-- **Impact**: BGM may fall back to missing files if R2 bucket not bound; audio files excluded from git
-- **Context**: Issue #51 — R2 enablement was blocked by account setup (Mar 2026)
+### REST Todo/Pomodoro API（デッドコード）
+- **場所**: `functions/api/todos.ts`, `functions/api/pomodoro.ts`
+- **問題**: REST APIとして実装されているが、実際はtRPCが使われており未使用
+- **影響**: コード量の肥大化・混乱の元
+- **対応**: 削除を検討（または意図的に残している場合はコメントで明示）
 
----
+## エラーハンドリングの不統一
 
-## 2. Type Safety Issues
+### エラーメッセージ言語の不統一
+- **問題**: UIは日本語だがエラーメッセージは英語
+  ```typescript
+  // useTodos.ts
+  const msg = e instanceof Error ? e.message : 'Failed to add todo'
+  // usePomodoro.ts
+  const msg = e instanceof Error ? e.message : 'Failed to migrate todos'
+  ```
+- **影響**: ユーザー向けエラーが英語で表示される場合がある
 
-### `any` Usage in tRPC Routers
-- **Files**: `src/app/routers/context.ts:13-14`, `src/app/routers/pomodoro.ts:12,13,47,57`, `src/app/routers/todos.ts:52`
-- **Details**:
-  - `context.ts`: `db: any` and `schema: any` — tRPC context lacks proper Drizzle types
-  - `pomodoro.ts`: `.where((t: any) => ...)` — Drizzle query builder not properly typed
-  - `todos.ts`: `const updateData: any = {}` — dynamic update object construction
-- **Risk**: Type errors masked at runtime; refactors won't catch breakage
+### フロントエンドのエラー状態表示
+- `useTodosStore` の `error` 状態がどこでユーザーに表示されるか不明確
 
-### `any[]` in MigrateDialog
-- **File**: `src/components/dialogs/MigrateDialog.tsx:14`
-- `useState<any[]>([])` — local todo type not inferred from storage schema
+## テストカバレッジの不足
 
----
+### ユニットテスト不足
+- **現状**: `src/hooks/useTimer.test.ts` のみ
+- **不足している対象**:
+  - `useTodos.ts` — ゲスト/ログイン分岐ロジック
+  - `usePomodoro.ts` — セッション管理
+  - `useBgm.ts` — BGM制御
+  - `src/app/routers/todos.ts` — tRPC ルーター
+  - `src/app/routers/pomodoro.ts` — tRPC ルーター
+  - `src/lib/storage.ts` — localStorage ラッパー
 
-## 3. Dual API Architecture Complexity
+### E2Eテストの実行環境依存
+- BGM テストは R2 バケットへのアクセスが必要（CI環境で失敗する可能性）
+- `public/audio/README.md` によるとBGMファイルはgitignoreで除外
 
-- Two parallel API systems exist: REST (`functions/api/todos.ts`, `functions/api/pomodoro.ts`) and tRPC (`functions/api/trpc/[[route]].ts`)
-- REST endpoints appear to be legacy/redundant — tRPC is the primary frontend API
-- **Risk**: Maintenance burden; unclear which endpoints are actually used by frontend
-- **Recommendation**: Audit and remove unused REST endpoints
+## Edge Runtime 制約リスク
 
----
+### Better Auth のEdge Runtime互換性
+- Better Auth 1.5.4 の全機能がCloudflare Workers で動作するか未検証部分がある
+- 特にメール関連機能（未実装のため顕在化していないが実装時に問題が出る可能性）
 
-## 4. Test Coverage Gaps
+### Node.js API の誤用リスク
+- `nodejs_compat` フラグで一部のNode.js APIが使えてしまうため、Edge Runtime非対応のコードが混入するリスクがある
 
-### Minimal Unit Tests
-- Only **1 unit test file**: `src/hooks/useTimer.test.ts` (245 lines)
-- No unit tests for: `useTodos`, `usePomodoro`, `useBgm`, `useAuth`, Zustand stores, tRPC routers
-- **Risk**: Regressions in untested hooks go undetected
+## セキュリティ上の注意点
 
-### E2E Test Dependencies
-- E2E tests require live Google OAuth — `tests/helpers/auth.ts` uses real sign-in
-- This makes E2E tests hard to run in CI without credentials
-- `tests/global-setup.ts` purpose unclear without reading it
+### JWT_SECRET の存在
+- `.dev.vars` に `JWT_SECRET` が存在するが、Better Auth 移行後のレガシーか新規で必要かが不明
+- 現在の実装で実際に使用されているか確認が必要
 
----
+### CORS設定
+- `FRONTEND_URL` 環境変数でCORSを制御しているが、設定漏れのリスク
 
-## 5. Security Considerations
+## パフォーマンス懸念
 
-### Sensitive Bindings in Wrangler
-- `BGM_BUCKET` R2 binding defined but bucket may not exist yet — silent failure mode
-- JWT secret and OAuth credentials stored as Cloudflare Pages secrets (correct pattern)
-- `.dev.vars` file exists for local development — must stay in `.gitignore`
+### tRPC バッチリクエスト
+- `httpBatchLink` を使用しているため複数のtRPCコールがバッチ化される
+- 意図しないバッチ遅延が生じる場合がある
 
-### Auth Token Storage
-- JWT stored as HTTP cookie (set by backend) — standard pattern, but cookie flags (`httpOnly`, `secure`, `sameSite`) should be audited
+### Zustand persist のhydration
+- `getInitialState()` でlocalStorageから復元するため、初回レンダリング時にちらつきが発生する可能性
 
-### BGM Filename Validation
-- `functions/api/bgm.ts` validates filename with regex `^[a-z0-9-]+\.(mp3)$` — adequate but case-insensitive flag (`i`) means uppercase extensions also pass; consistent lowercase should be enforced at upload time
+## アーキテクチャ上の技術的負債
 
----
+### authStore の実装不完全
+- `src/core/store/auth.ts` は型定義のみで実際の実装がない
+- 認証状態は `useAuth()` フックと `authClient` で管理しており、Zustand との役割分担が不明確
 
-## 6. Performance / Scalability
+### Cloudflare R2 の本番環境依存
+- BGM機能はCloudflare R2に依存しており、ローカル開発環境では動作確認が困難
+- `public/audio/` にフォールバックがあるか確認が必要
 
-### Cold Start Latency
-- Cloudflare Workers have near-zero cold starts, but Neon HTTP connection on each request adds ~20-100ms DB latency
-- No connection pooling possible in edge runtime
+## 依存関係の懸念
 
-### Guest Mode localStorage
-- Guest data stored in localStorage — no size limits enforced; large todo lists could approach 5MB browser limit
+### React 19の採用
+- React 19.2.0（比較的新しいバージョン）— サードパーティライブラリの互換性に注意
+- `@testing-library/react` 16.3.2 が React 19 に完全対応しているか確認が必要
 
----
-
-## 7. Fragile Areas
-
-### BGM Audio Files Not in Git
-- `public/audio/` is gitignored per `public/audio/README.md`
-- New contributors must manually source CC0 audio files
-- Onboarding friction; local dev BGM silent by default
-
-### Migration Dialog Logic
-- `src/components/dialogs/MigrateDialog.tsx` handles guest→auth data migration
-- Uses `any[]` for local todos — type mismatch between localStorage schema and DB schema could cause silent data loss
-
-### Dual tRPC/REST Context
-- tRPC server context passes `db` and `schema` as `any` — if DB or schema changes, tRPC procedures won't get type errors
-
----
-
-## 8. Known Production Issues (Resolved)
-
-- **JWT sign() parameter bug** (fixed PR #72): `exp` was passed as 3rd arg instead of in payload; `jwt.verify` was undefined middleware import instead of standalone function
-- Both `functions/api/auth.ts` and `functions/api/trpc/[[route]].ts` now use correct `await verify(token, secret, 'HS256')`
+### Vitest 4.0.18 と Vite 7.3.1
+- 最新バージョンを採用しているためエコシステムの追従が必要な場合がある

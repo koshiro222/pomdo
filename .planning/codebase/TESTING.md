@@ -1,241 +1,206 @@
-# Testing
+# TESTING.md — Test Structure & Practices
 
-## Overview
+## テストスタック
 
-Two-tier testing strategy: Vitest for unit tests (hooks/stores) and Playwright for E2E tests (user flows).
+| ツール | バージョン | 用途 |
+|--------|---------|------|
+| Vitest | 4.0.18 | ユニットテストランナー |
+| @testing-library/react | 16.3.2 | React フックのテスト |
+| jsdom | 28.1.0 | DOM エミュレーション |
+| @vitest/coverage-v8 | 4.0.18 | カバレッジ測定（v8） |
+| Playwright | 1.58.2 | E2Eブラウザテスト |
 
-## Unit Tests (Vitest)
+## ユニットテスト設定
 
-### Framework & Configuration
-
-- **Framework**: Vitest 4.0.18 with jsdom environment
-- **Config**: `vitest.config.ts`
-- **Setup file**: `src/test/setup.ts`
-- **Coverage**: v8 provider, outputs text + HTML + lcov
-
-```ts
-// vitest.config.ts key settings
+```typescript
+// vitest.config.ts
 {
   test: {
-    globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
-    exclude: ['**/tests/e2e/**'],
-    coverage: { provider: 'v8' }
+    setupFiles: ['src/test/setup.ts'],
+    css: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov']
+    }
   }
 }
 ```
 
-### File Structure
+### テストセットアップ（`src/test/setup.ts`）
+- localStorage のモック（Zustand persist ミドルウェア対応）
+- `@testing-library/jest-dom` マッチャー拡張
 
-Unit tests are **co-located** with source files:
+## ユニットテストの場所・構造
 
 ```
-src/hooks/useTimer.ts
-src/hooks/useTimer.test.ts   ← co-located test
+src/
+└── hooks/
+    └── useTimer.test.ts   # 現状唯一のユニットテスト
 ```
 
-Currently 1 unit test file: `src/hooks/useTimer.test.ts` (245 lines).
+### `useTimer.test.ts` パターン
+```typescript
+import { renderHook, act } from '@testing-library/react'
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 
-### Global Setup: `src/test/setup.ts`
-
-```ts
-import { expect, afterEach } from 'vitest'
-import { cleanup } from '@testing-library/react'
-import * as matchers from '@testing-library/jest-dom/matchers'
-
-expect.extend(matchers)  // jest-dom matchers available globally
-
-// localStorage mock for Zustand persist middleware
-const localStorageMock = (() => {
-  let store: Record<string, string> = {}
-  return { getItem, setItem, removeItem, clear, ... }
-})()
-
-Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock })
-
-afterEach(() => {
-  cleanup()           // React Testing Library cleanup
-  localStorageMock.clear()  // Reset localStorage between tests
-})
-```
-
-### Time-Based Testing Pattern
-
-Uses `vi.useFakeTimers()` + `vi.advanceTimersByTime()` for timer tests:
-
-```ts
 describe('useTimer', () => {
   beforeEach(() => {
     vi.useFakeTimers()
-    // Reset Zustand store state before each test
-    useTimerStore.setState({
-      isActive: false,
-      sessionType: 'work',
-      remainingSecs: 25 * 60,
-      pomodoroCount: 0,
-    })
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
+    vi.useRealTimers()
   })
 
-  it('タイマーがカウントダウンする', () => {
+  it('初期状態の検証', () => {
+    const { result } = renderHook(() => useTimer())
+    expect(result.current.isActive).toBe(false)
+    expect(result.current.sessionType).toBe('work')
+  })
+
+  it('タイマー開始でカウントダウン', () => {
     const { result } = renderHook(() => useTimer())
     act(() => { result.current.start() })
     act(() => { vi.advanceTimersByTime(1000) })
-    expect(result.current.remainingSecs).toBe(25 * 60 - 1)
+    expect(result.current.remainingSecs).toBe(WORK_DURATION - 1)
   })
 })
 ```
 
-### Zustand Store Reset Pattern
+### テストカバー範囲（useTimer.test.ts — 13ケース）
+- 初期化・初期値
+- start() / pause() / reset() / skip()
+- 1秒ごとのカウントダウン確認
+- pomodoroCount の自動インクリメント
+- セッション完了時の自動次セッション開始
+- onSessionComplete コールバック呼び出し
 
-Reset store state directly in `beforeEach` to ensure test isolation:
+## E2Eテスト設定
 
-```ts
-useTimerStore.setState({
-  isActive: false,
-  sessionType: 'work',
-  remainingSecs: 25 * 60,
-})
-```
-
-### Test Helpers Available
-
-- `@testing-library/react`: `renderHook`, `act`
-- `@testing-library/jest-dom`: DOM matchers (`.toBeVisible()`, `.toBeInTheDocument()`, etc.)
-- Vitest globals: `describe`, `it`, `expect`, `vi`, `beforeEach`, `afterEach`
-
-### Running Unit Tests
-
-```bash
-npm test                    # run all unit tests
-npm test -- --coverage      # with coverage report
-npm test -- useTimer        # filter by file name
-```
-
-## E2E Tests (Playwright)
-
-### Framework & Configuration
-
-- **Framework**: Playwright (latest)
-- **Config**: `playwright.config.ts`
-- **Test directory**: `tests/e2e/`
-- **Base URL**: `http://localhost:5173`
-- **Browsers**: Chromium, Firefox, WebKit (Desktop)
-- **Workers**: 1 (sequential — prevents auth state conflicts)
-- **Parallelism**: `fullyParallel: false`
-
-### Web Server
-
-Playwright auto-starts `npm run dev` (Vite + Wrangler) before tests:
-
-```ts
-webServer: {
-  command: 'npm run dev',
-  url: 'http://localhost:5173',
-  reuseExistingServer: !process.env.CI,
-  timeout: 120000,
-}
-```
-
-### Test Suites (5 files)
-
-| File | Coverage |
-|------|---------|
-| `tests/e2e/auth.spec.ts` | Google OAuth login flow, sign-out |
-| `tests/e2e/timer.spec.ts` | Timer display, session switching, countdown |
-| `tests/e2e/todo.spec.ts` | Todo CRUD (add, complete, delete) |
-| `tests/e2e/bgm.spec.ts` | BGM player controls |
-| `tests/e2e/migration.spec.ts` | Guest→auth data migration dialog |
-
-### Global Setup: `tests/global-setup.ts`
-
-Runs once before all Playwright tests. Sets up any required preconditions (DB cleanup, auth state).
-
-### Auth Helper: `tests/helpers/auth.ts`
-
-```ts
-import { signIn } from '../helpers/auth'
-
-// Reusable sign-in flow across test files
-await signIn(page)
-
-// Cleanup after authenticated tests
-await cleanupTodos(page)
-```
-
-### E2E Pattern: Guest Mode vs Auth Mode
-
-Most E2E tests cover both modes:
-
-```ts
-test.describe('タイマー動作 - ゲストモード', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-    await page.evaluate(() => localStorage.clear())
-    await page.reload()
-  })
-  // ...
-})
-
-test.describe('タイマー動作 - ログイン済み', () => {
-  test.beforeEach(async ({ page }) => {
-    await signIn(page)
-  })
-  // ...
-})
-```
-
-### localStorage Reset in E2E
-
-```ts
-// Reset specific store key
-await page.evaluate(() => localStorage.removeItem('timer-storage'))
-await page.reload()
-
-// Full reset
-await page.evaluate(() => localStorage.clear())
-await page.reload()
-```
-
-### Running E2E Tests
-
-```bash
-npx playwright test                    # run all E2E tests
-npx playwright test timer.spec.ts      # run single suite
-npx playwright test --headed           # with browser UI
-npx playwright test --debug            # step-through debugger
-npx playwright show-report             # view HTML report
-```
-
-### CI Configuration
-
-```ts
+```typescript
+// playwright.config.ts
 {
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  testDir: 'tests/e2e',
+  globalSetup: 'tests/global-setup.ts',
+  fullyParallel: false,   // 順序保証
+  workers: 1,             // シングルスレッド（テスト競合回避）
+  reporter: [['html'], ['json']],
+  use: {
+    baseURL: 'http://localhost:8788',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'only-on-failure',
+  },
+  projects: [
+    { name: 'chromium' },
+    { name: 'firefox' },
+    { name: 'webkit' },
+  ],
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:8788',
+    reuseExistingServer: !process.env.CI,
+  }
 }
 ```
 
-## Coverage
+## E2Eテストの構造
 
-Unit test coverage is collected by Vitest v8:
-
-```bash
-npm test -- --coverage
-# Output: coverage/ directory
-# Formats: text (stdout), HTML (coverage/index.html), lcov
+```
+tests/
+├── global-setup.ts          # テストユーザー作成（better-auth API経由）
+└── e2e/
+    ├── helpers/
+    │   └── auth.ts          # ログインヘルパー関数・テスト認証情報定数
+    ├── auth.spec.ts         # 認証フロー
+    ├── timer.spec.ts        # タイマー操作
+    ├── todo.spec.ts         # Todo CRUD
+    ├── migration.spec.ts    # ゲスト→ログイン移行
+    └── bgm.spec.ts          # BGM再生
 ```
 
-Current coverage focuses on `src/hooks/` and `src/core/store/`.
+### テスト認証情報（`tests/e2e/helpers/auth.ts`）
+```typescript
+export const TEST_USER = {
+  email: 'pomdo.test.x7k2q@example.com',
+  password: 'Px9mK#vL3nR@2025',
+  name: 'TestUser'
+}
+```
 
-## Testing Conventions
+### global-setup.ts
+- better-auth API 経由でテストユーザーを事前作成
+- 既存ユーザーがいる場合は削除して再作成
 
-- テスト名は日本語で書く（例: `'初期状態ではタイマーが停止している'`）
-- E2E tests always test both guest mode and authenticated mode when applicable
-- Zustand stores are reset via `.setState()` in `beforeEach`, not by re-importing
-- `vi.useFakeTimers()` must be paired with `vi.restoreAllMocks()` in `afterEach`
-- E2E helpers (`signIn`, `cleanupTodos`) handle auth boilerplate to keep tests focused
+## E2Eテストカバレッジ
+
+### `auth.spec.ts`
+- ゲストモード: ログインボタン表示確認
+- LoginDialog 表示: Google/メール両方のオプション
+- ダイアログ閉じる: ×ボタン・ESCキー
+- メールログイン: 正常系・エラーメッセージ確認
+- ログアウトフロー
+
+### `timer.spec.ts`
+- ゲストモード・ログインモード両方
+- Focus (25分) → Short Break (5分) → Long Break (15分) セッション切り替えUI
+- START / PAUSE / RESET / SKIP ボタン操作
+- 各セッション種別でのUI状態確認
+
+### `todo.spec.ts`
+- Todo 追加・完了チェック・削除
+- フィルター（Active / Done / All）
+- 残りタスク数表示の更新
+- タスク選択で CurrentTaskCard に反映
+
+### `migration.spec.ts`
+- ゲストモードでタスク作成 → ログイン後 MigrateDialog 表示
+- "Migrate" 選択: ゲストタスクがサーバーDBに移行
+- "Skip & Clear" 選択: ゲストタスク破棄
+- `cleanupTodos()` で後処理
+
+### `bgm.spec.ts`
+- BGM再生・停止
+- トラック切り替え
+
+## テスト実行コマンド
+
+```bash
+npm test              # Vitest ユニットテスト（ウォッチモード）
+npm run test:run      # Vitest 1回実行
+npm run test:coverage # カバレッジ付き実行
+npm run test:e2e      # Playwright E2E（全ブラウザ）
+npx playwright test --project=chromium  # Chromiumのみ
+npx playwright test tests/e2e/auth.spec.ts  # 特定ファイル
+```
+
+## モッキング戦略
+
+### localStorage モック（`src/test/setup.ts`）
+```typescript
+// Zustand persist との互換性のためlocalStorage全体をモック
+const localStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+}
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+```
+
+### タイマーモック（ユニットテスト内）
+```typescript
+vi.useFakeTimers()          // フェイクタイマー有効化
+vi.advanceTimersByTime(1000) // 時間を進める
+vi.useRealTimers()           // 復元
+```
+
+### HTTPモック
+- ユニットテストでは tRPC/fetch をモックしていない（現状）
+- E2E テストは実際の開発サーバーに対して実行
+
+## 注意事項
+- E2E は `fullyParallel: false` + `workers: 1` のため順序依存テストが書ける
+- テストユーザーは1件のみ（グローバルに共有）— 競合に注意
+- BGM テストは R2 への実際のアクセスが必要（ローカルでは public/audio/ フォールバックがある場合）

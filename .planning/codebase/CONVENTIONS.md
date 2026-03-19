@@ -1,165 +1,240 @@
-# Coding Conventions
+# CONVENTIONS.md — Code Style & Patterns
 
-**Analysis Date:** 2026-03-19
+## TypeScript設定（strict mode）
 
-## Naming Patterns
-
-**Files:**
-- Components: PascalCase (e.g., `TimerDisplay.tsx`, `CurrentTaskCard.tsx`)
-- Hooks: camelCase with `use` prefix (e.g., `useTimer.ts`, `useTodos.ts`)
-- Stores: camelCase with `use` suffix (e.g., `timer.ts` → `useTimerStore`)
-- Utils/Lib: camelCase (e.g., `animation.ts`, `storage.ts`)
-- Types/Schemas: PascalCase for type files (e.g., `schema.ts` contains types)
-- Tests: `filename.test.ts` or `filename.spec.ts`
-
-**Functions:**
-- React components: PascalCase (e.g., `TimerDisplay`, `LoginButton`)
-- Hooks: camelCase with `use` prefix (e.g., `useTimer()`, `useTodos()`)
-- Utility functions: camelCase (e.g., `formatFocusTime()`, `getSessionTotalSecs()`)
-- Handlers: `handle{Action}` pattern (e.g., `handleComplete`, `handleDelete`, `handleSelectNext`)
-- Callbacks/Mutations: descriptive camelCase (e.g., `onSessionComplete`, `onSessionTypeChange`)
-
-**Variables:**
-- State variables: camelCase (e.g., `remainingSecs`, `pomodoroCount`, `selectedTodoId`)
-- Constants: UPPER_SNAKE_CASE (e.g., `SESSION_DURATIONS`, `SESSION_ORDER`)
-- Boolean flags: prefix with `is` or `has` (e.g., `isActive`, `hasMoreTodos`)
-- Error messages: camelCase (e.g., `localError`, `currentError`)
-
-**Types:**
-- Interfaces: PascalCase (e.g., `TimerDisplayProps`, `CurrentTaskCardProps`, `Context`)
-- Type aliases: PascalCase (e.g., `SessionType`, `Mode`, `Toast`)
-- Union types: descriptive (e.g., `type SessionType = 'work' | 'short_break' | 'long_break'`)
-- Store types: compound (e.g., `TimerStore = TimerState & TimerActions`)
-
-## Code Style
-
-**Formatting:**
-- Prettier is not explicitly configured (no `.prettierrc` file present)
-- Default Vite/TypeScript formatting observed across codebase
-- Line length appears unrestricted in samples
-- Indentation: 2 spaces (observed in all files)
-
-**Linting:**
-- ESLint with flat config: `eslint.config.js`
-- Config extends: `@eslint/js`, `typescript-eslint`, `react-hooks`, `react-refresh`
-- Rules enforce React hooks dependencies via `eslint-plugin-react-hooks`
-- TypeScript strict mode enabled in compiler
-
-**Strict TypeScript Settings:**
 ```json
-"strict": true,
-"noUnusedLocals": true,
-"noUnusedParameters": true,
-"noFallthroughCasesInSwitch": true,
-"noUncheckedSideEffectImports": true
+// tsconfig.app.json
+{
+  "strict": true,
+  "noUnusedLocals": true,
+  "noUnusedParameters": true,
+  "noFallthroughCasesInSwitch": true,
+  "noUncheckedSideEffectImports": true
+}
 ```
 
-## Import Organization
+## コンポーネントパターン
 
-**Order:**
-1. React/Framework imports (e.g., `import { useState } from 'react'`)
-2. Third-party libraries (e.g., `import { motion } from 'framer-motion'`, `import { Check } from 'lucide-react'`)
-3. Internal components/hooks (e.g., `import { useTodos } from '../../hooks/useTodos'`)
-4. Utilities (e.g., `import { tapAnimation } from '@/lib/animation'`, `import { storage } from '../../lib/storage'`)
-5. Type imports (separate or with `type` keyword): `import type { SessionType } from '../../hooks/useTimer'`
+### Props定義
+```typescript
+// interface で厳密に定義・エクスポート
+export interface CurrentTaskCardProps {
+  selectedTodoId: string | null
+  todos: Todo[]
+  onSelectTodo: (id: string | null) => void
+}
 
-**Path Aliases:**
-- `@/*` resolves to `./src/*` (configured in `tsconfig.json` and `vitest.config.ts`)
-- Example: `@/lib/animation` → `src/lib/animation.ts`
-- Used for: utilities, components, shared lib files
-- Relative imports used for: hooks, stores (context-dependent imports)
+export const CurrentTaskCard: React.FC<CurrentTaskCardProps> = ({ ... }) => { ... }
+```
 
-## Error Handling
+### メモ化
+```typescript
+// イベントハンドラーは useCallback でメモ化
+const handleSelect = useCallback((id: string) => {
+  setSelectedTodoId(id)
+}, [setSelectedTodoId])
+```
 
-**Patterns:**
-- tRPC routers: use `TRPCError` with typed codes (e.g., `TRPCError({ code: 'NOT_FOUND', message: '...' })`)
-  - Location: `src/app/routers/` and `functions/api/trpc/`
-  - Example: `src/app/routers/todos.ts` throws `TRPCError` for validation failures
-- Try/catch blocks: catch as `Error` instance check pattern
-  ```typescript
-  try {
-    // logic
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Default error message'
-    // handle
-  }
-  ```
-- Promise rejections: `.catch()` for browser API calls (e.g., `audio.play().catch(() => ...)`)
-- Store initialization: catch and set error state
-  ```typescript
-  try {
-    const stored = storage.getTodos()
-    set({ localTodos: stored, loading: false, error: null })
-  } catch (e) {
-    set({ error: e instanceof Error ? e.message : 'Failed', loading: false })
-  }
-  ```
+### 条件レンダリング
+```typescript
+// 三項演算子で状態別表示
+{selectedTodo ? (
+  <div className="...">{selectedTodo.title}</div>
+) : (
+  <div className="text-gray-400">タスクを選択してください</div>
+)}
+```
 
-**CRITICAL - tRPC Implementation:**
-- Plain `throw new Error()` in tRPC procedures → `INTERNAL_SERVER_ERROR (500)` response
-- Always use `TRPCError` with specific code (e.g., `'NOT_FOUND'`, `'UNAUTHORIZED'`, `'BAD_REQUEST'`)
-- Location: `functions/lib/` and `src/app/routers/`
+### Tailwind + clsx/cn パターン
+```typescript
+import { cn } from '@/lib/utils'
 
-## Logging
+<div className={cn(
+  "base-class",
+  isActive && "active-class",
+  variant === 'error' && "error-class"
+)} />
+```
 
-**Framework:** `console` (no dedicated logging library)
+## Framer Motionパターン
 
-**Patterns:**
-- `console.warn()` for non-critical issues (e.g., browser autoplay policies)
-  ```typescript
-  .catch(() => {
-    console.warn('Autoplay prevented by browser policy')
-  })
-  ```
-- No `console.log()` for production code observed
-- Error tracking recommended but not yet implemented (opportunity area)
+```typescript
+// src/lib/animation.ts に統一定義
+export const tapAnimation = { scale: 0.95 }
+export const hoverAnimation = { scale: 1.02 }
 
-## Comments
+// 使用側
+<motion.button
+  whileTap={tapAnimation}
+  whileHover={hoverAnimation}
+>
+```
 
-**When to Comment:**
-- Helper functions with non-obvious behavior: e.g., `resetTimerState()` in `tests/e2e/timer.spec.ts` has JSDoc
-- Complex calculations: e.g., SVG circle circumference math in `TimerRing.tsx`
-- Business logic boundaries: e.g., "Session complete" sections in `useTimer.ts`
+## カスタムフックパターン
 
-**JSDoc/TSDoc:**
-- Minimal usage observed
-- Test helpers include comment blocks: `/** localStorage のタイマー状態をリセット... */`
-- Not required for simple functions/components
+### インターフェース定義
+```typescript
+export interface UseTimerReturn {
+  isActive: boolean
+  sessionType: SessionType
+  remainingSecs: number
+  start: () => void
+  pause: () => void
+  reset: () => void
+}
 
-## Function Design
+export interface UseTimerOptions {
+  onSessionComplete?: (type: SessionType) => void
+}
 
-**Size:**
-- Hooks: 100-150 lines typical (e.g., `useTimer.ts`, `useTodos.ts`)
-- Components: 90-100 lines including JSX
-- Procedures: 20-40 lines (tRPC routers in `src/app/routers/`)
+export function useTimer(options?: UseTimerOptions): UseTimerReturn { ... }
+```
 
-**Parameters:**
-- Interfaces for component props (e.g., `TimerDisplayProps`)
-- Interfaces for hook options (e.g., `UseTimerOptions`)
-- Limit to 3-5 parameters; use objects for multiple related params
+### Zustand ストア連携
+```typescript
+const {
+  isActive,
+  sessionType,
+  start,
+  pause
+} = useTimerStore()
+```
 
-**Return Values:**
-- Hooks return object of state + actions (e.g., `UseTimerReturn`)
-- Components return JSX Element
-- Async functions return promise (explicit typing)
+### エラーハンドリング
+```typescript
+try {
+  await createMutation.mutateAsync({ title })
+} catch (e) {
+  const msg = e instanceof Error ? e.message : 'Failed to add todo'
+  setError(msg)
+}
+```
 
-## Module Design
+## Zustand ストアパターン
 
-**Exports:**
-- Named exports for hooks (e.g., `export function useTimer()`)
-- Named exports for components (e.g., `export function TimerDisplay()`, `export default function CurrentTaskCard()`)
-- Default export for page/route components
-- Type exports: `export type { SessionType }` alongside function exports
+### 型定義の階層化
+```typescript
+interface TimerState {
+  isActive: boolean
+  sessionType: SessionType
+  remainingSecs: number
+}
 
-**Barrel Files:**
-- Not used in this codebase
-- Imports are direct from specific files (e.g., `from '../../hooks/useTimer'`)
+interface TimerActions {
+  start: () => void
+  pause: () => void
+  reset: () => void
+}
 
-**File Organization in Stores:**
-- Store definition and type definitions in single file (e.g., `src/core/store/timer.ts`)
-- State interface, Actions interface, combined Store type in same file
-- Use `persist` middleware from Zustand for localStorage integration
+type TimerStore = TimerState & TimerActions
 
----
+export const useTimerStore = create<TimerStore>()(
+  persist(
+    (set, get) => ({
+      // state
+      isActive: false,
+      sessionType: 'work',
+      remainingSecs: 25 * 60,
 
-*Convention analysis: 2026-03-19*
+      // actions
+      start: () => set({ isActive: true }),
+      pause: () => set({ isActive: false }),
+    }),
+    {
+      name: 'pomdo_timer',
+      partialize: (state) => ({
+        // isActive は永続化しない（リロード時はポーズ状態）
+        sessionType: state.sessionType,
+        remainingSecs: state.remainingSecs,
+      }),
+    }
+  )
+)
+```
+
+## tRPCエラーハンドリング
+
+```typescript
+// ✅ 正しい: TRPCError を使用
+import { TRPCError } from '@trpc/server'
+
+throw new TRPCError({
+  code: 'NOT_FOUND',
+  message: 'Todo not found'
+})
+
+throw new TRPCError({
+  code: 'UNAUTHORIZED',
+  message: 'Authentication required'
+})
+
+// ❌ 禁止: new Error() は INTERNAL_SERVER_ERROR になる
+throw new Error('Todo not found')
+```
+
+## localStorage ラッパーパターン
+
+```typescript
+// src/lib/storage.ts 経由でアクセス（直接 localStorage は使わない）
+import { storage } from '@/lib/storage'
+
+storage.getTodos()
+storage.addTodo({ title })
+storage.clearTodos()
+```
+
+## ゲスト/ログイン分岐パターン
+
+```typescript
+// useAuth から user を取得して分岐
+const { user } = useAuth()
+
+// データ取得
+const todos = user ? (todosQuery.data ?? []) : localTodos
+
+// 書き込み
+if (user) {
+  await createMutation.mutateAsync(input)
+} else {
+  storage.addTodo(input)
+}
+```
+
+## Zodスキーマパターン
+
+```typescript
+// src/app/routers/_shared.ts に共通スキーマを定義
+export const createTodoSchema = z.object({
+  title: z.string().min(1).max(255),
+})
+
+// ルーターでの使用
+create: protectedProcedure
+  .input(createTodoSchema)
+  .mutation(async ({ ctx, input }) => { ... })
+```
+
+## インポート規則
+
+```typescript
+// パスエイリアス @/* を使用（相対パス禁止）
+import { useTimerStore } from '@/core/store/timer'
+import { cn } from '@/lib/utils'
+import { storage } from '@/lib/storage'
+
+// 型のみのインポートは export type を使用
+export type { TimerState, SessionType }
+```
+
+## 命名規則まとめ
+
+| 対象 | 規則 | 例 |
+|------|------|-----|
+| コンポーネント | PascalCase | `TodoItem`, `BgmPlayer` |
+| フック | `use` + PascalCase | `useTimer`, `useTodos` |
+| ストア | `use` + Name + `Store` | `useTimerStore` |
+| インターフェース | PascalCase | `TimerState`, `UseTimerReturn` |
+| 定数 | SCREAMING_SNAKE_CASE | `WORK_DURATION_SECS` |
+| tRPCプロシージャ | camelCase | `getAll`, `createSession` |
+| DBテーブル | camelCase | `todos`, `pomodoroSessions` |
+| localStorage キー | `pomdo_` プレフィックス | `pomdo_timer`, `pomdo_todos` |

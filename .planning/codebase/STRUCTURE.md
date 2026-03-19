@@ -1,175 +1,169 @@
-# Directory Structure
+# STRUCTURE.md — Directory Layout & Organization
 
-## Overview
-
-Pomdo is a full-stack Cloudflare Pages application. The project uses a monorepo-style layout where frontend code lives in `src/` and backend (Cloudflare Functions) in `functions/`.
-
-## Top-Level Layout
+## トップレベル構造
 
 ```
 pomdo/
-├── src/                    # React frontend (Vite)
-├── functions/              # Cloudflare Pages Functions (backend API)
-├── tests/                  # E2E tests (Playwright)
-├── drizzle/                # DB migration files
-├── public/                 # Static assets (images, audio)
-├── ai-rules/               # AI assistant rules & architecture docs
-├── .planning/              # GSD planning artifacts
-├── dist/                   # Build output (gitignored)
-├── index.html              # SPA entry point
-├── vite.config.ts          # Vite build configuration
-├── vitest.config.ts        # Unit test configuration
-├── playwright.config.ts    # E2E test configuration
-├── wrangler.toml           # Cloudflare Pages deployment config
-├── drizzle.config.ts       # Drizzle ORM config
-├── tsconfig.json           # TypeScript root config
-├── tsconfig.app.json       # Frontend TypeScript config
-└── package.json
+├── src/                     # フロントエンド（React + TypeScript）
+├── functions/               # バックエンド（Cloudflare Pages Functions）
+├── tests/                   # E2Eテスト（Playwright）
+├── public/                  # 静的アセット
+├── ai-rules/                # AIアシスタント向けドキュメント
+├── .planning/               # GSD プランニングドキュメント
+├── dist/                    # ビルド出力（gitignore）
+├── package.json
+├── vite.config.ts
+├── vitest.config.ts
+├── playwright.config.ts
+├── wrangler.toml            # Cloudflare 設定
+├── drizzle.config.ts        # Drizzle ORM 設定
+├── tsconfig.json
+├── tsconfig.app.json        # フロントエンド用
+├── tsconfig.node.json       # Node.js ツール用
+└── eslint.config.js
 ```
 
-## Frontend: `src/`
+## src/ — フロントエンド
 
 ```
 src/
-├── main.tsx                # React app entry point
-├── App.tsx                 # Root component (layout, providers)
-├── app/
-│   └── routers/            # tRPC client-side router definitions
-│       ├── root.ts         # Root router (combines all routers)
-│       ├── todos.ts        # Todo tRPC procedures (client)
-│       ├── pomodoro.ts     # Pomodoro tRPC procedures (client)
-│       ├── context.ts      # tRPC context type
-│       └── _shared.ts      # Shared types/utilities
-├── components/
+├── main.tsx                 # React エントリーポイント（tRPC Provider ラップ）
+├── App.tsx                  # ルートコンポーネント（Bento Grid レイアウト）
+│
+├── components/              # UIコンポーネント（機能別分類）
 │   ├── auth/
 │   │   └── LoginButton.tsx
 │   ├── bgm/
 │   │   └── BgmPlayer.tsx
 │   ├── dialogs/
-│   │   ├── LoginDialog.tsx
-│   │   └── MigrateDialog.tsx  # Guest→auth data migration
+│   │   ├── LoginDialog.tsx  # Google/メール認証ダイアログ
+│   │   └── MigrateDialog.tsx # ゲスト→ログイン移行ダイアログ
 │   ├── layout/
 │   │   ├── Header.tsx
 │   │   └── Footer.tsx
-│   ├── pages/
-│   │   ├── ResetPasswordPage.tsx
-│   │   └── VerifyEmailPage.tsx
+│   ├── pages/               # ルートページコンポーネント
+│   │   ├── VerifyEmailPage.tsx
+│   │   └── ResetPasswordPage.tsx
 │   ├── stats/
-│   │   └── StatsCard.tsx
+│   │   └── StatsCard.tsx    # 本日のフォーカス分表示
 │   ├── tasks/
 │   │   └── CurrentTaskCard.tsx
 │   ├── timer/
 │   │   ├── TimerDisplay.tsx
 │   │   ├── TimerControls.tsx
-│   │   └── TimerRing.tsx
+│   │   └── TimerRing.tsx    # SVGリング進捗表示
 │   ├── todos/
-│   │   ├── TodoInput.tsx
+│   │   ├── TodoList.tsx
 │   │   ├── TodoItem.tsx
-│   │   └── TodoList.tsx
+│   │   └── TodoInput.tsx
 │   └── ui/
-│       └── checkbox.tsx    # shadcn/ui components
+│       └── checkbox.tsx     # shadcn/ui ベースの汎用コンポーネント
+│
+├── hooks/                   # カスタムフック（ビジネスロジック）
+│   ├── useAuth.ts           # 認証状態・ログイン/ログアウト
+│   ├── useTimer.ts          # タイマー制御・セッション完了コールバック
+│   ├── useTodos.ts          # Todo CRUD（ゲスト/ログイン分岐）
+│   ├── usePomodoro.ts       # Pomodoroセッション管理
+│   └── useBgm.ts            # BGM再生制御
+│
 ├── core/
-│   └── store/              # Zustand global state stores
-│       ├── auth.ts         # Authentication state
-│       ├── timer.ts        # Pomodoro timer state (persisted)
-│       ├── todos.ts        # Todo list state (persisted)
-│       └── ui.ts           # UI/dialog state
-├── hooks/                  # Custom React hooks
-│   ├── useAuth.ts          # Authentication actions
-│   ├── useBgm.ts           # BGM playback control
-│   ├── usePomodoro.ts      # Pomodoro session logic
-│   ├── useTimer.ts         # Timer countdown logic
-│   ├── useTimer.test.ts    # Co-located unit test
-│   └── useTodos.ts         # Todo CRUD operations
-├── lib/
-│   ├── auth.ts             # Auth utility helpers
-│   ├── storage.ts          # localStorage guest data helpers
-│   ├── trpc.tsx            # tRPC client setup
-│   ├── utils.ts            # General utilities (cn, etc.)
-│   └── animation.ts        # Animation helpers
+│   └── store/               # Zustand ストア
+│       ├── timer.ts         # タイマー状態（isActive, sessionType, remainingSecs）
+│       ├── todos.ts         # ローカルTodo状態
+│       ├── ui.ts            # UI状態（toasts）
+│       └── auth.ts          # 認証型定義（AuthUser）
+│
+├── app/
+│   └── routers/             # tRPC ルーター定義
+│       ├── root.ts          # appRouter（todos + pomodoro）
+│       ├── context.ts       # tRPC コンテキスト・protectedProcedure
+│       ├── _shared.ts       # 共通 Zod スキーマ
+│       ├── todos.ts         # todos ルーター
+│       └── pomodoro.ts      # pomodoro ルーター
+│
+├── lib/                     # ユーティリティ・設定
+│   ├── trpc.tsx             # tRPC Provider・QueryClient 初期化
+│   ├── auth.ts              # Better Auth クライアントインスタンス
+│   ├── storage.ts           # localStorage ラッパー
+│   ├── animation.ts         # Framer Motion バリアント定義
+│   └── utils.ts             # 汎用ユーティリティ（cn等）
+│
 └── test/
-    └── setup.ts            # Vitest global setup (jsdom, localStorage mock)
+    └── setup.ts             # Vitest セットアップ（localStorage モック等）
 ```
 
-## Backend: `functions/`
-
-Cloudflare Pages Functions — runs on Cloudflare Workers (Edge Runtime).
+## functions/ — バックエンド
 
 ```
 functions/
 ├── api/
-│   ├── [[route]].ts        # Catch-all REST API via Hono (basePath: /api)
-│   │                       # Handles: health check, auth, bgm proxy
-│   ├── auth.ts             # Google OAuth callback & JWT issuance
-│   ├── bgm.ts              # BGM audio proxy (Cloudflare R2 planned)
-│   ├── pomodoro.ts         # Pomodoro REST endpoints (legacy)
-│   ├── todos.ts            # Todos REST endpoints (legacy)
-│   └── trpc/
-│       └── [[route]].ts    # tRPC server adapter (endpoint: /api/trpc)
+│   ├── [[route]].ts         # Hono REST ルーター（ベース `/api`）
+│   ├── trpc/
+│   │   └── [[route]].ts     # tRPC fetchRequestHandler
+│   ├── auth.ts              # Better Auth OAuth フロー
+│   ├── bgm.ts               # BGM R2 ストリーミング
+│   ├── todos.ts             # REST Todo API（未使用 - tRPC優先）
+│   └── pomodoro.ts          # REST Pomodoro API（未使用 - tRPC優先）
 ├── lib/
-│   ├── auth.ts             # JWT verify helper
-│   ├── db.ts               # Drizzle + Neon HTTP client setup
-│   └── schema.ts           # Drizzle ORM table definitions
+│   ├── db.ts                # Drizzle ORM + Neon HTTP インスタンス
+│   ├── schema.ts            # PostgreSQL スキーマ定義
+│   └── auth.ts              # Better Auth サーバーインスタンス
 └── middleware/
-    └── auth.ts             # Hono auth middleware
+    └── auth.ts              # 認証ミドルウェア（セッション取得）
 ```
 
-## Tests: `tests/`
+## tests/ — E2Eテスト
 
 ```
 tests/
-├── e2e/                    # Playwright E2E tests
-│   ├── auth.spec.ts        # Google OAuth login flow
-│   ├── bgm.spec.ts         # BGM player
-│   ├── migration.spec.ts   # Guest→auth data migration
-│   ├── timer.spec.ts       # Pomodoro timer
-│   └── todo.spec.ts        # Todo CRUD
-├── helpers/
-│   └── auth.ts             # E2E auth helpers (signIn, cleanupTodos)
-└── global-setup.ts         # Playwright global setup
+├── global-setup.ts          # テストユーザー作成・初期化
+└── e2e/
+    ├── helpers/
+    │   └── auth.ts          # 認証ヘルパー・テストユーザー定数
+    ├── auth.spec.ts         # 認証フローE2E
+    ├── timer.spec.ts        # タイマー操作E2E
+    ├── todo.spec.ts         # TodoCRUD E2E
+    ├── migration.spec.ts    # ゲスト→ログイン移行E2E
+    └── bgm.spec.ts          # BGM再生E2E
 ```
 
-## Database: `drizzle/`
+## ai-rules/ — ドキュメント
 
 ```
-drizzle/
-├── meta/                   # Drizzle migration metadata
-└── *.sql                   # Migration SQL files
+ai-rules/
+├── ARCHITECTURE.md          # アーキテクチャ詳細
+├── WORK_FLOW.md             # 作業ワークフロー
+├── TESTING.md               # テスト手順
+├── COMMIT_AND_PR_GUIDELINES.md
+├── ISSUE_GUIDELINES.md
+└── TROUBLESHOOTING.md
 ```
 
-## Key Configuration Files
+## 命名規則
 
-| File | Purpose |
-|------|---------|
-| `wrangler.toml` | Cloudflare Pages project name, build output dir, compatibility date |
-| `vite.config.ts` | SPA build, path alias `@` → `src/` |
-| `vitest.config.ts` | Unit test: jsdom env, globals, coverage |
-| `playwright.config.ts` | E2E: chromium/firefox/webkit, baseURL 5173 |
-| `drizzle.config.ts` | DB connection, schema path |
-| `components.json` | shadcn/ui configuration |
+| 対象 | 規則 | 例 |
+|------|------|-----|
+| Reactコンポーネント | PascalCase | `TodoItem.tsx`, `BgmPlayer.tsx` |
+| カスタムフック | camelCase + `use` プレフィックス | `useTimer.ts`, `useTodos.ts` |
+| Zustand ストア | camelCase + `Store` サフィックス | `timer.ts` → `useTimerStore` |
+| 型/インターフェース | PascalCase + `interface` | `TimerState`, `UseTimerReturn` |
+| ユーティリティ | camelCase | `utils.ts`, `storage.ts` |
+| E2Eテスト | kebab-case + `.spec.ts` | `auth.spec.ts` |
+| ユニットテスト | 対象ファイル + `.test.ts` | `useTimer.test.ts` |
 
-## Naming Conventions
+## Key File Locations
 
-| Category | Convention | Example |
-|----------|-----------|---------|
-| React components | PascalCase | `TodoItem.tsx`, `TimerDisplay.tsx` |
-| Hooks | camelCase with `use` prefix | `useTimer.ts`, `useBgm.ts` |
-| Stores | camelCase with `use` + `Store` suffix | `useTimerStore`, `useTodosStore` |
-| Types/interfaces | PascalCase | `SessionType`, `Todo` |
-| API routes | kebab-case URL paths | `/api/trpc`, `/api/auth/google` |
-| E2E test files | kebab-case + `.spec.ts` | `timer.spec.ts` |
-| Unit test files | co-located + `.test.ts` | `useTimer.test.ts` |
-
-## Where to Add New Code
-
-| What | Where |
-|------|-------|
-| New React component | `src/components/{feature}/` |
-| New Zustand store | `src/core/store/{name}.ts` |
-| New custom hook | `src/hooks/use{Name}.ts` |
-| New tRPC procedure | `src/app/routers/{name}.ts` + `functions/api/trpc/[[route]].ts` |
-| New REST endpoint | `functions/api/[[route]].ts` (Hono route) |
-| New DB table | `functions/lib/schema.ts` + `npm run db:generate` |
-| New E2E test | `tests/e2e/{feature}.spec.ts` |
-| New unit test | Co-locate with source: `src/hooks/use{Name}.test.ts` |
-| shadcn/ui component | `src/components/ui/{name}.tsx` |
+| 目的 | パス |
+|------|------|
+| Reactエントリー | `src/main.tsx` |
+| ルートコンポーネント | `src/App.tsx` |
+| tRPC設定 | `src/lib/trpc.tsx` |
+| 認証クライアント | `src/lib/auth.ts` |
+| localStorage API | `src/lib/storage.ts` |
+| tRPCルーター定義 | `src/app/routers/root.ts` |
+| Honoバックエンド | `functions/api/[[route]].ts` |
+| tRPCバックエンド | `functions/api/trpc/[[route]].ts` |
+| DBスキーマ | `functions/lib/schema.ts` |
+| Better Auth設定 | `functions/lib/auth.ts` |
+| 環境変数（開発） | `.dev.vars`（gitignore） |
+| Cloudflare設定 | `wrangler.toml` |

@@ -4,12 +4,12 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: None
 status: ロードマップ作成完了
-last_updated: "2026-03-19T18:04:43.954Z"
+last_updated: "2026-03-19T18:12:18.259Z"
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Pomdo — BGM管理機能追加 プロジェクト状態
@@ -51,6 +51,10 @@ progress:
 - [Phase 01]: Migration file includes seed data for existing 2 tracks (簡易アプローチ採用)
 - [Phase 01]: tier column uses enum constraint for type safety
 - [Phase 01]: filename has unique constraint to prevent duplicate R2 keys
+
+| Phase 01-database P02 | 5min | 2 tasks | 1 files |
+
+- [Phase 01-database]: drizzle.config.tsで.dev.varsを読み込むよう修正し、ローカルからDrizzle Studioで本番DBを確認可能に
 
 ### Todos
 

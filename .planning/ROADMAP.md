@@ -5,7 +5,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: Database** — BGMトラック管理のためのデータベース基盤構築
+- [x] **Phase 1: Database** — BGMトラック管理のためのデータベース基盤構築 (completed 2026-03-19)
 - [ ] **Phase 2: Authentication** — 管理者権限判定の実装
 - [ ] **Phase 3: BGM API - Read** — BGMトラック取得API（既存プレイヤー移行用）
 - [ ] **Phase 4: BGM API - Write** — BGM追加・削除・更新API（R2操作含む）
@@ -27,7 +27,7 @@
 2. Drizzle Studioでテーブル構造を確認できる
 3. マイグレーションファイルがGitにコミットされている
 
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 - [ ] 01-01-PLAN.md — スキーマ定義とマイグレーション生成
 - [ ] 01-02-PLAN.md — マイグレーション適用と検証
@@ -119,7 +119,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Database | 0/2 | Planning complete | - |
+| 1. Database | 2/2 | Complete   | 2026-03-19 |
 | 2. Authentication | 0/0 | Not started | - |
 | 3. BGM API - Read | 0/0 | Not started | - |
 | 4. BGM API - Write | 0/0 | Not started | - |

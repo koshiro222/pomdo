@@ -9,8 +9,8 @@ BGM管理機能の実装に必要な要件。
 
 ### Database
 
-- [ ] **DB-01**: bgm_tracks テーブルを作成（id, title, artist, color, filename, tier, createdAt, updatedAt）
-- [ ] **DB-02**: Drizzleスキーマ定義を作成
+- [x] **DB-01**: bgm_tracks テーブルを作成（id, title, artist, color, filename, tier, createdAt, updatedAt）
+- [x] **DB-02**: Drizzleスキーマ定義を作成
 - [ ] **DB-03**: マイグレーションファイル生成と適用
 
 ### Backend API

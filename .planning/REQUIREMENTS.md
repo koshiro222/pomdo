@@ -73,24 +73,21 @@ BGM管理機能の実装に必要な要件。
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DB-01, DB-02, DB-03 | Phase 1 | Pending |
-| AUTH-01, AUTH-02, AUTH-03 | Phase 2 | Pending |
-| API-01, API-02, API-08 | Phase 3 | Pending |
-| API-03, API-06, API-07 | Phase 4 | Pending |
-| API-04, API-05 | Phase 5 | Pending |
-| FE-01, FE-02, FE-03, FE-04 | Phase 6 | Pending |
-| UI-01, UI-02, UI-03, UI-04, UI-05, UI-06, UI-07 | Phase 7 | Pending |
-| TEST-01, TEST-02, TEST-03, TEST-04 | Phase 8 | Pending |
+| AUTH-01, AUTH-02, AUTH-03, API-08 | Phase 2 | Pending |
+| API-01, API-02 | Phase 3 | Pending |
+| API-03, API-04, API-05, API-06, API-07 | Phase 4 | Pending |
+| FE-01, FE-02, FE-03, FE-04 | Phase 5 | Pending |
+| UI-01, UI-02, UI-03, UI-04, UI-05, UI-06, UI-07 | Phase 6 | Pending |
+| TEST-01, TEST-02, TEST-03, TEST-04 | 各フェーズ | Pending |
 
 **Coverage:**
 - v1 requirements: 28 total
 - Mapped to phases: 28
-- Unmapped: 0 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-20*
-*Last updated: 2026-03-20 after initial definition*
+*Last updated: 2026-03-20 after roadmap creation*

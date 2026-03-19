@@ -1,0 +1,136 @@
+# Pomdo — BGM管理機能追加 ロードマップ
+
+**Defined:** 2026-03-20
+**Granularity:** Standard (5-8 phases)
+
+## Phases
+
+- [ ] **Phase 1: Database** — BGMトラック管理のためのデータベース基盤構築
+- [ ] **Phase 2: Authentication** — 管理者権限判定の実装
+- [ ] **Phase 3: BGM API - Read** — BGMトラック取得API（既存プレイヤー移行用）
+- [ ] **Phase 4: BGM API - Write** — BGM追加・削除・更新API（R2操作含む）
+- [ ] **Phase 5: Player Migration** — 既存プレイヤーをDB連携へ移行
+- [ ] **Phase 6: Admin UI** — 管理者用BGM管理画面
+
+## Phase Details
+
+### Phase 1: Database
+
+**Goal:** BGMトラック管理に必要なデータベース基盤を構築する
+
+**Depends on:** Nothing
+
+**Requirements:** DB-01, DB-02, DB-03
+
+**Success Criteria** (what must be TRUE):
+1. `bgm_tracks` テーブルが本番環境に作成されている
+2. Drisma Studioでテーブル構造を確認できる
+3. マイグレーションファイルがGitにコミットされている
+
+**Plans:** TBD
+
+### Phase 2: Authentication
+
+**Goal:** 管理者権限を判定し、APIの保護を可能にする
+
+**Depends on:** Phase 1
+
+**Requirements:** AUTH-01, AUTH-02, AUTH-03, API-08
+
+**Success Criteria** (what must be TRUE):
+1. Better Authでadminロールが定義されている
+2. 管理者ユーザーがadminロールを持っている
+3. 非管理者が管理APIにアクセスした際、403エラーが返される
+4. ミドルウェアが正しく管理者判定できている
+
+**Plans:** TBD
+
+### Phase 3: BGM API - Read
+
+**Goal:** BGMトラック取得APIを実装し、既存プレイヤーの移行準備を整える
+
+**Depends on:** Phase 1, Phase 2
+
+**Requirements:** API-01, API-02
+
+**Success Criteria** (what must be TRUE):
+1. `bgm.getAll` クエリで全トラックが取得できる
+2. tierフィルタでトラックを絞り込める
+3. tRPCルーターが正しく定義されている
+4. 既存のハードコードされたトラックをDBに移行できる
+
+**Plans:** TBD
+
+### Phase 4: BGM API - Write
+
+**Goal:** 管理者がBGMを追加・削除・更新できるAPIを実装する
+
+**Depends on:** Phase 2, Phase 3
+
+**Requirements:** API-03, API-04, API-05, API-06, API-07
+
+**Success Criteria** (what must be TRUE):
+1. 管理者がMP3ファイルをアップロードするとR2に保存される
+2. トラック情報（曲名・アーティスト・色）をDBに登録できる
+3. トラック情報を更新できる
+4. トラックを削除するとR2からもファイルが削除される
+5. 非管理者が書き込みAPIを呼ぶと403エラーになる
+
+**Plans:** TBD
+
+### Phase 5: Player Migration
+
+**Goal:** 既存プレイヤーをDB連携に移行し、動作を維持する
+
+**Depends on:** Phase 3
+
+**Requirements:** FE-01, FE-02, FE-03, FE-04
+
+**Success Criteria** (what must be TRUE):
+1. プレイヤーがDBからトラックを取得して再生できる
+2. ハードコードされた `TRACKS` 定数が削除されている
+3. BGM取得失敗時にエラーメッセージが表示される
+4. 既存のBGM再生機能が問題なく動作している
+
+**Plans:** TBD
+
+### Phase 6: Admin UI
+
+**Goal:** 管理者がブラウザからBGMを管理できるUIを実装する
+
+**Depends on:** Phase 4, Phase 5
+
+**Requirements:** UI-01, UI-02, UI-03, UI-04, UI-05, UI-06, UI-07
+
+**Success Criteria** (what must be TRUE):
+1. 管理者のみHeaderに管理ボタンが表示される
+2. 管理画面でトラック一覧がテーブル形式で表示される
+3. ドラッグ&ドロップでファイルをアップロードできる
+4. トラック情報（曲名・アーティスト・色）を編集できる
+5. 削除時に確認ダイアログが表示される
+6. ローディング・エラー状態が適切に表示される
+
+**Plans:** TBD
+
+## Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Database | 0/0 | Not started | - |
+| 2. Authentication | 0/0 | Not started | - |
+| 3. BGM API - Read | 0/0 | Not started | - |
+| 4. BGM API - Write | 0/0 | Not started | - |
+| 5. Player Migration | 0/0 | Not started | - |
+| 6. Admin UI | 0/0 | Not started | - |
+
+## Testing Strategy
+
+各フェーズの成功基準には以下を含む:
+- 単体テスト（tRPCルーター、ミドルウェア）
+- E2Eテスト（BGM追加・削除・編集フロー）
+- 管理者権限テスト
+
+Testing要件（TEST-01〜TEST-04）は各フェーズの実装に組み込まれる。
+
+---
+*Roadmap created: 2026-03-20*

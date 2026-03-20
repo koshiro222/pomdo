@@ -4,18 +4,9 @@ import { Edit2, Trash2 } from 'lucide-react'
 import { slideInVariants, tapAnimation } from '@/lib/animation'
 import { EditTrackDialog } from './EditTrackDialog'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
+import type { BgmTrack } from '@/app/routers/_shared'
 
-export interface Track {
-  id: string
-  title: string
-  artist: string | null
-  color: string | null
-  tier: 'free' | 'premium'
-  filename: string
-  createdAt: Date
-  updatedAt: Date
-  src?: string
-}
+export type Track = BgmTrack
 
 export interface TrackItemProps {
   track: Track

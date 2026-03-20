@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AddTrackForm } from './AddTrackForm'
 
@@ -63,7 +63,7 @@ describe('AddTrackForm', () => {
       onload: null as ((event: any) => void) | null,
       onerror: null as ((event: any) => void) | null,
     }
-    global.FileReader = vi.fn(() => mockFileReader) as any
+    globalThis.FileReader = vi.fn(() => mockFileReader) as any
   })
 
   it('should update form fields on input', async () => {
@@ -83,8 +83,8 @@ describe('AddTrackForm', () => {
     expect(artistInput).toHaveValue('Test Artist')
 
     // 色選択inputが存在することを確認
-    const colorInput = screen.getByDisplayValue('#3b82f6')
-    expect(colorInput).toBeInTheDocument()
+    const colorInputElem = screen.getByDisplayValue('#3b82f6')
+    expect(colorInputElem).toBeInTheDocument()
 
     // Tier selectが存在することを確認（selectOptionsのテストは複雑なため省略）
     const tierLabel = screen.getByText('Tier')
@@ -133,7 +133,6 @@ describe('AddTrackForm', () => {
     // フォームを入力
     const titleInput = screen.getByPlaceholderText('_focus_time')
     const artistInput = screen.getByPlaceholderText('Lofi Records')
-    const colorInput = screen.getByDisplayValue('#3b82f6')
 
     await user.type(titleInput, 'Test Track')
     await user.type(artistInput, 'Test Artist')
@@ -157,7 +156,8 @@ describe('AddTrackForm', () => {
   })
 
   it('should show error toast when mutation fails', async () => {
-    mockCreateMutation.error = new Error('Failed to create track')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockCreateMutation.error = new Error('Failed to create track') as any
 
     render(<AddTrackForm onBack={mockOnBack} />)
 

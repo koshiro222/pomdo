@@ -13,6 +13,9 @@ interface Context {
   user: SessionUser | null
   db: any
   schema: any
+  env: {
+    BGM_BUCKET: R2Bucket
+  }
 }
 
 const t = initTRPC.context<Context>().create({

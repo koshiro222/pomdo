@@ -8,6 +8,7 @@ import * as schema from '../../lib/schema'
 
 type Bindings = AuthBindings & {
   DATABASE_URL: string
+  BGM_BUCKET: R2Bucket
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -38,6 +39,9 @@ app.all('/*', async (c) => {
       user,
       db,
       schema,
+      env: {
+        BGM_BUCKET: c.env.BGM_BUCKET,
+      },
     }),
   })
 })

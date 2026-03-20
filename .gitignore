@@ -75,3 +75,7 @@ playwright/.cache/
 
 # Test Coverage
 coverage/
+
+# GSD
+.planning/*/*/VERIFICATION.md
+.planning/*/*/*-SUMMARY.md

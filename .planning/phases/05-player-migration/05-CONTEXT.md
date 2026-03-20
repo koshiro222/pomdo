@@ -31,18 +31,11 @@ const bgmQuery = trpc.bgm.getAll.useQuery(undefined, {
 })
 ```
 
-### ローディング状態
+### ローディング状態とエラーハンドリング
 
 - **ローディング中**: フォールバックトラック（Phase 1マイグレーションで投入された2トラック）を表示
-- **実装**: `const tracks = isLoading && FALLBACK_ENABLED ? FALLBACK_TRACKS : (data ?? [])`
-
-**理由**: ユーザー体験を維持 — ローディング中もBGMが使える状態
-
-### エラーハンドリング
-
-- **方式**: フォールバックトラック + 環境変数スイッチ
-- **環境変数**: `VITE_BGM_FALLBACK` — `false` 以外の値でフォールバック有効
 - **エラー時**: フォールバック有効時はフォールバックトラックを返し続ける
+- **環境変数**: `VITE_BGM_FALLBACK` — `false` 以外の値でフォールバック有効
 
 **実装内容:**
 ```typescript
@@ -51,11 +44,13 @@ const FALLBACK_TRACKS: Track[] = [
   { id: '1', title: 'Lo-Fi Study 01', src: '/api/bgm/lofi-01.mp3', artist: 'Chill Beats', color: '#3b82f6' },
   { id: '2', title: 'Lo-Fi Study 02', src: '/api/bgm/lofi-02.mp3', artist: 'Relax Sounds', color: '#8b5cf6' },
 ]
-const tracks = (isLoading && FALLBACK_ENABLED) ? FALLBACK_TRACKS : (data ?? [])
+// ローディング中またはエラー時にフォールバック使用
+const tracks = ((isLoading || error) && FALLBACK_ENABLED) ? FALLBACK_TRACKS : (data ?? [])
 ```
 
 **理由**:
-- 本番環境ではフォールバックによりユーザー体験を維持
+- ユーザー体験を維持 — ローディング中もBGMが使える状態
+- 本番環境ではフォールバックによりAPI障害時も機能を維持
 - 開発環境では `VITE_BGM_FALLBACK=false` で無効化し、DB状態を正しく確認可能
 
 ### 型定義と互換性
@@ -167,7 +162,7 @@ const tracks = data?.map(({ id, title, src, artist, color }) =>
 - `src/hooks/useBgm.ts` — 修正対象
   - TRACKS 定数を削除
   - tRPC `bgm.getAll` 使用に変更
-  - フォールバックトラック定数を追加（条件付きで使用）
+  - フォールバックトラック定数を追加（ローディング・エラー時に使用）
 
 - `src/components/bgm/BgmPlayer.tsx` — 既存エラー表示パターン維持
   - `hasError` は `Audio` 要素の再生エラー用

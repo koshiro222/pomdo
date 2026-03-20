@@ -1,5 +1,24 @@
 # Milestones
 
+## v1.1 favicon追加 (Shipped: 2026-03-21)
+
+**Phases completed:** 1 phase, 1 plan, 2 tasks
+
+**Key accomplishments:**
+
+- lucide-reactのTimerアイコン構造をベースにしたSVG faviconを作成
+- プライマリーカラー（#22c55e）で円を塗りつぶし、白（#ffffff）の線でスタイリング
+- index.htmlでfavicon.svgを参照するよう更新
+- 旧Viteデフォルトfavicon（vite.svg）を削除
+
+**Stats:**
+
+- Timeline: 1 day (2026-03-21)
+- Files changed: 2
+- Git commits: 2 feat commits
+
+---
+
 ## v1.0 BGM管理機能追加 (Shipped: 2026-03-20)
 
 **Phases completed:** 6 phases, 16 plans
@@ -13,6 +32,7 @@
 - 管理者用BGM管理UI（AdminModal、TrackList、AddTrackForm、Edit/Delete Dialogs）
 
 **Stats:**
+
 - Timeline: 22 days (2026-02-28 → 2026-03-21)
 - TypeScript LOC: ~25,000
 - Git commits: 20+ feat commits

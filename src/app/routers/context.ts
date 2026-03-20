@@ -6,6 +6,7 @@ type SessionUser = {
   email: string
   name: string
   image: string | null
+  role: 'admin' | 'user'
 }
 
 interface Context {

@@ -2,9 +2,10 @@
 phase: 7
 slug: favicon
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-21
+updated: 2026-03-21
 ---
 
 # Phase 7 — Validation Strategy
@@ -27,7 +28,7 @@ created: 2026-03-21
 
 ## Sampling Rate
 
-- **After every task commit:** ブラウザタブでfaviconを手動確認
+- **After every task commit:** 自動検証コマンド（grep）を実行
 - **After every plan wave:** `npm run build && npm run preview` で本番ビルド後のfavicon表示を確認
 - **Before `/gsd:verify-work`:** ブラウザタブでfaviconが正しく表示されていることを目視確認
 - **Max feedback latency:** 60 seconds
@@ -36,12 +37,10 @@ created: 2026-03-21
 
 ## Per-Task Verification Map
 
-| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 07-01-01 | 01 | 1 | FAV-01 | manual-only | - | ❌ W0 | ⬜ pending |
-| 07-01-02 | 01 | 1 | FAV-02 | manual-only | - | ❌ W0 | ⬜ pending |
-| 07-01-03 | 01 | 1 | FAV-03 | manual-only | - | ❌ W0 | ⬜ pending |
-| 07-01-04 | 01 | 1 | FAV-04 | manual-only | - | ❌ W0 | ⬜ pending |
+| Task ID | Plan | Wave | Requirements | Test Type | Automated Command | Status |
+|---------|------|------|--------------|-----------|-------------------|--------|
+| 07-01-T1 | 01 | 1 | FAV-01, FAV-02, FAV-04 | automated | `grep -q 'viewBox="0 0 24 24"' public/favicon.svg && grep -q 'fill="#22c55e"' public/favicon.svg && grep -q 'stroke="#ffffff"' public/favicon.svg` | ⬜ pending |
+| 07-01-T2 | 01 | 1 | FAV-03 | automated | `grep -q 'href="/favicon.svg"' index.html && test ! -f public/vite.svg` | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -49,31 +48,32 @@ created: 2026-03-21
 
 ## Wave 0 Requirements
 
-- [ ] `tests/e2e/favicon.spec.ts` — ブラウザタブでのfavicon表示確認（手動テスト手順書）
-- [ ] Playwright設定にfavicon検証用ヘルパー関数の追加（オプション）
+Favicon実装では視覚的検証が主となるが、以下の自動検証コマンドをPLAN.mdの各タスクに組み込んでいるため、Wave 0でのテストスキャフォールド作成は不要とする：
 
-*(Faviconは主に視覚的な要素であり、自動テストでの検証は困難。手動テスト手順書を作成し、Wave 0で対応)*
+- **Task 1自動検証:** SVGファイル構造チェック（viewBox、fill、stroke属性の存在確認）
+- **Task 2自動検証:** HTML参照チェック（favicon.svgへの参照、旧ファイルの削除確認）
+
+視覚的検証は実行後のマニュアル確認手順としてPLAN.mdの`<verification>`セクションに記載。
 
 ---
 
-## Manual-Only Verifications
+## Manual-Only Verifications（視覚的確認）
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| TimerアイコンベースのSVG faviconが存在する | FAV-01 | 視覚的検証が必要 | `public/favicon.svg` をブラウザで開いて確認 |
-| プライマリーカラー（#22c55e）でスタイリングされている | FAV-02 | 色の視覚的確認が必要 | SVGファイル内のfill属性を確認し、ブラウザタブで表示確認 |
-| index.htmlでfaviconが参照されている | FAV-03 | ブラウザでの動作確認が必要 | `npm run dev` 後、ブラウザタブのアイコンを確認 |
-| SVG形式でスケーラブル | FAV-04 | スケーラビリティの視覚的確認が必要 | ブラウザのズーム機能でfaviconが鮮明に表示されることを確認 |
+| Timerアイコンとして認識可能 | FAV-01 | 視覚的検証が必要 | ブラウザタブでアイコンを確認 |
+| プライマリーカラー（#22c55e）で表示 | FAV-02 | 色の視覚的確認が必要 | ブラウザタブで緑色のアイコンを確認 |
+| スケーラブル（鮮明さ） | FAV-04 | ズーム時の視覚的確認が必要 | ブラウザズームでfaviconが鮮明に表示されることを確認 |
 
 ---
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 60s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references（N/A - automated commands in place）
+- [x] No watch-mode flags
+- [x] Feedback latency < 60s
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending

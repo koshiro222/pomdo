@@ -6,6 +6,7 @@ type SessionUser = {
   email: string
   name: string
   image: string | null
+  role: 'admin' | 'user'
 }
 
 interface Context {
@@ -33,5 +34,23 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
       ...ctx,
       user: ctx.user,
     },
+  })
+})
+
+export const adminProcedure = t.procedure.use(({ ctx, next }) => {
+  if (!ctx.user) {
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message: 'ログインが必要です',
+    })
+  }
+  if (ctx.user.role !== 'admin') {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: '管理者権限が必要です',
+    })
+  }
+  return next({
+    ctx: { ...ctx, user: ctx.user },
   })
 })

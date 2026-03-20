@@ -44,7 +44,7 @@ BGM管理機能の実装に必要な要件。
 ### Authentication
 
 - [ ] **AUTH-01**: Better Auth で admin ロール設定方法確認
-- [ ] **AUTH-02**: 管理者判定ロジック実装
+- [x] **AUTH-02**: 管理者判定ロジック実装
 - [ ] **AUTH-03**: 非管理者の管理APIアクセスを拒否（TRPCError）
 
 ### Testing

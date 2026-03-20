@@ -14,6 +14,7 @@ export function useAuth() {
         name: session.user.name,
         image: session.user.image ?? null,
         emailVerified: session.user.emailVerified,
+        role: session.user.role ?? 'user',
       }
     : null
 
@@ -25,10 +26,13 @@ export function useAuth() {
     await authClient.signOut()
   }, [])
 
+  const isAdmin = user?.role === 'admin'
+
   return {
     user,
     loading: isPending,
     login,
     logout,
+    isAdmin,
   }
 }

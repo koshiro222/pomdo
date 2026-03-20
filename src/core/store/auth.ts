@@ -4,4 +4,5 @@ export type AuthUser = {
   name: string
   image: string | null
   emailVerified: boolean
+  role: 'admin' | 'user'
 }

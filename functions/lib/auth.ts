@@ -1,4 +1,5 @@
 import { betterAuth } from 'better-auth'
+import { admin } from 'better-auth/plugins'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { createDb } from './db'
 import * as schema from './schema'
@@ -34,6 +35,9 @@ export function createAuthInstance(env: AuthBindings) {
         clientSecret: env.GOOGLE_CLIENT_SECRET,
       },
     },
+    plugins: [
+      admin(), // デフォルト: defaultRole='user', adminRoles=['admin']
+    ],
     emailAndPassword: {
       enabled: true,
       sendResetPassword: async ({ user, url }) => {

@@ -59,3 +59,22 @@ export type ApiError = z.infer<typeof errorSchema>
 export type ApiResponse<T> =
   | { success: true; data: T }
   | { success: false; error: ApiError }
+
+// BGM用スキーマ
+export const bgmTrackSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string().min(1),
+  src: z.string(), // /api/bgm/filename
+  artist: z.string().optional(),
+  color: z.string().optional(),
+  tier: z.enum(['free', 'premium']),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+})
+
+export const bgmGetAllInputSchema = z.object({
+  tier: z.enum(['free', 'premium']).optional(),
+}).optional() // input全体をオプション化
+
+export type BgmTrack = z.infer<typeof bgmTrackSchema>
+export type BgmGetAllInput = z.infer<typeof bgmGetAllInputSchema>

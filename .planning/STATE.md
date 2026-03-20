@@ -4,12 +4,12 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 04
 status: unknown
-last_updated: "2026-03-20T12:02:45.398Z"
+last_updated: "2026-03-20T12:11:33.385Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 10
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Pomdo — BGM管理機能追加 プロジェクト状態
@@ -69,6 +69,12 @@ Plan: 1 of 4
 
 - [Phase 04]: Edge Runtime対応のためArrayBufferを使用（Buffer不使用）
 - [Phase 04]: 簡易DBモック採用（Phase 04ではR2操作が主な検証対象）
+
+| Phase 04 P01 | 2min | 3 tasks | 5 files |
+
+- [Phase 04]: Base64デコード後のファイルサイズチェック（10MB制限）
+- [Phase 04]: UUID自動生成でファイル名衝突を回避
+- [Phase 04]: tierデフォルト値'free'をmutation側で明示指定
 
 ### Todos
 

@@ -24,7 +24,8 @@
 
 **実装内容:**
 ```
-create(input: { fileBase64: string, filename, title, artist?, color?, tier })
+create(input: { fileBase64: string, title, artist?, color?, tier? })
+filenameはサーバー側で自動生成（UUID）
 ```
 
 ### バリデーション
@@ -32,18 +33,16 @@ create(input: { fileBase64: string, filename, title, artist?, color?, tier })
 - **場所**: クライアント + サーバー両方
 - **ファイルサイズ**: 10MB上限
 - **文字数制限**: title 32文字、artist 32文字（DBスキーマ準拠）
-- **ファイル名**: アルファベット・数字・ハイフンのみ、`.mp3`拡張子必須
-- **バリデーション正規表現**: `/^[a-z0-9-]+\.mp3$/`
 
 **理由**: UX向上（クライアント事前チェック）+ セキュリティ（サーバー再チェック）
 
 ### ファイル名生成
 
-- **方式**: ユーザー指定
-- **形式**: 小文字英数字・ハイフンのみ、`.mp3`拡張子必須
-- **衝突時**: エラー返して再入力（自動サフィックスなし）
+- **方式**: 自動生成（UUID + `.mp3`）
+- **形式**: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.mp3`
+- **衝突時**: 衝突しない（UUIDの特性）
 
-**理由**: ユーザーが管理しやすいファイル名、衝突は明示的に通知
+**理由**: ユーザーはtitleのみ入力すればOK、実装シンプル、管理画面でtitle表示されるためファイル名の可読性は不要
 
 ### update mutation
 
@@ -66,8 +65,6 @@ create(input: { fileBase64: string, filename, title, artist?, color?, tier })
 
 **エラーパターン:**
 - ファイルサイズ超過: `BAD_REQUEST` / "ファイルサイズは10MB以下にしてください"
-- ファイル名重複: `CONFLICT` / "ファイル名が既に存在します"
-- ファイル名形式不正: `BAD_REQUEST` / "ファイル名は英数字とハイフンのみで、.mp3で終わる必要があります"
 - R2アップロード失敗: `INTERNAL_SERVER_ERROR` / "ファイルのアップロードに失敗しました"
 - トラック不在: `NOT_FOUND` / "トラックが見つかりません"
 
@@ -162,7 +159,8 @@ create(input: { fileBase64: string, filename, title, artist?, color?, tier })
 <specifics>
 ## Specific Ideas
 
-- ファイル名は小文字英数字・ハイフンのみでユーザーが指定（例: `lofi-study-01.mp3`）
+- filenameはサーバー側でUUIDで自動生成（例: `a1b2c3d4-e5f6-7890-abcd-ef1234567890.mp3`）
+- ユーザーはtitleのみ入力すればOK
 - ファイルサイズは10MB上限（Base64で約13MB）
 - titleは32文字、artistは32文字（DBスキーマ準拠）
 - tierフィールドのデフォルト値は`"free"`

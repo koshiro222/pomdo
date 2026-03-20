@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { router, publicProcedure, adminProcedure } from './context'
-import { bgmGetAllInputSchema, createBgmTrackSchema } from './_shared'
+import { bgmGetAllInputSchema, createBgmTrackSchema, updateBgmTrackSchema, deleteBgmTrackSchema } from './_shared'
 import { TRPCError } from '@trpc/server'
 
 export const bgmRouter = router({
@@ -63,5 +63,77 @@ export const bgmRouter = router({
         .returning()
 
       return created
+    }),
+
+  update: adminProcedure
+    .input(updateBgmTrackSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { db, schema } = ctx
+
+      // 存在チェック
+      const existing = await db
+        .select()
+        .from(schema.bgmTracks)
+        .where(eq(schema.bgmTracks.id, input.id))
+        .limit(1)
+
+      if (!existing || existing.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'トラックが見つかりません',
+        })
+      }
+
+      // 部分フィールド更新
+      const updateData: Record<string, unknown> = {}
+      if (input.title !== undefined) updateData.title = input.title
+      if (input.artist !== undefined) updateData.artist = input.artist
+      if (input.color !== undefined) updateData.color = input.color
+      if (input.tier !== undefined) updateData.tier = input.tier
+
+      const [updated] = await db
+        .update(schema.bgmTracks)
+        .set(updateData)
+        .where(eq(schema.bgmTracks.id, input.id))
+        .returning()
+
+      return updated
+    }),
+
+  delete: adminProcedure
+    .input(deleteBgmTrackSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { db, schema } = ctx
+
+      // 存在チェック（filename取得のため）
+      const existing = await db
+        .select()
+        .from(schema.bgmTracks)
+        .where(eq(schema.bgmTracks.id, input.id))
+        .limit(1)
+
+      if (!existing || existing.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'トラックが見つかりません',
+        })
+      }
+
+      const track = existing[0]
+
+      // DB削除（先に実行）
+      await db
+        .delete(schema.bgmTracks)
+        .where(eq(schema.bgmTracks.id, input.id))
+
+      // R2削除（失敗してもDB削除は確定）
+      try {
+        await ctx.env.BGM_BUCKET.delete(track.filename)
+      } catch (error) {
+        // ログ記録のみ、DB削除はロールバックしない
+        console.error(`R2 delete failed for ${track.filename}:`, error)
+      }
+
+      return { id: input.id }
     }),
 })

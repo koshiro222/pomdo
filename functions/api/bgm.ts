@@ -9,8 +9,8 @@ const bgm = new Hono<{ Bindings: Bindings }>()
 bgm.get('/:filename', async (c) => {
   const filename = c.req.param('filename')
 
-  // ファイル名のバリデーション
-  if (!filename.match(/^[a-z0-9-]+\.(mp3)$/i)) {
+  // ファイル名のバリデーション（スラッシュを含むパス構造を許可）
+  if (!filename.match(/^[a-z0-9-\/]+\.(mp3)$/i)) {
     return c.json({ error: 'Invalid filename' }, 400)
   }
 

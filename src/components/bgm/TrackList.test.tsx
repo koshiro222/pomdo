@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { TrackList } from './TrackList'
+import { trpc } from '@/lib/trpc'
 
 // tRPCフックをモック
 const mockTracks = [
@@ -30,15 +31,19 @@ vi.mock('@/lib/trpc', () => ({
   trpc: {
     bgm: {
       getAll: {
-        useQuery: vi.fn(() => ({
-          data: mockTracks,
-          isLoading: false,
-          error: null,
-        })),
+        useQuery: vi.fn(),
       },
     },
   },
 }))
+
+// モックのデフォルト値を設定
+const mockUseQuery = vi.mocked(trpc.bgm.getAll.useQuery)
+mockUseQuery.mockReturnValue({
+  data: mockTracks,
+  isLoading: false,
+  error: null,
+} as any)
 
 // TrackItemをモック（まだ実装されていないため）
 vi.mock('./TrackItem', () => ({
@@ -54,6 +59,12 @@ describe('TrackList', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // モックをデフォルト値にリセット
+    mockUseQuery.mockReturnValue({
+      data: mockTracks,
+      isLoading: false,
+      error: null,
+    } as any)
   })
 
   it('should render track list', () => {
@@ -67,12 +78,11 @@ describe('TrackList', () => {
 
   it('should render empty state when no tracks', () => {
     // tRPCモックで空配列を設定
-    const { trpc } = require('@/lib/trpc')
-    trpc.bgm.getAll.useQuery.mockReturnValue({
+    vi.mocked(trpc.bgm.getAll.useQuery).mockReturnValue({
       data: [],
       isLoading: false,
       error: null,
-    })
+    } as any)
 
     // TrackListをレンダリング
     render(<TrackList onAdd={mockOnAdd} />)
@@ -83,12 +93,11 @@ describe('TrackList', () => {
 
   it('should render loading state', () => {
     // tRPCモックでisLoading=trueを設定
-    const { trpc } = require('@/lib/trpc')
-    trpc.bgm.getAll.useQuery.mockReturnValue({
+    vi.mocked(trpc.bgm.getAll.useQuery).mockReturnValue({
       data: undefined,
       isLoading: true,
       error: null,
-    })
+    } as any)
 
     // TrackListをレンダリング
     render(<TrackList onAdd={mockOnAdd} />)
@@ -112,12 +121,11 @@ describe('TrackList', () => {
 
   it('should render error state', () => {
     // tRPCモックでerrorを設定
-    const { trpc } = require('@/lib/trpc')
-    trpc.bgm.getAll.useQuery.mockReturnValue({
+    vi.mocked(trpc.bgm.getAll.useQuery).mockReturnValue({
       data: undefined,
       isLoading: false,
       error: new Error('Failed to fetch tracks'),
-    })
+    } as any)
 
     // TrackListをレンダリング
     render(<TrackList onAdd={mockOnAdd} />)

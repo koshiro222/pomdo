@@ -3,15 +3,12 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { TrackItem } from './TrackItem'
 
 // Framer Motionをモック
-vi.mock('framer-motion', async () => {
-  const actual = await vi.importActual('framer-motion')
-  return {
-    ...actual,
-    motion: {
-      div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    },
-  }
-})
+vi.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+  },
+}))
 
 describe('TrackItem', () => {
   const mockTrack = {
@@ -23,6 +20,7 @@ describe('TrackItem', () => {
     filename: 'test.mp3',
     createdAt: new Date(),
     updatedAt: new Date(),
+    src: '/api/bgm/test.mp3',
   }
 
   beforeEach(() => {

@@ -4,6 +4,11 @@ import type { AuthUser } from '../core/store/auth'
 
 export type { AuthUser }
 
+// Role値の実行時検証を行う型ガード
+function isValidRole(value: string): value is 'user' | 'admin' {
+  return value === 'user' || value === 'admin'
+}
+
 export function useAuth() {
   const { data: session, isPending } = authClient.useSession()
 
@@ -14,7 +19,7 @@ export function useAuth() {
         name: session.user.name,
         image: session.user.image ?? null,
         emailVerified: session.user.emailVerified,
-        role: session.user.role ?? 'user',
+        role: (isValidRole(session.user.role ?? '') ? session.user.role! : 'user') as 'user' | 'admin',
       }
     : null
 

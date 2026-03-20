@@ -76,3 +76,5 @@ playwright/.cache/
 # Test Coverage
 coverage/
 
+# Planning debug sessions
+.planning/debug/

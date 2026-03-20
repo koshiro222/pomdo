@@ -43,6 +43,13 @@
       "when": 1773937876081,
       "tag": "0005_smooth_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773996749330,
+      "tag": "0006_curly_jocasta",
+      "breakpoints": true
     }
   ]
 }

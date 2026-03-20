@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { getBgmState, saveBgmState } from '../lib/storage'
+import { trpc } from '../lib/trpc'
 
 export type Track = {
   id: string
@@ -9,7 +10,9 @@ export type Track = {
   color?: string // アルバムアート用の色
 }
 
-export const TRACKS: Track[] = [
+// フォールバックトラック（ローディング中またはエラー時に使用）
+const FALLBACK_ENABLED = import.meta.env.VITE_BGM_FALLBACK !== 'false'
+const FALLBACK_TRACKS: Track[] = [
   { id: '1', title: 'Lo-Fi Study 01', src: '/api/bgm/lofi-01.mp3', artist: 'Chill Beats', color: '#3b82f6' },
   { id: '2', title: 'Lo-Fi Study 02', src: '/api/bgm/lofi-02.mp3', artist: 'Relax Sounds', color: '#8b5cf6' },
 ]
@@ -20,13 +23,41 @@ export type BgmState = {
   currentIndex: number
   isPlaying: boolean
   volume: number
-  hasError: boolean
+  hasError: boolean      // Audio要素の再生エラー用（既存）
+  loading: boolean       // APIローディング状態
+  error: unknown         // APIエラー情報（状態監視用、トースト表示はしない）
   toggle: () => void
   selectTrack: (index: number) => void
   setVolume: (vol: number) => void
 }
 
 export function useBgm(): BgmState {
+  // tRPCクエリでトラック取得
+  const bgmQuery = trpc.bgm.getAll.useQuery(undefined, {
+    enabled: true,
+    staleTime: 60 * 60 * 1000, // 1時間
+    refetchOnWindowFocus: false,
+  })
+
+  const { data: apiTracks, isLoading, error } = bgmQuery
+
+  // DBスキーマからTrack型にマッピング（tier, createdAt, updatedAtは破棄）
+  const dbTracks: Track[] = (apiTracks ?? []).map((track: any) =>
+    ({
+      id: track.id,
+      title: track.title,
+      src: track.src,
+      artist: track.artist ?? undefined,
+      color: track.color ?? undefined
+    })
+  )
+
+  // フォールバックロジック: ローディング中またはエラー時にフォールバック使用
+  const tracks = ((isLoading || error) && FALLBACK_ENABLED) ? FALLBACK_TRACKS : dbTracks
+
+  // エラー状態を抽出（フォールバック機能がエラーハンドリングとして機能）
+  const apiError = error
+
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(() => {
@@ -81,7 +112,7 @@ export function useBgm(): BgmState {
 
     const wasPlaying = isPlaying
     setHasError(false)
-    audio.src = TRACKS[currentIndex].src
+    audio.src = tracks[currentIndex].src
     audio.load()
 
     if (wasPlaying) {
@@ -104,8 +135,8 @@ export function useBgm(): BgmState {
 
     if (audio.paused) {
       // Ensure src is set
-      if (!audio.src || !audio.src.includes(TRACKS[currentIndex].src.replace('/audio/', ''))) {
-        audio.src = TRACKS[currentIndex].src
+      if (!audio.src || !audio.src.includes(tracks[currentIndex].src.replace('/audio/', ''))) {
+        audio.src = tracks[currentIndex].src
         audio.load()
       }
       audio.play().catch(() => setIsPlaying(false))
@@ -132,12 +163,14 @@ export function useBgm(): BgmState {
   }, [])
 
   return {
-    tracks: TRACKS,
-    currentTrack: TRACKS[currentIndex],
+    tracks,
+    currentTrack: tracks[currentIndex],
     currentIndex,
     isPlaying,
     volume,
     hasError,
+    loading: isLoading,
+    error: apiError ?? null,
     toggle,
     selectTrack,
     setVolume,

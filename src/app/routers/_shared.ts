@@ -78,3 +78,14 @@ export const bgmGetAllInputSchema = z.object({
 
 export type BgmTrack = z.infer<typeof bgmTrackSchema>
 export type BgmGetAllInput = z.infer<typeof bgmGetAllInputSchema>
+
+// BGM作成用スキーマ
+export const createBgmTrackSchema = z.object({
+  fileBase64: z.string().min(1, 'ファイルが必要です'),
+  title: z.string().min(1, 'タイトルが必要です').max(32, 'タイトルは32文字以下'),
+  artist: z.string().max(32, 'アーティスト名は32文字以下').optional(),
+  color: z.string().optional(),
+  tier: z.enum(['free', 'premium']).optional(),
+})
+
+export type CreateBgmTrack = z.infer<typeof createBgmTrackSchema>

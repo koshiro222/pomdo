@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 import { trpc } from '@/lib/trpc'
 import { tapAnimation, hoverAnimation } from '@/lib/animation'
 import { TrackItem } from './TrackItem'
+import type { BgmTrack } from '@/app/routers/_shared'
 
 export interface TrackListProps {
   onAdd: () => void
@@ -43,7 +44,7 @@ export function TrackList({ onAdd }: TrackListProps) {
           </div>
         ) : (
           <AnimatePresence mode="popLayout">
-            {tracks.map((track) => (
+            {tracks.map((track: BgmTrack) => (
               <TrackItem key={track.id} track={track} />
             ))}
           </AnimatePresence>

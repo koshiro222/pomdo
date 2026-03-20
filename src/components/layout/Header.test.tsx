@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { Header } from './Header'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -84,9 +84,9 @@ describe('Header - Admin Button', () => {
     // Headerをレンダリング
     render(<Header />)
 
-    // 管理ボタンをクリック
+    // 管理ボタンが存在することを確認
     const adminButton = screen.getByTitle('BGM管理')
-    fireEvent.click(adminButton)
+    expect(adminButton).toBeInTheDocument()
 
     // 注: 現在の実装ではAdminModalの状態管理はHeaderに存在しないため、
     // このテストは将来の実装でAdminModalが表示されることを検証する必要があります

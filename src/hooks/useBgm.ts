@@ -52,8 +52,9 @@ export function useBgm(): BgmState {
     })
   )
 
-  // フォールバックロジック: ローディング中またはエラー時にフォールバック使用
-  const tracks = ((isLoading || error) && FALLBACK_ENABLED) ? FALLBACK_TRACKS : dbTracks
+  // フォールバックロジック: ローディング中、エラー時、またはDBトラックが空の場合にフォールバック使用
+  const shouldUseFallback = ((isLoading || error || dbTracks.length === 0) && FALLBACK_ENABLED)
+  const tracks = shouldUseFallback ? FALLBACK_TRACKS : dbTracks
 
   // エラー状態を抽出（フォールバック機能がエラーハンドリングとして機能）
   const apiError = error
@@ -108,17 +109,19 @@ export function useBgm(): BgmState {
   // Handle track change: reload src and resume if was playing
   useEffect(() => {
     const audio = audioRef.current
-    if (!audio) return
+    if (!audio || tracks.length === 0) return
 
     const wasPlaying = isPlaying
     setHasError(false)
-    audio.src = tracks[currentIndex].src
+    // currentIndexが範囲外の場合は最初のトラックを使用
+    const safeIndex = Math.min(currentIndex, tracks.length - 1)
+    audio.src = tracks[safeIndex].src
     audio.load()
 
     if (wasPlaying) {
       audio.play().catch(() => setIsPlaying(false))
     }
-  }, [currentIndex]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentIndex, tracks.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save BGM state to localStorage when it changes
   useEffect(() => {
@@ -131,19 +134,20 @@ export function useBgm(): BgmState {
 
   const toggle = useCallback(() => {
     const audio = audioRef.current
-    if (!audio) return
+    if (!audio || tracks.length === 0) return
 
     if (audio.paused) {
       // Ensure src is set
-      if (!audio.src || !audio.src.includes(tracks[currentIndex].src.replace('/audio/', ''))) {
-        audio.src = tracks[currentIndex].src
+      const safeIndex = Math.min(currentIndex, tracks.length - 1)
+      if (!audio.src || !audio.src.includes(tracks[safeIndex].src.replace('/audio/', ''))) {
+        audio.src = tracks[safeIndex].src
         audio.load()
       }
       audio.play().catch(() => setIsPlaying(false))
     } else {
       audio.pause()
     }
-  }, [currentIndex])
+  }, [currentIndex, tracks.length])
 
   const selectTrack = useCallback((index: number) => {
     if (index === currentIndex) {
@@ -162,9 +166,12 @@ export function useBgm(): BgmState {
     }
   }, [])
 
+  // currentTrackがundefinedにならないように安全に取得
+  const currentTrack = tracks[currentIndex] ?? tracks[0] ?? FALLBACK_TRACKS[0]
+
   return {
     tracks,
-    currentTrack: tracks[currentIndex],
+    currentTrack,
     currentIndex,
     isPlaying,
     volume,

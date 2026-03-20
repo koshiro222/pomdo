@@ -37,7 +37,10 @@
   2. faviconがプライマリーカラー（#22c55e）で表示される
   3. faviconが拡大しても鮮明に表示される（SVGスケーラビリティ）
   4. アプリを開くとfaviconが即座に読み込まれる
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 07-01-PLAN.md — TimerアイコンベースのSVG favicon作成とindex.html更新
 
 ## Progress
 

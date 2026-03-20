@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { Timer, LayoutDashboard, BarChart3, Settings, UserCircle, LogIn } from 'lucide-react'
 import { tapAnimation, hoverAnimation } from '@/lib/animation'
 import { LoginDialog } from '@/components/dialogs/LoginDialog'
+import { AdminModal } from '@/components/bgm/AdminModal'
 
 interface HeaderProps {
   todayFocusMinutes?: number
@@ -17,8 +18,9 @@ function formatFocusTime(minutes: number): string {
 }
 
 export function Header({ todayFocusMinutes = 0 }: HeaderProps) {
-  const { user, logout } = useAuth()
+  const { user, logout, isAdmin } = useAuth()
   const [showLoginDialog, setShowLoginDialog] = useState(false)
+  const [showAdminModal, setShowAdminModal] = useState(false)
 
   return (
     <>
@@ -76,6 +78,19 @@ export function Header({ todayFocusMinutes = 0 }: HeaderProps) {
             </motion.span>
           </div>
 
+          {/* Admin Button（adminのみ） */}
+          {isAdmin && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowAdminModal(true)}
+              className="size-10 rounded-full border-2 border-cf-primary/30 overflow-hidden flex items-center justify-center bg-cf-surface hover:border-cf-primary/60 transition-colors cursor-pointer"
+              title="BGM管理"
+            >
+              <Settings className="text-cf-text" size={20} />
+            </motion.button>
+          )}
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -91,6 +106,13 @@ export function Header({ todayFocusMinutes = 0 }: HeaderProps) {
           </motion.button>
         </div>
       </header>
+
+      {isAdmin && (
+        <AdminModal
+          isOpen={showAdminModal}
+          onClose={() => setShowAdminModal(false)}
+        />
+      )}
 
       {!user && (
         <LoginDialog

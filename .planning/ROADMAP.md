@@ -126,7 +126,7 @@
 5. 削除時に確認ダイアログが表示される
 6. ローディング・エラー状態が適切に表示される
 
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 - [ ] 06-00-PLAN.md — テストファイル作成（Wave 0）
 - [ ] 06-01-PLAN.md — Headerへの管理ボタン追加とAdminModal基本構造（UI-01, UI-02）
@@ -142,7 +142,7 @@
 | 3. BGM API - Read | 0/1 | Planning | - |
 | 4. BGM API - Write | 0/4 | Planning | - |
 | 5. Player Migration | 0/1 | Planning | - |
-| 6. Admin UI | 1/4 | In Progress|  |
+| 6. Admin UI | 2/4 | In Progress|  |
 
 ## Testing Strategy
 

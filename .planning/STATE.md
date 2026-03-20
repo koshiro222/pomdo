@@ -4,12 +4,12 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 06
 status: unknown
-last_updated: "2026-03-20T19:56:52.529Z"
+last_updated: "2026-03-20T19:57:38.030Z"
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 15
-  completed_plans: 12
+  completed_plans: 13
 ---
 
 # Pomdo — BGM管理機能追加 プロジェクト状態
@@ -88,6 +88,11 @@ Plan: 1 of 4
 
 | Phase 04-bgm-api-write P03 | 5min | 2 tasks | 2 files |
 | Phase 06 P01 | 129 | 2 tasks | 4 files |
+| Phase 06 P00 | 3min | 7 tasks | 15 files |
+
+- [Phase 06]: @testing-library/user-eventを追加してフォーム操作テストを改善
+- [Phase 06]: プレースホルダーコンポーネントを作成してインポートエラーを回避
+- [Phase 06]: Framer Motionとreact-domのcreatePortalをモックしてテスト実行可能に
 
 ### Todos
 

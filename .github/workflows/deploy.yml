@@ -13,6 +13,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure Git encoding
+        run: |
+          git config --global core.quotePath false
+          git config --global i18n.commitencoding utf-8
+          git config --global i18n.logoutputencoding utf-8
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:

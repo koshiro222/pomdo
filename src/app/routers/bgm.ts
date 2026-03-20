@@ -1,7 +1,6 @@
-import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 import { router, publicProcedure } from './context'
-import { bgmGetAllInputSchema, bgmTrackSchema } from './_shared'
+import { bgmGetAllInputSchema } from './_shared'
 
 export const bgmRouter = router({
   getAll: publicProcedure
@@ -20,7 +19,7 @@ export const bgmRouter = router({
       const tracks = await query
 
       // srcフィールドを生成（/api/bgm/filename）
-      return tracks.map(track => ({
+      return tracks.map((track: any) => ({
         ...track,
         src: `/api/bgm/${track.filename}`,
       }))

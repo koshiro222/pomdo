@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
-import { router, publicProcedure } from './context'
-import { bgmGetAllInputSchema } from './_shared'
+import { router, publicProcedure, adminProcedure } from './context'
+import { bgmGetAllInputSchema, createBgmTrackSchema } from './_shared'
+import { TRPCError } from '@trpc/server'
 
 export const bgmRouter = router({
   getAll: publicProcedure
@@ -23,5 +24,44 @@ export const bgmRouter = router({
         ...track,
         src: `/api/bgm/${track.filename}`,
       }))
+    }),
+
+  create: adminProcedure
+    .input(createBgmTrackSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { db } = ctx
+
+      // ファイルサイズチェック（Base64デコード後）
+      const buffer = Uint8Array.from(atob(input.fileBase64), (c) => c.charCodeAt(0))
+      const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
+      if (buffer.byteLength > MAX_FILE_SIZE) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'ファイルサイズは10MB以下にしてください',
+        })
+      }
+
+      // ファイル名生成（UUID）
+      const filename = `${crypto.randomUUID()}.mp3`
+
+      // R2にアップロード
+      await ctx.env.BGM_BUCKET.put(filename, buffer, {
+        httpMetadata: { contentType: 'audio/mpeg' },
+      })
+
+      // DBに登録
+      const [created] = await db
+        .insert(ctx.schema.bgmTracks)
+        .values({
+          title: input.title,
+          artist: input.artist,
+          color: input.color,
+          filename,
+          tier: input.tier ?? 'free',
+        })
+        .returning()
+
+      return created
     }),
 })

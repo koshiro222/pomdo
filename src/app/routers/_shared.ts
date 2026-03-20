@@ -89,3 +89,21 @@ export const createBgmTrackSchema = z.object({
 })
 
 export type CreateBgmTrack = z.infer<typeof createBgmTrackSchema>
+
+// BGM更新用スキーマ
+export const updateBgmTrackSchema = z.object({
+  id: z.string().uuid('UUID形式で指定してください'),
+  title: z.string().min(1, 'タイトルが必要です').max(32, 'タイトルは32文字以下').optional(),
+  artist: z.string().max(32, 'アーティスト名は32文字以下').optional(),
+  color: z.string().optional(),
+  tier: z.enum(['free', 'premium']).optional(),
+})
+
+export type UpdateBgmTrack = z.infer<typeof updateBgmTrackSchema>
+
+// BGM削除用スキーマ
+export const deleteBgmTrackSchema = z.object({
+  id: z.string().uuid('UUID形式で指定してください'),
+})
+
+export type DeleteBgmTrack = z.infer<typeof deleteBgmTrackSchema>

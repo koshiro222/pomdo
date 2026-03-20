@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { tapAnimation } from '@/lib/animation'
+import { TrackList } from './TrackList'
+import { AddTrackForm } from './AddTrackForm'
 
 interface AdminModalProps {
   isOpen: boolean
@@ -60,18 +62,14 @@ export function AdminModal({ isOpen, onClose }: AdminModalProps) {
 
             {/* Content - modeによる切り替え */}
             {mode === 'list' && (
-              <div className="text-cf-subtext text-center py-8">
-                トラック一覧（次のタスクで実装）
-              </div>
+              <TrackList onAdd={() => setMode('add')} />
             )}
             {mode === 'add' && (
-              <div className="text-cf-subtext text-center py-8">
-                追加フォーム（次のタスクで実装）
-              </div>
+              <AddTrackForm onBack={() => setMode('list')} />
             )}
             {mode === 'edit' && (
               <div className="text-cf-subtext text-center py-8">
-                編集フォーム（次のタスクで実装）
+                編集ダイアログはTrackItemから直接開きます
               </div>
             )}
           </motion.div>

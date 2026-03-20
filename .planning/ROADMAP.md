@@ -10,7 +10,7 @@
 - [ ] **Phase 3: BGM API - Read** — BGMトラック取得API（既存プレイヤー移行用）
 - [ ] **Phase 4: BGM API - Write** — BGM追加・削除・更新API（R2操作含む）
 - [ ] **Phase 5: Player Migration** — 既存プレイヤーをDB連携へ移行
-- [ ] **Phase 6: Admin UI** — 管理者用BGM管理画面
+- [x] **Phase 6: Admin UI** — 管理者用BGM管理画面 (completed 2026-03-20)
 
 ## Phase Details
 
@@ -126,7 +126,7 @@
 5. 削除時に確認ダイアログが表示される
 6. ローディング・エラー状態が適切に表示される
 
-**Plans:** 4 plans
+**Plans:** 5/5 plans complete
 
 - [ ] 06-00-PLAN.md — テストファイル作成（Wave 0）
 - [ ] 06-01-PLAN.md — Headerへの管理ボタン追加とAdminModal基本構造（UI-01, UI-02）
@@ -143,7 +143,7 @@
 | 3. BGM API - Read | 0/1 | Planning | - |
 | 4. BGM API - Write | 0/4 | Planning | - |
 | 5. Player Migration | 0/1 | Planning | - |
-| 6. Admin UI | 3/4 | In Progress|  |
+| 6. Admin UI | 5/5 | Complete   | 2026-03-20 |
 
 ## Testing Strategy
 

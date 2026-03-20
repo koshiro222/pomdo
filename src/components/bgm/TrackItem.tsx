@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Edit2, Trash2 } from 'lucide-react'
 import { slideInVariants, tapAnimation } from '@/lib/animation'
+import { EditTrackDialog } from './EditTrackDialog'
+import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 
 export interface Track {
   id: string
@@ -74,13 +76,21 @@ export function TrackItem({ track }: TrackItemProps) {
         </div>
       </motion.div>
 
-      {/* ダイアログ - プレースホルダー（次のプランで実装） */}
-      {showDeleteConfirm && (
-        <div>DeleteConfirmDialog - 次のプランで実装</div>
-      )}
-      {showEditDialog && (
-        <div>EditTrackDialog - 次のプランで実装</div>
-      )}
+      {/* ダイアログ */}
+      <AnimatePresence>
+        {showEditDialog && (
+          <EditTrackDialog
+            track={track}
+            onClose={() => setShowEditDialog(false)}
+          />
+        )}
+        {showDeleteConfirm && (
+          <DeleteConfirmDialog
+            track={track}
+            onClose={() => setShowDeleteConfirm(false)}
+          />
+        )}
+      </AnimatePresence>
     </>
   )
 }

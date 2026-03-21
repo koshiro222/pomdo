@@ -8,11 +8,33 @@ interface DailyStats {
   pomodoros: number
 }
 
+// 月次統計集計ロジック
+const getMonthlyStats = (sessions: Session[]): { totalMinutes: number; totalSessions: number } => {
+  const now = new Date()
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  return sessions
+    .filter((s) => {
+      const sessionDate = new Date(s.startedAt)
+      return s.type === 'work' && s.completedAt !== null && sessionDate >= firstDay && sessionDate <= now
+    })
+    .reduce(
+      (acc, s) => ({
+        totalMinutes: acc.totalMinutes + Math.floor(s.durationSecs / 60),
+        totalSessions: acc.totalSessions + 1,
+      }),
+      { totalMinutes: 0, totalSessions: 0 }
+    )
+}
+
 export default function StatsCard() {
   const { sessions } = usePomodoro()
 
   // 本日のデータを抽出
   const today = new Date().toDateString()
+
+  // 月次統計を計算
+  const monthlyStats = getMonthlyStats(sessions)
   const todayStats = sessions
     .filter((s) => s.type === 'work' && s.completedAt !== null && new Date(s.startedAt).toDateString() === today)
     .reduce(

@@ -16,7 +16,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 8. レスポンシブ対応修正 | 0/3 | Planning | - |
-| 9. Stats機能実装 | 0/5 | Ready | - |
+| 9. Stats機能実装 | 5/5 | Complete | 2026-03-22 |
 | 10. グリッド統一 | 0/2 | Not started | - |
 
 **Overall:** 0/10 plans complete (0%)
@@ -102,11 +102,11 @@
 
 **Plans:** 5 plans
 
-- [ ] 09-01-PLAN.md — Rechartsインストール・テストファイル作成（Wave 0）
-- [ ] 09-02-PLAN.md — タブ切り替えUI・Today/Week統計・棒グラフ実装（STAT-01, STAT-02, STAT-04）
-- [ ] 09-03-PLAN.md — 累積集中時間計算・ComposedChart実装（STAT-05）
-- [ ] 09-04-PLAN.md — 月次統計実装（STAT-03）
-- [ ] 09-05-PLAN.md — ローディング状態・空状態・データ更新実装（STAT-06, STAT-07, STAT-08）
+- [x] 09-01-PLAN.md — Rechartsインストール・テストファイル作成（Wave 0）
+- [x] 09-02-PLAN.md — タブ切り替えUI・Today/Week統計・棒グラフ実装（STAT-01, STAT-02, STAT-04）
+- [x] 09-03-PLAN.md — 累積集中時間計算・ComposedChart実装（STAT-05）
+- [x] 09-04-PLAN.md — 月次統計実装（STAT-03）
+- [x] 09-05-PLAN.md — ローディング状態・空状態・データ更新実装（STAT-06, STAT-07, STAT-08）
 
 ---
 

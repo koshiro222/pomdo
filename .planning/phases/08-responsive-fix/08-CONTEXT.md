@@ -15,16 +15,21 @@
 
 ### グリッド修正
 - smブレイクポイント（6列）を維持
-- Statsカードのcol-spanを4→2に変更
+- Statsカードのcol-spanを4→2に変更（※既にコード上はsm:col-span-2）
 - smブレイクポイントでの2行目: BGM(2) + Stats(2) + 残り2列 → 残り2列をTodo(2)に割り当てて合計6列に
 - lgブレイクポイント（12列）は現状維持
 
-**修正後のcol-span:**
-- Timer: sm:col-span-4 lg:col-span-8 row-span-2
-- CurrentTask: sm:col-span-2 lg:col-span-2
-- BGM: sm:col-span-2 lg:col-span-2
-- Stats: sm:col-span-2（4から変更） lg:col-span-4
-- Todo: sm:col-span-6 lg:col-span-12
+**修正後のcol-span（確認用）:**
+- Timer: sm:col-span-4 lg:col-span-8 row-span-2（変更なし）
+- CurrentTask: sm:col-span-2 lg:col-span-2（変更なし）
+- BGM: sm:col-span-2 lg:col-span-2（変更なし）
+- Stats: sm:col-span-2 lg:col-span-4（変更なし）
+- Todo: sm:col-span-6 lg:col-span-12（変更なし）
+
+### コードクリーンアップ
+- Statsカード、CurrentTaskカード、BGMカード、Todoカードから`sm:row-span-1`を削除
+- 理由: row-span-1はデフォルト値であり、明示的に記述する必要がない（冗長なコード）
+- これによりコードが簡潔になり、可読性が向上
 
 ### Framer Motion最適化
 - 全カードの`layout` propを`layout="position"`に変更

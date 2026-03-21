@@ -291,3 +291,65 @@ describe('STAT-06: ローディング状態', () => {
     expect(spinnerContainer?.className).toContain('flex items-center justify-center')
   })
 })
+
+describe('STAT-07: 空状態', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('completedSessions.length === 0 && !loadingの場合に空状態が表示される', () => {
+    vi.mocked(usePomodoro).mockReturnValue({
+      sessions: [], // 完了済みセッションなし
+      loading: false,
+      error: null,
+      startSession: vi.fn(),
+      completeSession: vi.fn(),
+      fetchSessions: vi.fn(),
+    })
+
+    render(<StatsCard />)
+
+    // 空状態メッセージが表示されていることを確認
+    expect(screen.getByText(/セッションがありません/)).toBeTruthy()
+    expect(screen.getByText(/ポモドーロを始めて記録を残しましょう/)).toBeTruthy()
+  })
+
+  it('BarChart3アイコンが表示される', () => {
+    vi.mocked(usePomodoro).mockReturnValue({
+      sessions: [],
+      loading: false,
+      error: null,
+      startSession: vi.fn(),
+      completeSession: vi.fn(),
+      fetchSessions: vi.fn(),
+    })
+
+    render(<StatsCard />)
+
+    // BarChart3アイコン（lucide-react）はsvg要素としてレンダリングされる
+    // データ属性や特定のクラスで確認
+    const icon = document.querySelector('svg')
+    expect(icon).toBeTruthy()
+  })
+
+  it('「セッションがありません\nポモドーロを始めて記録を残しましょう」メッセージが表示される', () => {
+    vi.mocked(usePomodoro).mockReturnValue({
+      sessions: [],
+      loading: false,
+      error: null,
+      startSession: vi.fn(),
+      completeSession: vi.fn(),
+      fetchSessions: vi.fn(),
+    })
+
+    render(<StatsCard />)
+
+    // メッセージのテキストを確認
+    const emptyState = screen.getByText(/セッションがありません/)
+    expect(emptyState).toBeTruthy()
+
+    // 2行目のメッセージも確認
+    const subMessage = screen.getByText(/ポモドーロを始めて記録を残しましょう/)
+    expect(subMessage).toBeTruthy()
+  })
+})

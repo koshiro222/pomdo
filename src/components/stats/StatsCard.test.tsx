@@ -1,5 +1,119 @@
-import { renderHook } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, it, expect, vi } from 'vitest'
+import StatsCard from './StatsCard'
+
+// Mock usePomodoro hook
+const mockSessions = [
+  {
+    id: '1',
+    userId: 'user1',
+    todoId: null,
+    type: 'work' as const,
+    startedAt: new Date().toISOString(),
+    completedAt: new Date().toISOString(),
+    durationSecs: 1500, // 25 minutes
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    userId: 'user1',
+    todoId: null,
+    type: 'work' as const,
+    startedAt: new Date().toISOString(),
+    completedAt: new Date().toISOString(),
+    durationSecs: 1500,
+    createdAt: new Date().toISOString(),
+  },
+]
+
+vi.mock('../../hooks/usePomodoro', () => ({
+  usePomodoro: () => ({
+    sessions: mockSessions,
+    loading: false,
+    error: null,
+  }),
+}))
+
+describe('STAT-01: Today Tab UI and Statistics', () => {
+  it('should display tab buttons (Today/Week/Month)', () => {
+    render(<StatsCard />)
+
+    expect(screen.getByRole('button', { name: /today/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /week/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /month/i })).toBeInTheDocument()
+  })
+
+  it('should have Today tab selected by default', () => {
+    render(<StatsCard />)
+
+    const todayTab = screen.getByRole('button', { name: /today/i })
+    expect(todayTab).toHaveClass('bg-cf-primary')
+  })
+
+  it('should display todays focus time correctly', async () => {
+    render(<StatsCard />)
+
+    // 2 sessions * 25 minutes = 50 minutes
+    await waitFor(() => {
+      expect(screen.getByText(/50m/)).toBeInTheDocument()
+    })
+  })
+
+  it('should display todays pomodoro count correctly', async () => {
+    render(<StatsCard />)
+
+    await waitFor(() => {
+      expect(screen.getByText('2')).toBeInTheDocument()
+    })
+  })
+
+  it('should switch to Week tab when clicked', async () => {
+    const user = userEvent.setup()
+    render(<StatsCard />)
+
+    const weekTab = screen.getByRole('button', { name: /week/i })
+    await user.click(weekTab)
+
+    expect(weekTab).toHaveClass('bg-cf-primary')
+  })
+
+  it('should switch to Month tab when clicked', async () => {
+    const user = userEvent.setup()
+    render(<StatsCard />)
+
+    const monthTab = screen.getByRole('button', { name: /month/i })
+    await user.click(monthTab)
+
+    expect(monthTab).toHaveClass('bg-cf-primary')
+  })
+})
+
+describe('STAT-02: Week Tab Statistics', () => {
+  it('should display weekly statistics with session data', () => {
+    render(<StatsCard />)
+
+    // Switch to Week tab
+    const weekTab = screen.getByRole('button', { name: /week/i })
+    weekTab.click()
+
+    // Week tab content should be visible
+    expect(screen.getByText(/last 7 days/i)).toBeInTheDocument()
+  })
+})
+
+describe('STAT-04: Bar Chart Display', () => {
+  it('should display bar chart in Week tab', () => {
+    render(<StatsCard />)
+
+    const weekTab = screen.getByRole('button', { name: /week/i })
+    weekTab.click()
+
+    // Recharts renders SVG elements - check for chart container
+    const chartContainer = document.querySelector('.recharts-wrapper')
+    expect(chartContainer).toBeInTheDocument()
+  })
+})
 
 describe('StatsCard - STAT-05 累積集中時間', () => {
   it('週次データにcumulativeMinutesフィールドが含まれる', () => {

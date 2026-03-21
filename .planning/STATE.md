@@ -36,7 +36,8 @@ See: `.planning/PROJECT.md` (updated 2026-03-21)
 ## Current Position
 
 Phase: 09 (stats) — COMPLETE
-Plan: 5 of 5
+Plan: 5 of 5 — Phase 09完了
+Next: Phase 10 (グリッド統一)
 
 ### Phase Context
 

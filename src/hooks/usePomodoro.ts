@@ -59,14 +59,17 @@ export function usePomodoro(): UsePomodoroReturn {
   // ローカルストレージから初期データを読み込み
   const initLocalSessions = useCallback(() => {
     setLoading(true)
-    try {
-      const stored = storage.getPomodoroSessions()
-      setLocalSessions(stored)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load sessions')
-    } finally {
-      setLoading(false)
-    }
+    // 少し遅延を入れてローディング状態が見えるようにする
+    setTimeout(() => {
+      try {
+        const stored = storage.getPomodoroSessions()
+        setLocalSessions(stored)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load sessions')
+      } finally {
+        setLoading(false)
+      }
+    }, 300)
   }, [])
 
   // 初期化時にローカルストレージから読み込み
@@ -113,7 +116,9 @@ export function usePomodoro(): UsePomodoroReturn {
             durationSecs,
             completedAt: null,
           })
-          setLocalSessions((prev) => [...prev, created])
+          // セッション作成後にセッションリストを再読み込みして確実に反映させる
+          const stored = storage.getPomodoroSessions()
+          setLocalSessions(stored)
           return created
         }
       } catch (e) {
@@ -136,9 +141,9 @@ export function usePomodoro(): UsePomodoroReturn {
           const completedAt = new Date().toISOString()
           const updated = storage.updatePomodoroSession(sessionId, { completedAt })
           if (updated) {
-            setLocalSessions((prev) =>
-              prev.map((s) => (s.id === sessionId ? updated : s))
-            )
+            // 更新後にセッションリストを再読み込みして確実に反映させる
+            const stored = storage.getPomodoroSessions()
+            setLocalSessions(stored)
           }
         }
       } catch (e) {

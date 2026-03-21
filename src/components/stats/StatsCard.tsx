@@ -229,7 +229,7 @@ export default function StatsCard() {
 
       {/* ローディングスピナー（オーバーレイ） */}
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-3xl">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-3xl z-10 pointer-events-none">
           <div className="w-8 h-8 border-2 border-cf-primary border-t-transparent rounded-full animate-spin" />
         </div>
       )}

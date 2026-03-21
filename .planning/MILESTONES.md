@@ -1,5 +1,15 @@
 # Milestones
 
+## v1.2 UI/UX改善 (Shipped: 2026-03-21)
+
+**Phases completed:** 3 phases, 10 plans, 2 tasks
+
+**Key accomplishments:**
+
+- (none recorded)
+
+---
+
 ## v1.1 favicon追加 (Shipped: 2026-03-21)
 
 **Phases completed:** 1 phase, 1 plan, 2 tasks

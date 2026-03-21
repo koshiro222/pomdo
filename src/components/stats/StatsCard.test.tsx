@@ -130,8 +130,6 @@ describe('STAT-04: Bar Chart Display', () => {
       expect(screen.getByText(/last 7 days/i)).toBeInTheDocument()
     })
 
-    // Check that ResponsiveContainer is in the DOM
-    const chartContainer = document.querySelector('.recharts-wrapper')
     // In jsdom, Recharts might not fully render, but we can check the content exists
     expect(screen.getByText(/last 7 days/i)).toBeInTheDocument()
   })
@@ -141,22 +139,6 @@ describe('StatsCard - STAT-05 累積集中時間', () => {
   it('週次データにcumulativeMinutesフィールドが含まれる', () => {
     // このテストは、実装前に cumulativeMinutes フィールドの存在を確認するためのもの
     // 実装が完了すると、このテストはデータ構造の検証として機能する
-    const mockSessions = [
-      {
-        id: '1',
-        type: 'work' as const,
-        startedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2日前
-        completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 25 * 60 * 1000).toISOString(),
-        durationSecs: 25 * 60, // 25分
-      },
-      {
-        id: '2',
-        type: 'work' as const,
-        startedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1日前
-        completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000).toISOString(),
-        durationSecs: 50 * 60, // 50分
-      },
-    ]
 
     // cumulativeMinutesフィールドの存在を確認する型チェック
     type WeeklyDataWithCumulative = {

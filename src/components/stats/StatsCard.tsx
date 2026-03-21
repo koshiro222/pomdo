@@ -10,36 +10,6 @@ interface WeeklyData {
 
 type TabType = 'today' | 'week' | 'month'
 
-type Session = {
-  id: string
-  userId?: string
-  todoId: string | null
-  type: 'work' | 'short_break' | 'long_break'
-  startedAt: string
-  completedAt: string | null
-  durationSecs: number
-  createdAt: string
-}
-
-// 月次統計集計ロジック
-const getMonthlyStats = (sessions: Session[]): { totalMinutes: number; totalSessions: number } => {
-  const now = new Date()
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-
-  return sessions
-    .filter((s) => {
-      const sessionDate = new Date(s.startedAt)
-      return s.type === 'work' && s.completedAt !== null && sessionDate >= firstDay && sessionDate <= now
-    })
-    .reduce(
-      (acc, s) => ({
-        totalMinutes: acc.totalMinutes + Math.floor(s.durationSecs / 60),
-        totalSessions: acc.totalSessions + 1,
-      }),
-      { totalMinutes: 0, totalSessions: 0 }
-    )
-}
-
 export default function StatsCard() {
   const { sessions } = usePomodoro()
   const [activeTab, setActiveTab] = useState<TabType>('today')

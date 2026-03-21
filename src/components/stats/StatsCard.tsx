@@ -63,7 +63,7 @@ export default function StatsCard() {
   }
 
   return (
-    <div className="glass rounded-3xl p-6 h-full flex flex-col">
+    <div className="glass rounded-3xl p-6 h-full flex flex-col overflow-y-auto min-h-0">
       {/* ヘッダー */}
       <p className="text-xs uppercase tracking-widest text-cf-subtext font-bold mb-4">
         Stats

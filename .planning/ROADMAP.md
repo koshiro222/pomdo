@@ -15,7 +15,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 8. レスポンシブ対応修正 | 0/3 | Not started | - |
+| 8. レスポンシブ対応修正 | 0/3 | Planning | - |
 | 9. Stats機能実装 | 0/2 | Not started | - |
 | 10. グリッド統一 | 0/2 | Not started | - |
 
@@ -77,8 +77,11 @@
 3. ユーザーはタイマー部分の過剰な余白が解消されたレイアウトを見る
 4. ユーザーはレイアウト変更時のアニメーションがスムーズで競合しない
 
-**Plans:**
-- TBD（`/gsd:plan-phase 8`で作成）
+**Plans:** 3 plans
+
+- [ ] 08-01-PLAN.md — グリッド定義修正・layout prop最適化・main要素overflow削除
+- [ ] 08-02-PLAN.md — タイマー部分の余白調整（モードタブ位置）
+- [ ] 08-03-PLAN.md — TodoList・StatsCardにoverflow設定追加
 
 ---
 
@@ -164,4 +167,5 @@ Phase 10（グリッド統一）
 
 ---
 *Roadmap created: 2026-03-22*
-*Next step: `/gsd:plan-phase 8`*
+*Phase 8 plans created: 2026-03-22*
+*Next step: `/gsd:execute-phase 8`*

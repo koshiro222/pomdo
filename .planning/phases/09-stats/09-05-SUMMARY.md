@@ -129,3 +129,11 @@ Stats機能は完全に実装されました：
 ---
 *Phase: 09-stats*
 *Completed: 2026-03-22*
+
+## Self-Check: PASSED
+
+- [x] SUMMARY.md exists: /Users/koshiro/develop/pomdo/.planning/phases/09-stats/09-05-SUMMARY.md
+- [x] Commit exists: e483def (fix), 8f14087 (feat), a200e2e (test)
+- [x] STATE.md updated: Phase 09 complete, 5/10 plans
+- [x] ROADMAP.md updated: Phase 09 marked complete
+- [x] Final commit created: f44d63b

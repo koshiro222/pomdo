@@ -16,10 +16,10 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 8. レスポンシブ対応修正 | 0/3 | Planning | - |
-| 9. Stats機能実装 | 0/2 | Not started | - |
+| 9. Stats機能実装 | 0/5 | Ready | - |
 | 10. グリッド統一 | 0/2 | Not started | - |
 
-**Overall:** 0/7 plans complete (0%)
+**Overall:** 0/10 plans complete (0%)
 
 ## Phases
 
@@ -100,8 +100,13 @@
 4. ユーザーはデータ更新時に統計が自動的に再描画されるのを確認できる
 5. ユーザーはデータがない場合に空状態の表示を確認できる
 
-**Plans:**
-- TBD（`/gsd:plan-phase 9`で作成）
+**Plans:** 5 plans
+
+- [ ] 09-01-PLAN.md — Rechartsインストール・テストファイル作成（Wave 0）
+- [ ] 09-02-PLAN.md — タブ切り替えUI・Today/Week統計・棒グラフ実装（STAT-01, STAT-02, STAT-04）
+- [ ] 09-03-PLAN.md — 累積集中時間計算・ComposedChart実装（STAT-05）
+- [ ] 09-04-PLAN.md — 月次統計実装（STAT-03）
+- [ ] 09-05-PLAN.md — ローディング状態・空状態・データ更新実装（STAT-06, STAT-07, STAT-08）
 
 ---
 
@@ -168,4 +173,5 @@ Phase 10（グリッド統一）
 ---
 *Roadmap created: 2026-03-22*
 *Phase 8 plans created: 2026-03-22*
+*Phase 9 plans created: 2026-03-22*
 *Next step: `/gsd:execute-phase 8`*

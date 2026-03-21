@@ -1,14 +1,45 @@
 import { Clock, Target } from 'lucide-react'
 import { useState } from 'react'
 import { usePomodoro } from '../../hooks/usePomodoro'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface WeeklyData {
   date: string
   sessions: number
+  cumulativeMinutes: number
 }
 
 type TabType = 'today' | 'week' | 'month'
+
+type Session = {
+  id: string
+  userId?: string
+  todoId: string | null
+  type: 'work' | 'short_break' | 'long_break'
+  startedAt: string
+  completedAt: string | null
+  durationSecs: number
+  createdAt: string
+}
+
+// 月次統計集計ロジック
+const getMonthlyStats = (sessions: Session[]): { totalMinutes: number; totalSessions: number } => {
+  const now = new Date()
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  return sessions
+    .filter((s) => {
+      const sessionDate = new Date(s.startedAt)
+      return s.type === 'work' && s.completedAt !== null && sessionDate >= firstDay && sessionDate <= now
+    })
+    .reduce(
+      (acc, s) => ({
+        totalMinutes: acc.totalMinutes + Math.floor(s.durationSecs / 60),
+        totalSessions: acc.totalSessions + 1,
+      }),
+      { totalMinutes: 0, totalSessions: 0 }
+    )
+}
 
 export default function StatsCard() {
   const { sessions } = usePomodoro()
@@ -32,22 +63,8 @@ export default function StatsCard() {
       { focusMinutes: 0, pomodoros: 0 }
     )
 
-  // 直近7日間のデータを計算
-  const weeklyData: WeeklyData[] = []
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date()
-    date.setDate(date.getDate() - i)
-    const dateStr = date.toDateString()
-
-    const daySessions = sessions
-      .filter((s) => s.type === 'work' && s.completedAt !== null && new Date(s.startedAt).toDateString() === dateStr)
-      .length
-
-    weeklyData.push({
-      date: getDayLabel(dateStr),
-      sessions: daySessions,
-    })
-  }
+  // 月次統計を計算
+  const monthlyStats = getMonthlyStats(sessions)
 
   // 日付の表示形式（月曜始まり）
   function getDayLabel(dateStr: string): string {
@@ -60,6 +77,29 @@ export default function StatsCard() {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     const dayIndex = (date.getDay() + 6) % 7
     return days[dayIndex]
+  }
+
+  // 直近7日間のデータを計算（累積集中時間を含む）
+  const weeklyData: WeeklyData[] = []
+  let cumulativeTotal = 0
+
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toDateString()
+
+    const daySessions = sessions.filter(
+      (s) => s.type === 'work' && s.completedAt !== null && new Date(s.startedAt).toDateString() === dateStr
+    )
+
+    const dayMinutes = daySessions.reduce((sum, s) => sum + Math.floor(s.durationSecs / 60), 0)
+    cumulativeTotal += dayMinutes
+
+    weeklyData.push({
+      date: getDayLabel(dateStr),
+      sessions: daySessions.length,
+      cumulativeMinutes: cumulativeTotal,
+    })
   }
 
   return (
@@ -115,25 +155,53 @@ export default function StatsCard() {
         </div>
       )}
 
-      {/* Weekタブ */}
+      {/* Weekタブ - 複合グラフ（STAT-05） */}
       {activeTab === 'week' && (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0">
           <p className="text-xs text-cf-subtext mb-3">Last 7 Days</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={weeklyData}>
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="sessions" fill="#22c55e" name="Sessions" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="flex-1 min-h-0">
+            <ResponsiveContainer width="100%" height={200}>
+              <ComposedChart data={weeklyData}>
+                <XAxis dataKey="date" />
+                <YAxis yAxisId="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <Tooltip />
+                <Bar yAxisId="left" dataKey="sessions" fill="#22c55e" name="セッション数" />
+                <Line yAxisId="right" type="monotone" dataKey="cumulativeMinutes" stroke="#22c55e" strokeWidth={2} name="累積時間(分)" />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       )}
 
-      {/* Monthタブ（プレースホルダー） */}
+      {/* Monthタブ */}
       {activeTab === 'month' && (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-cf-subtext">Month statistics coming soon</p>
+        <div className="flex-1">
+          {/* 月間集中時間 */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-cf-primary/20 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-cf-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-cf-text">
+                {monthlyStats.totalMinutes > 0
+                  ? `${Math.floor(monthlyStats.totalMinutes / 60)}h ${monthlyStats.totalMinutes % 60}m`
+                  : '0m'}
+              </p>
+              <p className="text-xs text-cf-subtext">Focus Time This Month</p>
+            </div>
+          </div>
+
+          {/* 月間セッション数 */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cf-primary/20 flex items-center justify-center">
+              <Target className="w-5 h-5 text-cf-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-cf-text">{monthlyStats.totalSessions}</p>
+              <p className="text-xs text-cf-subtext">Pomodoros This Month</p>
+            </div>
+          </div>
         </div>
       )}
     </div>

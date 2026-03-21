@@ -1,4 +1,4 @@
-import { Clock, Target } from 'lucide-react'
+import { BarChart3, Clock, Target } from 'lucide-react'
 import { useState } from 'react'
 import { usePomodoro } from '../../hooks/usePomodoro'
 import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
@@ -50,6 +50,28 @@ export default function StatsCard() {
     { id: 'week' as const, label: 'Week' },
     { id: 'month' as const, label: 'Month' },
   ]
+
+  // 完了済みセッションをフィルタリング
+  const completedSessions = sessions.filter((s) => s.completedAt !== null)
+
+  // 空状態: 完了済みセッションがない場合
+  if (completedSessions.length === 0 && !loading) {
+    return (
+      <div className="glass rounded-3xl p-6 h-full flex flex-col">
+        <p className="text-xs uppercase tracking-widest text-cf-subtext font-bold mb-4">
+          Stats
+        </p>
+
+        <div className="flex-1 flex flex-col items-center justify-center text-cf-subtext">
+          <BarChart3 className="w-16 h-16 mb-4 opacity-50" />
+          <p className="text-center">
+            セッションがありません<br />
+            ポモドーロを始めて記録を残しましょう
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   // 本日のデータを抽出
   const today = new Date().toDateString()

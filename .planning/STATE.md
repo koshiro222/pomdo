@@ -35,12 +35,12 @@ See: `.planning/PROJECT.md` (updated 2026-03-21)
 
 ## Current Position
 
-Phase: 09 (stats) — EXECUTING
-Plan: 1 of 5
+Phase: 09 (stats) — COMPLETE
+Plan: 5 of 5
 
 ### Phase Context
 
-**Goal:** 全画面サイズでUIが正しく表示される
+**Goal:** ユーザーは自分の作業統計を視覚的に把握できる
 
 **Requirements:** RESP-01～RESP-05（5件）
 
@@ -77,8 +77,8 @@ Plan: 1 of 5
 
 - Started: 2026-03-22
 - Phases completed: 0/3
-- Plans completed: 0/7
-- Git commits: 0
+- Plans completed: 5/10
+- Git commits: 15+ feat commits
 
 ## Accumulated Context
 
@@ -108,6 +108,11 @@ Plan: 1 of 5
 - [Phase 09]: 月次統計は合計値のみ表示（グラフなし、Todayと同じスタイル） — ユーザーが今月の作業統計をシンプルに確認できるため
 - [Phase 09]: 集計期間はstartedAt基準で今月1日〜現在 — 月末のセッションが翌月1日に完結した場合のエッジケースは無視する仕様
 - [Phase 09]: タブ切り替え機能を実装（Plan 09-02/03の依存関係を解消） — Monthタブを表示するにはタブ切り替え機能が必要だったため
+
+| Phase 09 P05 | 3min | 2 tasks | 1 files |
+
+- [Phase 09]: ローディングオーバーレイパターン — 既存コンテンツを維持したままスピナー表示（UX向上）
+- [Phase 09]: 空状態パターン — アイコンとメッセージでデータなしそユーザーに案内
 
 ### Completed Features
 
@@ -180,11 +185,12 @@ Plan: 1 of 5
 
 ### Last Session
 
-- v1.1完了（Phase 7: Faviconの実装）
-- 2026-03-21にv1.1マイルストーン完了
-- 2026-03-22にv1.2ロードマップ作成
+- Phase 09完了（Stats機能実装: 5/5プラン完了）
+- 2026-03-22に09-05プラン完了（ローディング状態と空状態のUI）
 
 ### Next Action
+
+Phase 10（グリッド統一）の開始
 
 `/gsd:plan-phase 8`
 

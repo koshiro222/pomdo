@@ -4,6 +4,12 @@ import { describe, it, expect, vi } from 'vitest'
 import StatsCard from './StatsCard'
 
 // Mock usePomodoro hook
+vi.mock('../../hooks/usePomodoro', () => ({
+  usePomodoro: vi.fn(),
+}))
+
+import { usePomodoro } from '../../hooks/usePomodoro'
+
 const mockSessions = [
   {
     id: '1',
@@ -27,13 +33,19 @@ const mockSessions = [
   },
 ]
 
-vi.mock('../../hooks/usePomodoro', () => ({
-  usePomodoro: () => ({
-    sessions: mockSessions,
-    loading: false,
-    error: null,
-  }),
-}))
+// デフォルトのmock返り値を設定
+const defaultMockReturn = {
+  sessions: mockSessions,
+  loading: false,
+  error: null,
+  startSession: vi.fn(),
+  completeSession: vi.fn(),
+  fetchSessions: vi.fn(),
+}
+
+beforeEach(() => {
+  vi.mocked(usePomodoro).mockReturnValue(defaultMockReturn)
+})
 
 describe('STAT-01: Today Tab UI and Statistics', () => {
   it('should display tab buttons (Today/Week/Month)', () => {
@@ -200,5 +212,82 @@ describe('StatsCard - STAT-05 累積集中時間', () => {
     }
 
     expect(cumulativeValues).toEqual(expectedCumulative)
+  })
+})
+
+describe('STAT-06: ローディング状態', () => {
+  beforeEach(() => {
+    // 各テスト前にmockをリセット
+    vi.clearAllMocks()
+  })
+
+  it('loadingがtrueの場合にスピナーが表示される', () => {
+    vi.mocked(usePomodoro).mockReturnValue({
+      sessions: [],
+      loading: true,
+      error: null,
+      startSession: vi.fn(),
+      completeSession: vi.fn(),
+      fetchSessions: vi.fn(),
+    })
+
+    render(<StatsCard />)
+
+    // スピナー要素を確認（animate-spinクラスで判定）
+    const spinner = document.querySelector('.animate-spin')
+    expect(spinner).toBeTruthy()
+  })
+
+  it('ローディング中も既存の統計データが表示される', () => {
+    const mockSessions = [
+      {
+        id: '1',
+        userId: '',
+        todoId: null,
+        type: 'work' as const,
+        startedAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
+        durationSecs: 1500,
+        createdAt: new Date().toISOString(),
+      },
+    ]
+
+    vi.mocked(usePomodoro).mockReturnValue({
+      sessions: mockSessions,
+      loading: true,
+      error: null,
+      startSession: vi.fn(),
+      completeSession: vi.fn(),
+      fetchSessions: vi.fn(),
+    })
+
+    render(<StatsCard />)
+
+    // Statsヘッダーが表示されていることを確認
+    expect(screen.getByText('Stats')).toBeTruthy()
+
+    // スピナーが表示されていることを確認
+    const spinner = document.querySelector('.animate-spin')
+    expect(spinner).toBeTruthy()
+  })
+
+  it('スピナーがグラフ中央に配置されている', () => {
+    vi.mocked(usePomodoro).mockReturnValue({
+      sessions: [],
+      loading: true,
+      error: null,
+      startSession: vi.fn(),
+      completeSession: vi.fn(),
+      fetchSessions: vi.fn(),
+    })
+
+    render(<StatsCard />)
+
+    // スピナーの親コンテナがabsolute inset-0を持つことを確認
+    const spinnerContainer = document.querySelector('.absolute.inset-0')
+    expect(spinnerContainer).toBeTruthy()
+
+    // スピナーが中央配置されていることを確認（flex items-center justify-center）
+    expect(spinnerContainer?.className).toContain('flex items-center justify-center')
   })
 })

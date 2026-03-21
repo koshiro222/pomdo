@@ -42,7 +42,7 @@ const getMonthlyStats = (sessions: Session[]): { totalMinutes: number; totalSess
 }
 
 export default function StatsCard() {
-  const { sessions } = usePomodoro()
+  const { sessions, loading } = usePomodoro()
   const [activeTab, setActiveTab] = useState<TabType>('today')
 
   const tabs = [
@@ -103,7 +103,7 @@ export default function StatsCard() {
   }
 
   return (
-    <div className="glass rounded-3xl p-6 h-full flex flex-col overflow-y-auto min-h-0">
+    <div className="glass rounded-3xl p-6 h-full flex flex-col overflow-y-auto min-h-0 relative">
       {/* ヘッダー */}
       <p className="text-xs uppercase tracking-widest text-cf-subtext font-bold mb-4">
         Stats
@@ -202,6 +202,13 @@ export default function StatsCard() {
               <p className="text-xs text-cf-subtext">Pomodoros This Month</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ローディングスピナー（オーバーレイ） */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-3xl">
+          <div className="w-8 h-8 border-2 border-cf-primary border-t-transparent rounded-full animate-spin" />
         </div>
       )}
     </div>

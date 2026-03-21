@@ -17,9 +17,9 @@
 |-------|----------------|--------|-----------|
 | 8. レスポンシブ対応修正 | 0/3 | Planning | - |
 | 9. Stats機能実装 | 5/5 | Complete | 2026-03-22 |
-| 10. グリッド統一 | 0/2 | Not started | - |
+| 10. グリッド統一 | 0/2 | Planning | - |
 
-**Overall:** 0/10 plans complete (0%)
+**Overall:** 5/10 plans complete (50%)
 
 ## Phases
 
@@ -123,8 +123,10 @@
 2. ユーザーは全領域で一貫したガターサイズ（16px）を確認できる
 3. ユーザーは全領域で一貫したスペーシングを確認できる
 
-**Plans:**
-- TBD（`/gsd:plan-phase 10`で作成）
+**Plans:** 2 plans
+
+- [ ] 10-01-PLAN.md — カードデザイン統一（GRID-01, GRID-03）
+- [ ] 10-02-PLAN.md — グリッド検証・デザインシステム文書化（GRID-02, GRID-04）
 
 ---
 
@@ -153,7 +155,7 @@ Phase 10（グリッド統一）
 - Statsデータの集計ロジックが複雑になる可能性
 
 **Phase 10 リスク:**
-- BentoCard共通コンポーネントの導入により、既存コンポーネントのリファクタリングが必要
+- .bento-cardクラスへの統一により、既存コンポーネントのclassName変更が必要
 - グリッドシステムの修正により、既存のレイアウトが崩れる可能性
 
 ## Coverage Validation
@@ -174,4 +176,5 @@ Phase 10（グリッド統一）
 *Roadmap created: 2026-03-22*
 *Phase 8 plans created: 2026-03-22*
 *Phase 9 plans created: 2026-03-22*
-*Next step: `/gsd:execute-phase 8`*
+*Phase 10 plans created: 2026-03-22*
+*Next step: `/gsd:execute-phase 10`*

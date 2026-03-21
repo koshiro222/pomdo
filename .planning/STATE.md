@@ -1,7 +1,7 @@
 ---
 gsd_state_version: 1.0
-milestone: 計画中
-milestone_name: planning
+milestone: v1.2
+milestone_name: UI/UX改善
 status: unknown
 last_updated: "2026-03-21T00:00:00.000Z"
 progress:
@@ -14,14 +14,21 @@ progress:
 # Pomdo — プロジェクト状態
 
 **Last Updated:** 2026-03-21
-**Milestone:** v1.1 完了
+**Milestone:** v1.2 UI/UX改善
 
 ## Project Reference
 
 See: `.planning/PROJECT.md` (updated 2026-03-21)
 
 **Core value:** ユーザーが集中して作業を完了できるようにする。タイマー、タスク、BGMがシームレスに連携する。
-**Current focus:** 次のマイルストーンを計画中
+**Current focus:** UI/UX改善（レスポンシブ、デザイン統一、Stats実装）
+
+## Current Position
+
+Phase: Not started (defining requirements)
+Plan: —
+Status: 要件定義中
+Last activity: 2026-03-21 — Milestone v1.2 開始
 
 ## Performance Metrics
 
@@ -38,6 +45,13 @@ See: `.planning/PROJECT.md` (updated 2026-03-21)
 - Phases completed: 1/1
 - Plans completed: 1/1
 - Git commits: 2 feat commits
+
+### v1.2 Milestone (Active)
+
+- Started: 2026-03-21
+- Phases completed: 0/?
+- Plans completed: 0/?
+- Git commits: 0
 
 ## Accumulated Context
 
@@ -59,6 +73,7 @@ See: `.planning/PROJECT.md` (updated 2026-03-21)
 - Drizzle ORM + PostgreSQL
 - R2 for object storage
 - lucide-react（アイコン）
+- Tailwind CSS
 
 ### Technical Debt (Carried Over)
 
@@ -68,7 +83,12 @@ See: `.planning/PROJECT.md` (updated 2026-03-21)
 
 ### Known Issues
 
-なし
+**UI/UX課題:**
+- レスポンシブ対応が不完全 — 要素が重なり、ボタンがクリックできない
+- 各グリッドに統一感がない
+- タイマー部分の余白が大きすぎる
+- selectedTaskがUX的に微妙
+- Statsが機能していない — カウントもグラフも表示されない
 
 ## Session Continuity
 
@@ -79,7 +99,9 @@ See: `.planning/PROJECT.md` (updated 2026-03-21)
 
 ### Next Steps
 
-- `/gsd:new-milestone` を実行して次のマイルストーンを開始
+- リサーチ実施（UI/UX、レスポンシブ、Stats）
+- 要件定義
+- ロードマップ作成
 
 ---
-*Milestone v1.1 completed: 2026-03-21*
+*Milestone v1.2 started: 2026-03-21*

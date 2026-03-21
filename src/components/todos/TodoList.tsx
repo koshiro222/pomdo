@@ -45,14 +45,14 @@ export default function TodoList({ }: TodoListProps) {
 
   if (loading) {
     return (
-      <div className="glass rounded-2xl flex flex-col min-h-64 sm:h-full overflow-hidden p-6">
+      <div className="bento-card flex flex-col min-h-64 sm:h-full overflow-hidden p-4">
         <div className="text-cf-subtext">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="glass rounded-2xl flex flex-col min-h-64 sm:h-full overflow-hidden">
+    <div className="bento-card flex flex-col min-h-64 sm:h-full overflow-hidden">
       {/* ヘッダー */}
       <div className="p-6 border-b border-white/10">
         <div className="flex items-center justify-between mb-4">

@@ -57,7 +57,7 @@ export default function StatsCard() {
   // 空状態: 完了済みセッションがない場合
   if (completedSessions.length === 0 && !loading) {
     return (
-      <div className="glass rounded-3xl p-6 h-full flex flex-col">
+      <div className="bento-card p-6 h-full flex flex-col">
         <p className="text-xs uppercase tracking-widest text-cf-subtext font-bold mb-4">
           Stats
         </p>
@@ -125,7 +125,7 @@ export default function StatsCard() {
   }
 
   return (
-    <div className="glass rounded-3xl p-6 h-full flex flex-col overflow-y-auto min-h-0 relative">
+    <div className="bento-card p-6 h-full flex flex-col overflow-y-auto min-h-0 relative">
       {/* ヘッダー */}
       <p className="text-xs uppercase tracking-widest text-cf-subtext font-bold mb-4">
         Stats

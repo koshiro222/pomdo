@@ -167,7 +167,7 @@ function AppMain() {
           <div className="h-full grid grid-cols-1 sm:grid-cols-6 lg:grid-cols-12 gap-4">
             {/* タイマーカード - デスクトップ8列×2行、タブレット4列×2行 */}
             <motion.div
-              className="glass rounded-3xl overflow-hidden sm:col-span-4 sm:row-span-2 lg:col-span-8 lg:row-span-2"
+              className="bento-card sm:col-span-4 sm:row-span-2 lg:col-span-8 lg:row-span-2"
               variants={fadeInUpVariants}
               initial="hidden"
               animate="visible"
@@ -189,7 +189,7 @@ function AppMain() {
 
             {/* Current Taskカード - デスクトップ2列×1行、タブレット2列×1行 */}
             <motion.div
-              className="glass rounded-3xl overflow-hidden sm:col-span-2 lg:col-span-2 lg:row-span-1"
+              className="bento-card sm:col-span-2 lg:col-span-2 lg:row-span-1"
               variants={fadeInUpVariants}
               initial="hidden"
               animate="visible"
@@ -201,7 +201,7 @@ function AppMain() {
 
             {/* BGMカード - デスクトップ2列×1行、タブレット2列×1行 */}
             <motion.div
-              className="glass rounded-3xl overflow-hidden sm:col-span-2 lg:col-span-2 lg:row-span-1"
+              className="bento-card sm:col-span-2 lg:col-span-2 lg:row-span-1"
               variants={fadeInUpVariants}
               initial="hidden"
               animate="visible"
@@ -213,7 +213,7 @@ function AppMain() {
 
             {/* Statsカード - デスクトップ4列×1行、タブレット2列×1行 */}
             <motion.div
-              className="glass rounded-3xl overflow-hidden sm:col-span-2 lg:col-span-4 lg:row-span-1"
+              className="bento-card sm:col-span-2 lg:col-span-4 lg:row-span-1"
               variants={fadeInUpVariants}
               initial="hidden"
               animate="visible"
@@ -225,7 +225,7 @@ function AppMain() {
 
             {/* Todoカード - デスクトップ12列×1行、タブレット6列×1行 */}
             <motion.div
-              className="glass rounded-3xl overflow-hidden sm:col-span-6 lg:col-span-12 lg:row-span-1"
+              className="bento-card sm:col-span-6 lg:col-span-12 lg:row-span-1"
               variants={fadeInUpVariants}
               initial="hidden"
               animate="visible"

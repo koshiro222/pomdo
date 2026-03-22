@@ -54,7 +54,7 @@ export default function TodoItem({
       <motion.button
         {...tapAnimation}
         onClick={(e) => e.stopPropagation()}
-        className="opacity-0 group-hover:opacity-50 transition-opacity cursor-grab active:cursor-grabbing text-cf-subtext"
+        className="opacity-30 group-hover:opacity-50 transition-opacity cursor-grab active:cursor-grabbing text-cf-subtext"
       >
         <GripVertical className="text-sm" />
       </motion.button>
@@ -99,6 +99,7 @@ export default function TodoItem({
           onDelete(id)
         }}
         className="opacity-0 group-hover:opacity-100 transition-opacity text-cf-subtext hover:text-cf-danger"
+        aria-label="削除"
       >
         <Trash2 className="text-lg" />
       </motion.button>

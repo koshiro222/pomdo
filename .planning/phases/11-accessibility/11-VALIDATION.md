@@ -2,8 +2,8 @@
 phase: 11
 slug: accessibility
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-23
 ---
 
@@ -39,10 +39,10 @@ created: 2026-03-23
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
 | 11-01-01 | 01 | 1 | A11Y-01 | manual-only | axe DevTools + WebAIM Contrast Checker | ❌ W0 | ⬜ pending |
-| 11-01-02 | 01 | 1 | A11Y-01 | unit | `npm test -- --grep "text-cf-subtext"` | ❌ W0 | ⬜ pending |
-| 11-02-01 | 02 | 1 | A11Y-02 | unit | `npm test -- --grep "focus-visible"` | ❌ W0 | ⬜ pending |
-| 11-03-01 | 03 | 1 | A11Y-03 | unit | `npm test -- --grep "drag.*handle.*opacity"` | ❌ W0 | ⬜ pending |
-| 11-04-01 | 04 | 1 | A11Y-04 | unit | `npm test -- --grep "aria-label"` | ❌ W0 | ⬜ pending |
+| 11-01-02 | 01 | 1 | A11Y-01 | unit | `npm test -- --grep "text-cf-subtext"` | ✅ W0 | ⬜ pending |
+| 11-02-01 | 02 | 1 | A11Y-02 | unit | `npm test -- --grep "focus-visible"` | ✅ W0 | ⬜ pending |
+| 11-03-01 | 03 | 1 | A11Y-03 | unit | `npm test -- --grep "drag.*handle.*opacity"` | ✅ W0 | ⬜ pending |
+| 11-04-01 | 04 | 1 | A11Y-04 | unit | `npm test -- --grep "aria-label"` | ✅ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -50,10 +50,10 @@ created: 2026-03-23
 
 ## Wave 0 Requirements
 
-- [ ] `src/components/todos/TodoItem.test.tsx` — A11Y-02, A11Y-03（focus表示、ドラッグハンドル）
-- [ ] `src/components/bgm/TrackItem.test.tsx` — A11Y-04（ARIAラベル）
-- [ ] `src/test/accessibility-test-utils.tsx` — 共通アクセシビリティテストユーティリティ
-- [ ] Framework install: なし（既にvitest導入済み）
+- [x] `src/components/todos/TodoItem.test.tsx` — A11Y-02, A11Y-03（focus表示、ドラッグハンドル）
+- [x] `src/components/bgm/TrackItem.test.tsx` — A11Y-04（ARIAラベル）
+- [x] `src/test/accessibility-test-utils.tsx` — 共通アクセシビリティテストユーティリティ
+- [x] Framework install: なし（既にvitest導入済み）
 
 ---
 
@@ -72,14 +72,14 @@ created: 2026-03-23
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 60s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 60s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** wave-0-complete
 
 ---
 

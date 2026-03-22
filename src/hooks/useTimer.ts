@@ -20,11 +20,13 @@ export interface UseTimerReturn {
 
 interface UseTimerOptions {
   initialSessionType?: SessionType
-  onSessionComplete?: (sessionType: SessionType, durationSecs: number) => void
+  onSessionStart?: (sessionType: SessionType, durationSecs: number) => Promise<string | null>
+  onSessionComplete?: (sessionId: string) => Promise<void>
 }
 
 export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
   const {
+    onSessionStart,
     onSessionComplete,
   } = options
 
@@ -47,12 +49,18 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
   } = useTimerStore()
 
   const autoStartTimeoutRef = useRef<number | null>(null)
+  const currentSessionIdRef = useRef<string | null>(null)
 
   const totalSecs = getSessionTotalSecs(sessionType)
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
+    // セッション開始時のコールバックを呼ぶ
+    if (onSessionStart) {
+      const sessionId = await onSessionStart(sessionType, totalSecs)
+      currentSessionIdRef.current = sessionId
+    }
     storeStart()
-  }, [storeStart])
+  }, [storeStart, sessionType, totalSecs, onSessionStart])
 
   const pause = useCallback(() => {
     storePause()
@@ -84,9 +92,12 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
       }, 1000)
     } else if (isActive && remainingSecs === 0) {
       // Session complete
-      const durationSecs = getSessionTotalSecs(sessionType)
-      if (onSessionComplete) {
-        onSessionComplete(sessionType, durationSecs)
+      const sessionId = currentSessionIdRef.current
+      if (onSessionComplete && sessionId) {
+        onSessionComplete(sessionId).catch((err) => {
+          console.error('Failed to complete session:', err)
+        })
+        currentSessionIdRef.current = null
       }
 
       if (sessionType === 'work') {

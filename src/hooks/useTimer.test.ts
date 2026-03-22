@@ -29,11 +29,11 @@ describe('useTimer', () => {
     expect(result.current.pomodoroCount).toBe(0)
   })
 
-  it('開始するとタイマーがカウントダウンする', () => {
+  it('開始するとタイマーがカウントダウンする', async () => {
     const { result } = renderHook(() => useTimer())
 
-    act(() => {
-      result.current.start()
+    await act(async () => {
+      await result.current.start()
     })
 
     expect(result.current.isActive).toBe(true)
@@ -46,11 +46,11 @@ describe('useTimer', () => {
     expect(result.current.remainingSecs).toBe(25 * 60 - 1)
   })
 
-  it('一時停止するとタイマーが停止する', () => {
+  it('一時停止するとタイマーが停止する', async () => {
     const { result } = renderHook(() => useTimer())
 
-    act(() => {
-      result.current.start()
+    await act(async () => {
+      await result.current.start()
     })
 
     act(() => {
@@ -72,11 +72,11 @@ describe('useTimer', () => {
     expect(result.current.remainingSecs).toBe(25 * 60 - 1)
   })
 
-  it('リセットするとタイマーが初期状態に戻る', () => {
+  it('リセットするとタイマーが初期状態に戻る', async () => {
     const { result } = renderHook(() => useTimer())
 
-    act(() => {
-      result.current.start()
+    await act(async () => {
+      await result.current.start()
     })
 
     act(() => {
@@ -113,13 +113,13 @@ describe('useTimer', () => {
     expect(result.current.sessionType).toBe('work')
   })
 
-  it('作業セッション完了時に pomodoroCount が増加する', () => {
+  it('作業セッション完了時に pomodoroCount が増加する', async () => {
     const { result } = renderHook(() => useTimer())
 
     expect(result.current.pomodoroCount).toBe(0)
 
-    act(() => {
-      result.current.start()
+    await act(async () => {
+      await result.current.start()
     })
 
     act(() => {
@@ -129,13 +129,13 @@ describe('useTimer', () => {
     expect(result.current.pomodoroCount).toBe(1)
   })
 
-  it('休憩セッション完了時に pomodoroCount は増加しない', () => {
+  it('休憩セッション完了時に pomodoroCount は増加しない', async () => {
     const { result } = renderHook(() => useTimer({ initialSessionType: 'short_break' }))
 
     expect(result.current.pomodoroCount).toBe(0)
 
-    act(() => {
-      result.current.start()
+    await act(async () => {
+      await result.current.start()
     })
 
     act(() => {
@@ -145,22 +145,34 @@ describe('useTimer', () => {
     expect(result.current.pomodoroCount).toBe(0)
   })
 
-  it('onSessionComplete コールバックが呼ばれる', () => {
-    const onSessionComplete = vi.fn()
-    const { result } = renderHook(() => useTimer({ onSessionComplete }))
+  it('onSessionStart コールバックがタイマー開始時に呼ばれる', async () => {
+    const onSessionStart = vi.fn().mockResolvedValue('session-id-123')
+    const { result } = renderHook(() => useTimer({ onSessionStart }))
 
-    act(() => {
-      result.current.start()
+    await act(async () => {
+      await result.current.start()
+    })
+
+    expect(onSessionStart).toHaveBeenCalledWith('work', 25 * 60)
+  })
+
+  it('onSessionComplete コールバックがセッション完了時に呼ばれる', async () => {
+    const onSessionStart = vi.fn().mockResolvedValue('session-id-123')
+    const onSessionComplete = vi.fn().mockResolvedValue(undefined)
+    const { result } = renderHook(() => useTimer({ onSessionStart, onSessionComplete }))
+
+    await act(async () => {
+      await result.current.start()
     })
 
     act(() => {
       vi.advanceTimersByTime(25 * 60 * 1000)
     })
 
-    expect(onSessionComplete).toHaveBeenCalledWith('work', 25 * 60)
+    expect(onSessionComplete).toHaveBeenCalledWith('session-id-123')
   })
 
-  it('4ポモドーロ後に長休憩になる', () => {
+  it('4ポモドーロ後に長休憩になる', async () => {
     const sessionOrder: SessionType[] = []
 
     const trackSession = (type: SessionType) => {
@@ -169,12 +181,15 @@ describe('useTimer', () => {
 
     const { result } = renderHook(() =>
       useTimer({
-        onSessionComplete: (type) => trackSession(type),
+        onSessionStart: (type) => {
+          trackSession(type)
+          return Promise.resolve('session-id')
+        },
       }),
     )
 
-    act(() => {
-      result.current.start()
+    await act(async () => {
+      await result.current.start()
     })
 
     act(() => {
@@ -184,11 +199,11 @@ describe('useTimer', () => {
     expect(result.current.sessionType).toBe('short_break')
   })
 
-  it('セッション完了時は一時停止状態である', () => {
+  it('セッション完了時は一時停止状態である', async () => {
     const { result } = renderHook(() => useTimer())
 
-    act(() => {
-      result.current.start()
+    await act(async () => {
+      await result.current.start()
     })
 
     act(() => {
@@ -199,11 +214,11 @@ describe('useTimer', () => {
     expect(result.current.sessionType).toBe('short_break')
   })
 
-  it('セッション完了から3秒後に自動で開始される', () => {
+  it('セッション完了から3秒後に自動で開始される', async () => {
     const { result } = renderHook(() => useTimer())
 
-    act(() => {
-      result.current.start()
+    await act(async () => {
+      await result.current.start()
     })
 
     act(() => {
@@ -220,11 +235,11 @@ describe('useTimer', () => {
     expect(result.current.isActive).toBe(true)
   })
 
-  it('skipした時は一時停止状態のまま', () => {
+  it('skipした時は一時停止状態のまま', async () => {
     const { result } = renderHook(() => useTimer())
 
-    act(() => {
-      result.current.start()
+    await act(async () => {
+      await result.current.start()
     })
 
     // スキップ

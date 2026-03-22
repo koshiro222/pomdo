@@ -106,16 +106,17 @@ function AppMain() {
   const { refetch } = useTodos()
   const { sessions, startSession, completeSession } = usePomodoro()
   const { isActive, sessionType, remainingSecs, changeSessionType, start, pause, reset, skip } = useTimer({
-    onSessionComplete: async (type, durationSecs) => {
+    onSessionStart: async (type, durationSecs) => {
       const session = await startSession(type, durationSecs)
-      if (session) {
-        completeSession(session.id)
-        // Play notification sound
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3')
-        audio.play().catch(() => {
-          console.warn('Autoplay prevented by browser policy')
-        })
-      }
+      return session?.id ?? null
+    },
+    onSessionComplete: async (sessionId) => {
+      await completeSession(sessionId)
+      // Play notification sound
+      const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3')
+      audio.play().catch(() => {
+        console.warn('Autoplay prevented by browser policy')
+      })
     },
   })
   const [showMigrateDialog, setShowMigrateDialog] = useState(false)

@@ -142,10 +142,24 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--df-accent-focus);
+    outline-offset: 2px;
+  }
+
+  /* フォールバック（古いブラウザ向け） */
+  @supports not selector(:focus-visible) {
+    *:focus {
+      outline: 2px solid var(--df-accent-focus);
+      outline-offset: 2px;
     }
+  }
+
   body {
     @apply bg-background text-foreground;
-    }
+  }
 }
 
 /* Glassmorphism */

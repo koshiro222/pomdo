@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import TodoItem from './TodoItem'
-import { expectAriaLabel, expectDragHandleVisible, expectOpacityClass } from '@/test/accessibility-test-utils'
 
 // Framer Motionをモック
 vi.mock('framer-motion', () => ({

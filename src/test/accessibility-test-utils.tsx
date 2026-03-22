@@ -7,7 +7,7 @@ import { screen } from '@testing-library/react'
  * @param expectedLabel - 期待されるaria-label値
  */
 export async function expectAriaLabel(
-  buttonRole: string | RegExp = 'button',
+  buttonRole: string = 'button',
   expectedLabel: string | RegExp
 ) {
   const button = screen.getByRole(buttonRole, { name: expectedLabel })

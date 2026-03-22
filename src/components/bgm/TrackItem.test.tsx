@@ -89,4 +89,42 @@ describe('TrackItem', () => {
 
     expect(screen.getByText('premium')).toBeInTheDocument()
   })
+
+  describe('A11Y-04: ARIAラベル', () => {
+    it('should have aria-label="編集" on edit button', async () => {
+      render(<TrackItem track={mockTrack} />)
+
+      // aria-label="編集"を持つボタンを検索
+      const editButton = screen.getByRole('button', { name: '編集' })
+      expect(editButton).toBeInTheDocument()
+      expect(editButton).toHaveAttribute('aria-label', '編集')
+    })
+
+    it('should have aria-label="削除" on delete button', async () => {
+      render(<TrackItem track={mockTrack} />)
+
+      // aria-label="削除"を持つボタンを検索
+      const deleteButton = screen.getByRole('button', { name: '削除' })
+      expect(deleteButton).toBeInTheDocument()
+      expect(deleteButton).toHaveAttribute('aria-label', '削除')
+    })
+
+    it('should have accessible name for all icon-only buttons', () => {
+      const { container } = render(<TrackItem track={mockTrack} />)
+
+      // 全てのbutton要素を取得
+      const buttons = container.querySelectorAll('button')
+
+      // アイコンボタン（テキストコンテンツがないボタン）はaria-labelを持つべき
+      buttons.forEach(button => {
+        const hasTextContent = button.textContent && button.textContent.trim().length > 0
+        const hasAriaLabel = button.hasAttribute('aria-label')
+
+        // テキストがない場合はaria-labelが必須
+        if (!hasTextContent) {
+          expect(hasAriaLabel).toBe(true)
+        }
+      })
+    })
+  })
 })

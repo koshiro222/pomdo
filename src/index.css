@@ -102,8 +102,7 @@
     --df-accent-break: #f59e0b;    /* Amber: 休憩 */
     --df-accent-danger: #ef4444;    /* Red: 削除 */
     --df-text-primary: #e5e7eb;     /* コントラスト7+ */
-    --df-text-secondary: #6b7280;
-    --df-text-muted: #4b5563;
+    --df-text-secondary: #9ca3af;
 }
 
 .dark {

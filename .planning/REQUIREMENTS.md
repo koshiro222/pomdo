@@ -9,8 +9,8 @@ UI/UXレビュー結果に基づくアクセシビリティと品質改善。
 
 ### A11Y (Accessibility)
 
-- [ ] **A11Y-01**: ユーザーはWCAG AA基準（4.5:1）を満たすカラーコントラストでテキストを読める
-- [ ] **A11Y-02**: ユーザーはキーボード操作時に明確なfocusスタイルを確認できる
+- [x] **A11Y-01**: ユーザーはWCAG AA基準（4.5:1）を満たすカラーコントラストでテキストを読める
+- [x] **A11Y-02**: ユーザーはキーボード操作時に明確なfocusスタイルを確認できる
 - [x] **A11Y-03**: ユーザーはドラッグハンドルをキーボードなしで認識できる（常時表示）
 - [ ] **A11Y-04**: ユーザーは適切なサイズのアイコンボタンを操作できる（ARIAラベル最適化）
 
@@ -109,8 +109,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| A11Y-01 | Phase 11 | Pending |
-| A11Y-02 | Phase 11 | Pending |
+| A11Y-01 | Phase 11 | Complete |
+| A11Y-02 | Phase 11 | Complete |
 | A11Y-03 | Phase 11 | Complete |
 | A11Y-04 | Phase 11 | Pending |
 | TOUCH-01 | Phase 12 | Pending |

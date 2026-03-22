@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { eq, and, desc, asc } from 'drizzle-orm'
+import { eq, and, desc } from 'drizzle-orm'
 import { router, protectedProcedure } from './context'
 import { newPomodoroSessionSchema } from './_shared'
 

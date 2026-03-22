@@ -1,19 +1,20 @@
 import { z } from 'zod'
+import { eq, and, desc, asc } from 'drizzle-orm'
 import { router, protectedProcedure } from './context'
 import { newPomodoroSessionSchema } from './_shared'
 
 export const pomodoroRouter = router({
   getSessions: protectedProcedure.query(async ({ ctx }) => {
-    const { db, user } = ctx
+    const { db, user, schema } = ctx
 
     const sessions = await db
       .select()
-      .from(ctx.schema.pomodoroSessions)
-      .where((t: any) => t.userId === user.id)
-      .orderBy((t: any) => t.startedAt)
+      .from(schema.pomodoroSessions)
+      .where(eq(schema.pomodoroSessions.userId, user.id))
+      .orderBy(desc(schema.pomodoroSessions.startedAt))
       .limit(30)
 
-    return sessions.reverse()
+    return sessions
   }),
 
   createSession: protectedProcedure
@@ -39,12 +40,12 @@ export const pomodoroRouter = router({
   completeSession: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const { db, user } = ctx
+      const { db, user, schema } = ctx
 
       const existing = await db
         .select()
-        .from(ctx.schema.pomodoroSessions)
-        .where((t: any) => t.id === input.id && t.userId === user.id)
+        .from(schema.pomodoroSessions)
+        .where(and(eq(schema.pomodoroSessions.id, input.id), eq(schema.pomodoroSessions.userId, user.id)))
         .limit(1)
 
       if (!existing || existing.length === 0) {
@@ -52,9 +53,9 @@ export const pomodoroRouter = router({
       }
 
       const updated = await db
-        .update(ctx.schema.pomodoroSessions)
+        .update(schema.pomodoroSessions)
         .set({ completedAt: new Date() })
-        .where((t: any) => t.id === input.id && t.userId === user.id)
+        .where(and(eq(schema.pomodoroSessions.id, input.id), eq(schema.pomodoroSessions.userId, user.id)))
         .returning()
 
       return updated[0]

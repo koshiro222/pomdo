@@ -20,11 +20,11 @@
 | 8. レスポンシブ対応修正 | 3/3 | Complete | 2026-03-22 |
 | 9. Stats機能実装 | 5/5 | Complete | 2026-03-22 |
 | 10. グリッド統一 | 2/2 | Complete | 2026-03-22 |
-| 11. アクセシビリティ基盤 | 0/4 | Not started | - |
+| 11. アクセシビリティ基盤 | 0/3 | Not started | - |
 | 12. 物理的インタラクション改善 | 0/4 | Not started | - |
 | 13. 動きと一貫性 | 0/4 | Not started | - |
 
-**Overall:** 27/39 plans complete (69%)
+**Overall:** 27/38 plans complete (71%)
 
 ## Phases
 
@@ -80,13 +80,13 @@
 <details>
 <summary>📋 v1.3 アクセシビリティ&品質改善 (Phases 11-13) — PLANNED</summary>
 
-- [ ] Phase 11: アクセシビリティ基盤 (0/4 plans) — TBD
+- [ ] Phase 11: アクセシビリティ基盤 (0/3 plans) — TBD
 - [ ] Phase 12: 物理的インタラクション改善 (0/4 plans) — TBD
 - [ ] Phase 13: 動きと一貫性 (0/4 plans) — TBD
 
 **v1.3 Stats:**
 - Total phases: 3
-- Total plans: TBD
+- Total plans: 11
 - Timeline: TBD
 
 </details>
@@ -107,7 +107,11 @@
 3. ユーザーはドラッグ操作可能な要素をホバーなしで認識できる（ハンドル常時表示）
 4. ユーザーは全てのアイコンボタンに適切なARIAラベルが付与されていることを確認できる
 
-**Plans**: TBD
+**Plans:** 3 plans
+
+- [ ] 11-01-PLAN.md — カラーコントラスト修正 + Focusスタイル追加 (A11Y-01, A11Y-02)
+- [ ] 11-02-PLAN.md — ドラッグハンドル常時表示 (A11Y-03)
+- [ ] 11-03-PLAN.md — ARIAラベル付与 (A11Y-04)
 
 ### Phase 12: 物理的インタラクション改善
 
@@ -154,4 +158,4 @@
 
 ---
 *Roadmap updated: 2026-03-23*
-*Next: `/gsd:plan-phase 11`*
+*Next: `/gsd:execute-phase 11`*

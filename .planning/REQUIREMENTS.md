@@ -30,22 +30,20 @@
 
 ## Traceability
 
-フェーズ作成後に記入。
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LAYOUT-01 | Phase TBD | Pending |
-| LAYOUT-02 | Phase TBD | Pending |
-| TODO-01 | Phase TBD | Pending |
-| TODO-02 | Phase TBD | Pending |
-| TODO-03 | Phase TBD | Pending |
-| TODO-04 | Phase TBD | Pending |
+| LAYOUT-01 | Phase 14 | Pending |
+| LAYOUT-02 | Phase 14 | Pending |
+| TODO-01 | Phase 15 | Pending |
+| TODO-02 | Phase 15 | Pending |
+| TODO-03 | Phase 15 | Pending |
+| TODO-04 | Phase 15 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 6 total
-- Mapped to phases: 0
-- Unmapped: 6 ⚠️
+- Mapped to phases: 6
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after initial definition*
+*Last updated: 2026-03-24 after roadmap creation*

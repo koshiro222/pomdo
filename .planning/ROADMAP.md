@@ -21,10 +21,10 @@
 | 9. Stats機能実装 | 5/5 | Complete | 2026-03-22 |
 | 10. グリッド統一 | 2/2 | Complete | 2026-03-22 |
 | 11. アクセシビリティ基盤 | 4/4 | Complete | 2026-03-23 |
-| 12. 物理的インタラクション改善 | 0/2 | Not started | - |
-| 13. 動きと一貫性 | 0/4 | Not started | - |
+| 12. 物理的インタラクション改善 | 2/2 | Complete | 2026-03-24 |
+| 13. 動きと一貫性 | 0/2 | Not started | - |
 
-**Overall:** 31/39 plans complete (79%)
+**Overall:** 33/37 plans complete (89%)
 
 ## Phases
 
@@ -81,12 +81,12 @@
 <summary>📋 v1.3 アクセシビリティ&品質改善 (Phases 11-13) — PLANNED</summary>
 
 - [x] Phase 11: アクセシビリティ基盤 (4/4 plans) — completed 2026-03-23
-- [ ] Phase 12: 物理的インタラクション改善 (0/2 plans) — TBD
-- [ ] Phase 13: 動きと一貫性 (0/4 plans) — TBD
+- [x] Phase 12: 物理的インタラクション改善 (2/2 plans) — completed 2026-03-24
+- [ ] Phase 13: 動きと一貫性 (0/2 plans) — TBD
 
 **v1.3 Stats:**
 - Total phases: 3
-- Total plans: 10 (reduced from 12)
+- Total plans: 10
 - Timeline: TBD
 
 </details>
@@ -130,8 +130,8 @@
 
 **Plans:** 2/2 plans complete
 
-- [ ] 12-01-PLAN.md — タッチターゲット拡大 + グローバルcursor定義 (TOUCH-01, TOUCH-02)
-- [ ] 12-02-PLAN.md — overflow-hidden削除 + アルバムアート固定 + 視覚確認 (RESP-06, RESP-07)
+- [x] 12-01-PLAN.md — タッチターゲット拡大 + グローバルcursor定義 (TOUCH-01, TOUCH-02)
+- [x] 12-02-PLAN.md — overflow-hidden削除 + アルバムアート固定 + 視覚確認 (RESP-06, RESP-07)
 
 ### Phase 13: 動きと一貫性
 
@@ -142,12 +142,13 @@
 **Requirements**: ANIM-01, ANIM-02, CONS-01, CONS-02
 
 **Success Criteria** (what must be TRUE):
-1. ユーザーはOS設定で「アニメーション抑制」を有効にした場合、アプリ内アニメーションが無効化されることを確認できる
-2. ユーザーはアニメーション中に60fpsの滑らかな動作を体験できる（カクつきなし）
-3. ユーザーは全てのボタンで統一されたスタイル（枠線、パディング、角丸）を確認できる
-4. ユーザーは全ての対話要素に統一されたホバー効果（色変化、明度変化）を確認できる
+1. ユーザーは全てのボタンで統一されたスタイル（角丸）を確認できる
+2. ユーザーは全ての対話要素に統一されたホバー効果（Framer Motionのscaleアニメーション）を確認できる
 
-**Plans**: TBD
+**Plans:** 2 plans
+
+- [ ] 13-01-PLAN.md — ボーダー半径統一（小ボタンの角丸をrounded-xlに統一） (CONS-01)
+- [ ] 13-02-PLAN.md — ホバー効果統一（Framer Motion優先、CSSのhover:bg-white/10削除） (CONS-02)
 
 ## Coverage Summary
 
@@ -157,9 +158,10 @@
 
 **Requirement mapping:**
 - Phase 11: A11Y-01, A11Y-02, A11Y-03, A11Y-04 (4) — Complete
-- Phase 12: TOUCH-01, TOUCH-02, RESP-06, RESP-07 (4)
-- Phase 13: ANIM-01, ANIM-02, CONS-01, CONS-02 (4)
+- Phase 12: TOUCH-01, TOUCH-02, RESP-06, RESP-07 (4) — Complete
+- Phase 13: CONS-01, CONS-02 (2)
+- Skipped: ANIM-01（deferred）, ANIM-02（既に達成）
 
 ---
 *Roadmap updated: 2026-03-24*
-*Next: `/gsd:execute-phase 12`*
+*Next: `/gsd:execute-phase 13`*

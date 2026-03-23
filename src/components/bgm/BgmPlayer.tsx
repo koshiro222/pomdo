@@ -79,9 +79,10 @@ export function BgmPlayer() {
         {/* ヘッダー */}
         <div className="flex items-center justify-between mb-3">
           <motion.button
+            {...hoverAnimation}
             {...tapAnimation}
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-3 text-cf-subtext hover:text-cf-primary hover:bg-white/10 transition-colors"
+            className="p-3 rounded-xl text-cf-subtext hover:text-cf-primary transition-colors"
             title={isExpanded ? '縮小' : 'プレイリスト'}
             aria-label={isExpanded ? '縮小' : 'プレイリスト'}
           >
@@ -119,7 +120,7 @@ export function BgmPlayer() {
               {...tapAnimation}
               onClick={handlePrevTrack}
               disabled={hasError}
-              className="p-3 text-cf-text hover:text-cf-primary hover:bg-white/10 transition-colors disabled:text-cf-subtext disabled:cursor-not-allowed"
+              className="p-3 rounded-xl text-cf-text hover:text-cf-primary transition-colors disabled:text-cf-subtext disabled:cursor-not-allowed"
               title="前の曲"
             >
               <SkipBack className="w-6 h-6" />
@@ -141,7 +142,7 @@ export function BgmPlayer() {
               {...tapAnimation}
               onClick={handleNextTrack}
               disabled={hasError}
-              className="p-3 text-cf-text hover:text-cf-primary hover:bg-white/10 transition-colors disabled:text-cf-subtext disabled:cursor-not-allowed"
+              className="p-3 rounded-xl text-cf-text hover:text-cf-primary transition-colors disabled:text-cf-subtext disabled:cursor-not-allowed"
               title="次の曲"
             >
               <SkipForward className="w-6 h-6" />

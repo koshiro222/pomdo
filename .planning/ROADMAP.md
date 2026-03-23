@@ -68,7 +68,7 @@
 
 **Milestone Goal:** BentoGridを3カラム構成に再設計し、CurrentTaskCardをTodoListに統合してUXを改善する
 
-- [ ] **Phase 14: BentoGrid 3カラム再設計** - デスクトップ3カラム・モバイル縦積みのレイアウト基盤を確立する
+- [x] **Phase 14: BentoGrid 3カラム再設計** - デスクトップ3カラム・モバイル縦積みのレイアウト基盤を確立する (completed 2026-03-23)
 - [ ] **Phase 15: TodoList統合UI** - CurrentTaskCardをTodoListカードに統合し、ハイライトセクションとアクションボタンを実装する
 
 ## Phase Details
@@ -82,7 +82,7 @@
   2. モバイルでTimer→Todo→BGM→Statsの順序で縦に積み重なる
   3. 各カラムが均等幅（1/3ずつ）で表示される
   4. 既存のTimer・BGM・Stats各カードの内部コンテンツが壊れていない
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 14-01-PLAN.md — BentoGrid 3カラム均等レイアウト実装とビジュアル確認

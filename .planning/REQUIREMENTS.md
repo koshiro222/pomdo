@@ -31,8 +31,8 @@ UI/UXレビュー結果に基づくアクセシビリティと品質改善。
 
 ### CONS (Consistency)
 
-- [ ] **CONS-01**: ユーザーは全てのボタンで統一されたスタイルを確認できる
-- [ ] **CONS-02**: ユーザーは全ての対話要素で統一されたホバー効果を確認できる
+- [x] **CONS-01**: ユーザーは全てのボタンで統一されたスタイルを確認できる
+- [x] **CONS-02**: ユーザーは全ての対話要素で統一されたホバー効果を確認できる
 
 ---
 
@@ -119,8 +119,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RESP-07 | Phase 12 | Complete |
 | ANIM-01 | Phase 13 | Pending |
 | ANIM-02 | Phase 13 | Pending |
-| CONS-01 | Phase 13 | Pending |
-| CONS-02 | Phase 13 | Pending |
+| CONS-01 | Phase 13 | Complete |
+| CONS-02 | Phase 13 | Complete |
 
 **Coverage (v1.3):**
 - v1.3 requirements: 12 total

@@ -93,12 +93,13 @@ export default function TodoItem({
         )}
       </div>
       <motion.button
+        {...hoverAnimation}
         {...tapAnimation}
         onClick={(e) => {
           e.stopPropagation()
           onDelete(id)
         }}
-        className="p-3 opacity-0 group-hover:opacity-100 transition-opacity text-cf-subtext hover:text-cf-danger hover:bg-white/10"
+        className="p-3 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-cf-subtext hover:text-cf-danger"
         aria-label="削除"
       >
         <Trash2 className="text-lg" />

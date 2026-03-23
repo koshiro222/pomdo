@@ -23,7 +23,7 @@ export function TimerControls({
         {...hoverAnimation}
         {...tapAnimation}
         onClick={onReset}
-        className="size-14 rounded-full glass flex items-center justify-center text-cf-subtext hover:text-cf-text transition-colors hover:bg-white/10"
+        className="size-14 rounded-full glass flex items-center justify-center text-cf-subtext hover:text-cf-text transition-colors"
         aria-label="リセット"
       >
         <RotateCcw className="text-3xl" />
@@ -42,7 +42,7 @@ export function TimerControls({
         {...hoverAnimation}
         {...tapAnimation}
         onClick={onSkip}
-        className="size-14 rounded-full glass flex items-center justify-center text-cf-subtext hover:text-cf-text transition-colors hover:bg-white/10"
+        className="size-14 rounded-full glass flex items-center justify-center text-cf-subtext hover:text-cf-text transition-colors"
         aria-label="スキップ"
       >
         <SkipForward className="text-3xl" />

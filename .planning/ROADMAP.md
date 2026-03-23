@@ -24,7 +24,7 @@
 | 11. アクセシビリティ基盤 | v1.3 | 4/4 | Complete | 2026-03-23 |
 | 12. 物理的インタラクション改善 | v1.3 | 2/2 | Complete | 2026-03-24 |
 | 13. 動きと一貫性 | v1.3 | 2/2 | Complete | 2026-03-24 |
-| 14. BentoGrid 3カラム再設計 | v1.4 | 0/TBD | Not started | - |
+| 14. BentoGrid 3カラム再設計 | v1.4 | 0/1 | Planning | - |
 | 15. TodoList統合UI | v1.4 | 0/TBD | Not started | - |
 
 **Completed:** 35/35 plans (v1.0-v1.3)
@@ -82,7 +82,10 @@
   2. モバイルでTimer→Todo→BGM→Statsの順序で縦に積み重なる
   3. 各カラムが均等幅（1/3ずつ）で表示される
   4. 既存のTimer・BGM・Stats各カードの内部コンテンツが壊れていない
-**Plans**: TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 14-01-PLAN.md — BentoGrid 3カラム均等レイアウト実装とビジュアル確認
 
 ### Phase 15: TodoList統合UI
 **Goal**: ユーザーが選択中タスクの情報確認とPomodoro操作をTodoListカード内で完結できる

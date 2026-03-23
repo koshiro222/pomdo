@@ -11,7 +11,7 @@ interface AlbumArtProps {
 
 function AlbumArt({ isPlaying, color }: AlbumArtProps) {
   return (
-    <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
+    <div className="relative w-24 h-24 flex-shrink-0">
       {/* アルバムアート背景 */}
       <div
         className={`w-full h-full rounded-2xl flex items-center justify-center ${isPlaying ? 'album-art-spinning' : ''}`}
@@ -22,13 +22,13 @@ function AlbumArt({ isPlaying, color }: AlbumArtProps) {
       >
         {/* アイコンまたは回転するディスク */}
         <div
-          className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center ${isPlaying ? 'album-art-spinning' : ''}`}
+          className={`w-20 h-20 rounded-full flex items-center justify-center ${isPlaying ? 'album-art-spinning' : ''}`}
           style={{
             background: `linear-gradient(135deg, ${color}60, ${color}30)`,
             animationDuration: '12s',
           }}
         >
-          <Music className={`w-8 h-8 sm:w-10 sm:h-10 text-white ${isPlaying ? '' : 'album-art-paused'}`} />
+          <Music className={`w-8 h-8 text-white ${isPlaying ? '' : 'album-art-paused'}`} />
         </div>
       </div>
 
@@ -73,7 +73,7 @@ export function BgmPlayer() {
   }
 
   return (
-    <div className="relative flex flex-col h-full overflow-hidden">
+    <div className="relative flex flex-col h-full">
       {/* コンパクト表示（常時表示） */}
       <div className="flex-1 flex flex-col p-4 sm:p-6">
         {/* ヘッダー */}

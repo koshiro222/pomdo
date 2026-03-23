@@ -2,7 +2,7 @@
 
 **Created:** 2026-02-28
 **Current Milestone:** v1.3 アクセシビリティ&品質改善
-**Last Updated:** 2026-03-23
+**Last Updated:** 2026-03-24
 
 ## Milestones
 
@@ -20,11 +20,11 @@
 | 8. レスポンシブ対応修正 | 3/3 | Complete | 2026-03-22 |
 | 9. Stats機能実装 | 5/5 | Complete | 2026-03-22 |
 | 10. グリッド統一 | 2/2 | Complete | 2026-03-22 |
-| 11. アクセシビリティ基盤 | 0/4 | Not started | - |
-| 12. 物理的インタラクション改善 | 0/4 | Not started | - |
+| 11. アクセシビリティ基盤 | 4/4 | Complete | 2026-03-23 |
+| 12. 物理的インタラクション改善 | 0/2 | Not started | - |
 | 13. 動きと一貫性 | 0/4 | Not started | - |
 
-**Overall:** 27/39 plans complete (69%)
+**Overall:** 31/39 plans complete (79%)
 
 ## Phases
 
@@ -80,13 +80,13 @@
 <details>
 <summary>📋 v1.3 アクセシビリティ&品質改善 (Phases 11-13) — PLANNED</summary>
 
-- [ ] Phase 11: アクセシビリティ基盤 (0/4 plans) — TBD
-- [ ] Phase 12: 物理的インタラクション改善 (0/4 plans) — TBD
+- [x] Phase 11: アクセシビリティ基盤 (4/4 plans) — completed 2026-03-23
+- [ ] Phase 12: 物理的インタラクション改善 (0/2 plans) — TBD
 - [ ] Phase 13: 動きと一貫性 (0/4 plans) — TBD
 
 **v1.3 Stats:**
 - Total phases: 3
-- Total plans: 12
+- Total plans: 10 (reduced from 12)
 - Timeline: TBD
 
 </details>
@@ -109,10 +109,10 @@
 
 **Plans:** 4/4 plans complete
 
-- [ ] 11-00-PLAN.md — Wave 0: テストインフラ構築 (A11Y-02, A11Y-03, A11Y-04 テスト作成)
-- [ ] 11-01-PLAN.md — カラーコントラスト修正 + Focusスタイル追加 (A11Y-01, A11Y-02)
-- [ ] 11-02-PLAN.md — ドラッグハンドル常時表示 (A11Y-03)
-- [ ] 11-03-PLAN.md — ARIAラベル付与 (A11Y-04)
+- [x] 11-00-PLAN.md — Wave 0: テストインフラ構築 (A11Y-02, A11Y-03, A11Y-04 テスト作成)
+- [x] 11-01-PLAN.md — カラーコントラスト修正 + Focusスタイル追加 (A11Y-01, A11Y-02)
+- [x] 11-02-PLAN.md — ドラッグハンドル常時表示 (A11Y-03)
+- [x] 11-03-PLAN.md — ARIAラベル付与 (A11Y-04)
 
 ### Phase 12: 物理的インタラクション改善
 
@@ -128,7 +128,10 @@
 3. ユーザーはモバイル画面でコンテンツが画面外にあふれることなく閲覧できる
 4. ユーザーは小さい画面でアルバムアートが適切なサイズで表示され、圧迫感を感じない
 
-**Plans**: TBD
+**Plans:** 2 plans
+
+- [ ] 12-01-PLAN.md — タッチターゲット拡大 + グローバルcursor定義 (TOUCH-01, TOUCH-02)
+- [ ] 12-02-PLAN.md — overflow-hidden削除 + アルバムアート固定 + 視覚確認 (RESP-06, RESP-07)
 
 ### Phase 13: 動きと一貫性
 
@@ -153,10 +156,10 @@
 - Mapped: 12/12 (100%) ✓
 
 **Requirement mapping:**
-- Phase 11: A11Y-01, A11Y-02, A11Y-03, A11Y-04 (4)
+- Phase 11: A11Y-01, A11Y-02, A11Y-03, A11Y-04 (4) — Complete
 - Phase 12: TOUCH-01, TOUCH-02, RESP-06, RESP-07 (4)
 - Phase 13: ANIM-01, ANIM-02, CONS-01, CONS-02 (4)
 
 ---
-*Roadmap updated: 2026-03-23*
-*Next: `/gsd:execute-phase 11`*
+*Roadmap updated: 2026-03-24*
+*Next: `/gsd:execute-phase 12`*

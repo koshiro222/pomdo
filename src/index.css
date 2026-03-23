@@ -157,6 +157,13 @@
     }
   }
 
+  /* Phase 12: グローバルcursor定義 */
+  button {
+    cursor: pointer;
+  }
+
+  /* ドラッグハンドルはTailwindクラスで上書き（cursor-grab active:cursor-grabbing） */
+
   body {
     @apply bg-background text-foreground;
   }

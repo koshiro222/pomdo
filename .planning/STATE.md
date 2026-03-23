@@ -4,12 +4,12 @@ milestone: v1.3
 milestone_name: milestone
 current_phase: 12
 status: unknown
-last_updated: "2026-03-23T18:48:39.160Z"
+last_updated: "2026-03-23T19:27:26.445Z"
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # STATE: Pomdo v1.3 アクセシビリティ&品質改善
@@ -125,6 +125,10 @@ Plan: 1 of 2
 
 - [Phase 12]: グローバルcursor定義: @layer baseでbutton { cursor: pointer; }を定義し、全てのbutton要素でpointerカーソルを統一
 - [Phase 12]: タッチターゲットパターン: p-3（12px padding）で44px以上のタッチターゲットを確保、hover:bg-white/10で視覚的フィードバック
+- [Phase 12-02]: アルバムアート固定サイズ: レスポンシブ縮小（sm:w-32 sm:h-32）を削除し、96px固定に変更
+- [Phase 12-02]: overflow-hidden削除: カードルートのoverflow-hiddenのみ削除、スクロール領域（overflow-y-auto）は維持
+
+| Phase 12 P02 | 3min | 4 tasks | 3 files |
 
 ### Completed Features
 

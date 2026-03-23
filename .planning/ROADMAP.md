@@ -24,11 +24,11 @@
 | 11. アクセシビリティ基盤 | v1.3 | 4/4 | Complete | 2026-03-23 |
 | 12. 物理的インタラクション改善 | v1.3 | 2/2 | Complete | 2026-03-24 |
 | 13. 動きと一貫性 | v1.3 | 2/2 | Complete | 2026-03-24 |
-| 14. BentoGrid 3カラム再設計 | v1.4 | 0/1 | Planning | - |
-| 15. TodoList統合UI | v1.4 | 0/TBD | Not started | - |
+| 14. BentoGrid 3カラム再設計 | v1.4 | 1/1 | Complete | 2026-03-23 |
+| 15. TodoList統合UI | v1.4 | 0/3 | Planning | - |
 
-**Completed:** 35/35 plans (v1.0-v1.3)
-**In Progress:** v1.4 (0 plans complete)
+**Completed:** 36/36 plans (v1.0-v1.3 + Phase 14)
+**In Progress:** v1.4 Phase 15 (0 plans complete)
 
 ## Phases
 
@@ -85,7 +85,7 @@
 **Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 14-01-PLAN.md — BentoGrid 3カラム均等レイアウト実装とビジュアル確認
+- [x] 14-01-PLAN.md — BentoGrid 3カラム均等レイアウト実装とビジュアル確認
 
 ### Phase 15: TodoList統合UI
 **Goal**: ユーザーが選択中タスクの情報確認とPomodoro操作をTodoListカード内で完結できる
@@ -93,11 +93,16 @@ Plans:
 **Requirements**: TODO-01, TODO-02, TODO-03, TODO-04
 **Success Criteria** (what must be TRUE):
   1. TodoListカードの上部に選択中タスクのハイライトセクションが表示される
-  2. ハイライトセクションにタスク名とPomodoro進捗（完了数/目標数）が表示される
+  2. ハイライトセクションにタスク名とPomodoro進捗（完了数）が表示される
   3. TodoListカード内にCompleteボタンとNextボタンが表示され、クリックできる
   4. 画面にCurrentTaskCardが存在せず、その機能がTodoListカード内で動作する
-  5. タスク未選択時にハイライトセクションが適切な空状態を表示する
-**Plans**: TBD
+  5. タスク未選択時にハイライトセクションが表示されない
+**Plans:** 3 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — TodoListにハイライトセクションとTodoItem選択中スタイルを実装
+- [ ] 15-02-PLAN.md — TodoList統合UIのE2Eテスト作成
+- [ ] 15-03-PLAN.md — ビジュアル・機能確認（チェックポイント）
 
 ---
 *Roadmap updated: 2026-03-24*

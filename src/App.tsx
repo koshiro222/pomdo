@@ -10,7 +10,6 @@ import { getSessionTotalSecs } from './core/store/timer'
 import { storage } from './lib/storage'
 import { fadeInUpVariants } from './lib/animation'
 import TodoList from './components/todos/TodoList'
-import CurrentTaskCard from './components/tasks/CurrentTaskCard'
 import StatsCard from './components/stats/StatsCard'
 import { TimerDisplay } from './components/timer/TimerDisplay'
 import { TimerControls } from './components/timer/TimerControls'
@@ -148,7 +147,7 @@ function AppMain() {
   }
 
   return (
-    <div className="font-display bg-cf-background text-cf-text min-h-screen relative overflow-hidden">
+    <div className="font-display bg-cf-background text-cf-text min-h-screen relative overflow-x-hidden lg:overflow-hidden">
       {/* 背景画像 */}
       <div
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
@@ -160,15 +159,15 @@ function AppMain() {
       </div>
 
       {/* メインコンテンツ - Bento Grid */}
-      <div className="relative z-10 flex flex-col min-h-screen sm:h-screen">
+      <div className="relative z-10 flex flex-col min-h-screen lg:h-screen">
         <Header todayFocusMinutes={todayFocusMinutes} />
 
         <main className="flex-1 p-4 min-h-0">
-          {/* Bento Grid: 12列システム */}
-          <div className="h-full grid grid-cols-1 sm:grid-cols-6 lg:grid-cols-12 gap-4">
-            {/* タイマーカード - デスクトップ8列×2行、タブレット4列×2行 */}
+          {/* Bento Grid: 3カラム均等システム */}
+          <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* カラム1: Timer */}
             <motion.div
-              className="bento-card sm:col-span-4 sm:row-span-2 lg:col-span-8 lg:row-span-2"
+              className="bento-card"
               variants={fadeInUpVariants}
               initial="hidden"
               animate="visible"
@@ -188,53 +187,41 @@ function AppMain() {
               />
             </motion.div>
 
-            {/* Current Taskカード - デスクトップ2列×1行、タブレット2列×1行 */}
+            {/* カラム2: Todo */}
             <motion.div
-              className="bento-card sm:col-span-2 lg:col-span-2 lg:row-span-1"
+              className="bento-card"
               variants={fadeInUpVariants}
               initial="hidden"
               animate="visible"
               custom={1}
               layout="position"
             >
-              <CurrentTaskCard />
-            </motion.div>
-
-            {/* BGMカード - デスクトップ2列×1行、タブレット2列×1行 */}
-            <motion.div
-              className="bento-card sm:col-span-2 lg:col-span-2 lg:row-span-1"
-              variants={fadeInUpVariants}
-              initial="hidden"
-              animate="visible"
-              custom={2}
-              layout="position"
-            >
-              <BgmPlayer />
-            </motion.div>
-
-            {/* Statsカード - デスクトップ4列×1行、タブレット2列×1行 */}
-            <motion.div
-              className="bento-card sm:col-span-2 lg:col-span-4 lg:row-span-1"
-              variants={fadeInUpVariants}
-              initial="hidden"
-              animate="visible"
-              custom={3}
-              layout="position"
-            >
-              <StatsCard />
-            </motion.div>
-
-            {/* Todoカード - デスクトップ12列×1行、タブレット6列×1行 */}
-            <motion.div
-              className="bento-card sm:col-span-6 lg:col-span-12 lg:row-span-1"
-              variants={fadeInUpVariants}
-              initial="hidden"
-              animate="visible"
-              custom={4}
-              layout="position"
-            >
               <TodoList />
             </motion.div>
+
+            {/* カラム3: BGM + Stats ラッパー（plain div） */}
+            <div className="h-full flex flex-col gap-4">
+              <motion.div
+                className="bento-card flex-1"
+                variants={fadeInUpVariants}
+                initial="hidden"
+                animate="visible"
+                custom={2}
+                layout="position"
+              >
+                <BgmPlayer />
+              </motion.div>
+              <motion.div
+                className="bento-card flex-1"
+                variants={fadeInUpVariants}
+                initial="hidden"
+                animate="visible"
+                custom={3}
+                layout="position"
+              >
+                <StatsCard />
+              </motion.div>
+            </div>
           </div>
         </main>
 

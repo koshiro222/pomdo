@@ -7,8 +7,8 @@
 
 ### レイアウト変更
 
-- [ ] **LAYOUT-01**: ユーザーはデスクトップでTimer・Todo・BGM+Statsの3カラム均等分割レイアウトを確認できる
-- [ ] **LAYOUT-02**: ユーザーはモバイルでTimer→Todo→BGM→Statsの縦積み順序を確認できる
+- [x] **LAYOUT-01**: ユーザーはデスクトップでTimer・Todo・BGM+Statsの3カラム均等分割レイアウトを確認できる
+- [x] **LAYOUT-02**: ユーザーはモバイルでTimer→Todo→BGM→Statsの縦積み順序を確認できる
 
 ### Todo統合
 
@@ -32,8 +32,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LAYOUT-01 | Phase 14 | Pending |
-| LAYOUT-02 | Phase 14 | Pending |
+| LAYOUT-01 | Phase 14 | Complete |
+| LAYOUT-02 | Phase 14 | Complete |
 | TODO-01 | Phase 15 | Pending |
 | TODO-02 | Phase 15 | Pending |
 | TODO-03 | Phase 15 | Pending |

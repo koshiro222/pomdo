@@ -145,7 +145,7 @@
 1. ユーザーは全てのボタンで統一されたスタイル（角丸）を確認できる
 2. ユーザーは全ての対話要素に統一されたホバー効果（Framer Motionのscaleアニメーション）を確認できる
 
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 - [ ] 13-01-PLAN.md — ボーダー半径統一（小ボタンの角丸をrounded-xlに統一） (CONS-01)
 - [ ] 13-02-PLAN.md — ホバー効果統一（Framer Motion優先、CSSのhover:bg-white/10削除） (CONS-02)

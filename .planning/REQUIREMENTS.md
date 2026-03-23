@@ -16,8 +16,8 @@ UI/UXレビュー結果に基づくアクセシビリティと品質改善。
 
 ### TOUCH
 
-- [ ] **TOUCH-01**: ユーザーは44px以上のタッチターゲットで操作できる
-- [ ] **TOUCH-02**: ユーザーは全ての対話要素にカーソルポインターを確認できる
+- [x] **TOUCH-01**: ユーザーは44px以上のタッチターゲットで操作できる
+- [x] **TOUCH-02**: ユーザーは全ての対話要素にカーソルポインターを確認できる
 
 ### RESP (Responsive)
 
@@ -113,8 +113,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | A11Y-02 | Phase 11 | Complete |
 | A11Y-03 | Phase 11 | Complete |
 | A11Y-04 | Phase 11 | Complete |
-| TOUCH-01 | Phase 12 | Pending |
-| TOUCH-02 | Phase 12 | Pending |
+| TOUCH-01 | Phase 12 | Complete |
+| TOUCH-02 | Phase 12 | Complete |
 | RESP-06 | Phase 12 | Pending |
 | RESP-07 | Phase 12 | Pending |
 | ANIM-01 | Phase 13 | Pending |

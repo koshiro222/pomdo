@@ -4,12 +4,12 @@ milestone: v1.3
 milestone_name: milestone
 current_phase: 13
 status: unknown
-last_updated: "2026-03-23T21:01:04.724Z"
+last_updated: "2026-03-23T21:01:36.625Z"
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # STATE: Pomdo v1.3 アクセシビリティ&品質改善
@@ -37,32 +37,36 @@ See: `.planning/PROJECT.md` (updated 2026-03-23)
 ## Current Position
 
 Phase: 13 (motion-and-consistency) — EXECUTING
-Plan: 1 of 2
+Plan: 2 of 2
 
 ### Phase Context
 
-**Goal:** ユーザーはWCAG AA基準を満たすUIで、色、キーボード操作、ARIAを通じてアプリを利用できる
+**Goal:** ユーザーはFramer Motionによる統一されたアニメーションと一貫性のあるUIを体験できる
 
-**Requirements:** A11Y-01～A11Y-04（4件）
+**Requirements:** ANIM-01～ANIM-02, CONS-01～CONS-02（4件）
 
-- A11Y-01: カラーコントラスト改善（WCAG AA 4.5:1）
-- A11Y-02: キーボードfocusスタイル
+- ANIM-01: prefers-reduced-motion対応
+- ANIM-02: Framer Motion活用
+- CONS-01: ボタンスタイル統一
+- CONS-02: ホバー効果統一
 - A11Y-03: ドラッグハンドル常時表示
 - A11Y-04: ARIAラベル最適化
 
 **Success Criteria:**
 
-1. ✅ ユーザーは全てのテキストをWCAG AA 4.5:1のコントラスト比で読める
-2. ⏳ ユーザーはTabキー操作時に明確なfocusスタイル（青色枠等）を確認できる
-3. ✅ ユーザーはドラッグ操作可能な要素をホバーなしで認識できる（ハンドル常時表示）
-4. ⏳ ユーザーは全てのアイコンボタンに適切なARIAラベルが付与されていることを確認できる
+1. ✅ ユーザーは全ての対話要素でFramer Motionのscaleアニメーション（scale 1.02）を確認できる
+2. ✅ ユーザーは色変化ホバー効果（hover:text-cf-danger等）を確認できる
+3. ✅ ユーザーはCSSのhover:bg-white/10が削除されたことを確認できる（Framer Motionとの重複解消）
+4. ✅ ユーザーは全てのボタンでrounded-xlによる統一されたスタイルを確認できる
 
 ### Latest Plan Completion
 
-**Phase 11 Plan 00: アクセシビリティテストインフラ構築** (v1.3)
+**Phase 13 Plan 02: ホバー効果統一** (v1.3)
 
-- ✅ アクセシビリティテストユーティリティ作成（accessibility-test-utils.tsx）
-- ✅ TodoItemアクセシビリティテスト作成（TodoItem.test.tsx）
+- ✅ 全対話要素にFramer Motionの{...hoverAnimation}を適用（scale 1.02）
+- ✅ CSSのhover:bg-white/10を全ファイルから削除
+- ✅ 色変化ホバー効果（hover:text-*）は維持
+- ✅ rounded-xlを追加してボタンスタイル完全統一
 - ✅ TrackItem ARIAラベルテスト拡張（TrackItem.test.tsx）
 - ✅ VALIDATION.md Nyquist準拠達成（nyquist_compliant: true）
 
@@ -130,6 +134,7 @@ Plan: 1 of 2
 
 | Phase 12 P02 | 3min | 4 tasks | 3 files |
 | Phase 13 P01 | 0 | 2 tasks | 2 files |
+| Phase 13 P02 | 1.5min | 3 tasks | 3 files |
 
 ### Completed Features
 

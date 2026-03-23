@@ -51,7 +51,7 @@ export function TrackItem({ track }: TrackItemProps) {
           <motion.button
             {...tapAnimation}
             onClick={() => setShowEditDialog(true)}
-            className="text-cf-subtext hover:text-cf-text"
+            className="p-3 text-cf-subtext hover:text-cf-text hover:bg-white/10 transition-colors"
             aria-label="編集"
           >
             <Edit2 size={16} />
@@ -59,7 +59,7 @@ export function TrackItem({ track }: TrackItemProps) {
           <motion.button
             {...tapAnimation}
             onClick={() => setShowDeleteConfirm(true)}
-            className="text-cf-subtext hover:text-cf-danger"
+            className="p-3 text-cf-subtext hover:text-cf-danger hover:bg-white/10 transition-colors"
             aria-label="削除"
           >
             <Trash2 size={16} />

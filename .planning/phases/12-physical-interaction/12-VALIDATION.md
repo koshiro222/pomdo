@@ -2,8 +2,8 @@
 phase: 12
 slug: physical-interaction
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-24
 ---
 
@@ -27,7 +27,7 @@ created: 2026-03-24
 
 ## Sampling Rate
 
-- **After every task commit:** Run `npm test -- --run`
+- **After every task commit:** Run automated verification command
 - **After every plan wave:** Run `npm test -- --run`
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** 30 seconds
@@ -36,12 +36,23 @@ created: 2026-03-24
 
 ## Per-Task Verification Map
 
-| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 12-01-01 | 01 | 1 | TOUCH-01 | unit | `npm test -- --run` | ⬜ W0 | ⬜ pending |
-| 12-01-02 | 01 | 1 | TOUCH-02 | visual | `manual inspection` | - | ⬜ pending |
-| 12-01-03 | 01 | 1 | RESP-06 | visual | `manual inspection` | - | ⬜ pending |
-| 12-01-04 | 01 | 1 | RESP-07 | visual | `manual inspection` | - | ⬜ pending |
+### Plan 01 (Wave 1)
+
+| Task ID | Requirement | Automated Command | Status |
+|---------|-------------|-------------------|--------|
+| 12-01-01 | TOUCH-02 | `grep -q "button {" src/index.css && grep -q "cursor: pointer" src/index.css && echo "PASS"` | ⬜ pending |
+| 12-01-02 | TOUCH-01 | `grep -c "p-3" src/components/bgm/BgmPlayer.tsx \| xargs -I{} sh -c 'if [ {} -ge 3 ]; then echo "PASS"; else echo "FAIL: expected 3+ p-3 occurrences, got {}"; fi'` | ⬜ pending |
+| 12-01-03 | TOUCH-01 | `grep -q "p-3.*opacity-0.*group-hover:opacity-100" src/components/todos/TodoItem.tsx && echo "PASS"` | ⬜ pending |
+| 12-01-04 | TOUCH-01 | `grep -c "p-3" src/components/bgm/TrackItem.tsx \| xargs -I{} sh -c 'if [ {} -ge 2 ]; then echo "PASS"; else echo "FAIL: expected 2+ p-3 occurrences, got {}"; fi'` | ⬜ pending |
+
+### Plan 02 (Wave 2)
+
+| Task ID | Requirement | Automated Command | Status |
+|---------|-------------|-------------------|--------|
+| 12-02-01 | RESP-06, RESP-07 | `grep -q "w-24 h-24 flex-shrink-0" src/components/bgm/BgmPlayer.tsx && ! grep -q "sm:w-32 sm:h-32" src/components/bgm/BgmPlayer.tsx && echo "PASS"` | ⬜ pending |
+| 12-02-02 | RESP-06 | `! grep -q "bento-card.*overflow-hidden" src/components/todos/TodoList.tsx && echo "PASS"` | ⬜ pending |
+| 12-02-03 | RESP-06 | `! grep -q "bento-card.*overflow-hidden" src/components/tasks/CurrentTaskCard.tsx && echo "PASS"` | ⬜ pending |
+| 12-02-04 | TOUCH-01, TOUCH-02, RESP-06, RESP-07 | `npm run build` (checkpoint task) | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -49,8 +60,8 @@ created: 2026-03-24
 
 ## Wave 0 Requirements
 
-- [ ] `src/components/__tests__/` — stubs for touch target testing
-- [ ] Existing vitest infrastructure covers all phase requirements
+- [x] Existing vitest infrastructure covers all phase requirements
+- [x] No new test files required — all verification via grep commands
 
 ---
 
@@ -67,11 +78,11 @@ created: 2026-03-24
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending

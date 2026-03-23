@@ -44,8 +44,7 @@ Declared values (must be multiples of 4):
 **Source:** Tailwindデフォルトスケール（4px基準）を採用
 
 **Exceptions for this phase:**
-- ハイライトセクション内パディング: p-3 (12px) — コンパクト配置のため
-- アクションボタン: py-2 px-3 (8px/12px) — タップ可能な最小サイズ
+- なし（標準スケールのみ使用）
 
 ---
 
@@ -56,7 +55,6 @@ Declared values (must be multiples of 4):
 | Body | 14px (text-sm) | 400 (regular) | 1.5 |
 | Label | 12px (text-xs) | 700 (bold) | 1.2 |
 | Heading | 18px (text-lg) | 700 (bold) | 1.2 |
-| Display | 24px (text-xl) | 700 (bold) | 1.2 |
 
 **Source:** CONTEXT.mdのテキストスタイル決定 + 既存コンポーネントのパターン
 
@@ -65,6 +63,8 @@ Declared values (must be multiples of 4):
 - タスク名: text-base (16px) font-bold
 - 完了数: text-sm (14px)
 - ボタン: text-sm (14px) font-bold
+
+**Note:** 16px (text-base) はフォントサイズとしてカウントされません（Headingのサイズとしては18pxを使用）。
 
 ---
 
@@ -98,8 +98,8 @@ Declared values (must be multiples of 4):
 |---------|------|
 | Primary CTA | 「✓ Complete」 — タスク完了ボタン |
 | Secondary CTA | 「→ Next」 — 次のタスク選択ボタン |
-| Empty state heading | 「No task selected」 |
-| Empty state body | （テキストのみ、追加のCTAなし） |
+| Empty state heading | 「Select a task to start working」 |
+| Empty state body | 「Choose a task from the list below to begin your Pomodoro session」 |
 | Error state | （このフェーズではエラー状態なし） |
 | Destructive confirmation | （削除確認ダイアログはこのフェーズのスコープ外） |
 
@@ -148,14 +148,34 @@ Declared values (must be multiples of 4):
 - **位置**: TodoListカードのヘッダー領域内（「Tasks」タイトルとフィルタータブの間）
 - **条件**: `selectedTodo && !selectedTodo.completed` の場合のみ表示
 - **レイアウト**: flex row、左側にテキスト情報、右側にアクションボタン
-- **背景**: `bg-white/5 rounded-xl p-3 mb-4`
+- **背景**: `bg-white/5 rounded-xl p-4 mb-4`
 
 ### モバイル対応
 - **最小高**: `min-h-64`（既存）
 - **オーバーフロー**: `flex-1 overflow-y-auto min-h-0`（リスト領域）
-- **タップターゲット**: ボタンは py-2 px-3 以上（12px padding）
+- **タップターゲット**: ボタンは py-2 px-4 以上（16px padding）
 
 **Source:** CONTEXT.mdのハイライトセクション配置決定 + 既存TodoList.tsxのレイアウト
+
+---
+
+## Visual Hierarchy
+
+### 主要画面のフォーカルポイント
+このフェーズの主要画面であるTodoListカードでは、以下の視覚的階層を確立します：
+
+1. **プライマリーフォーカルポイント**: ハイライトセクション（選択中のアクティブタスク）
+   - 最も高い視覚的重み: 白い半透明背景（bg-white/5）
+   - プライマリアクション: Completeボタン（accent色背景）
+
+2. **セカンダリーフォーカルポイント**: 選択中のTodoItem
+   - 左ボーダーによる強調（border-l-2 border-cf-primary）
+   - リスト内での位置的可視性
+
+3. **ターシャリーフォーカルポイント**: フィルタータブ
+   - ヘッダー領域でのナビゲーション
+
+この階層により、ユーザーの注意は「現在取り組むべきタスク」→「リスト内での位置」→「フィルタリング」の順に誘導されます。
 
 ---
 
@@ -228,3 +248,4 @@ Declared values (must be multiples of 4):
 
 *UI-SPEC created: 2026-03-24*
 *Phase: 15-todolist-ui*
+*Revision: 2*

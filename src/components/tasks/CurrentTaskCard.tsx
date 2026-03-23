@@ -39,7 +39,7 @@ export default function CurrentTaskCard({}: CurrentTaskCardProps) {
   const hasMoreTodos = todos.some((t: Todo) => !t.completed && t.id !== selectedTodoId)
 
   return (
-    <div className="bento-card p-6 h-full flex flex-col relative overflow-hidden">
+    <div className="bento-card p-6 h-full flex flex-col relative">
       {currentTodo ? (
         <>
           {/* ヘッダー */}

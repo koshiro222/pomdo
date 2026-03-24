@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: TodoカードUI/UX改善
-status: unknown
-stopped_at: "Completed Phase 18 Plan 03: DnD UI integration"
-last_updated: "2026-03-24T19:29:26.041Z"
+status: completed
+stopped_at: "Completed Phase 18 Plan 04: Migration and validation"
+last_updated: "2026-03-25T00:05:00.000Z"
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # STATE: Pomdo v1.6 TodoカードUI/UX改善
@@ -27,8 +27,8 @@ See: `.planning/PROJECT.md` (updated 2026-03-25)
 
 ## Current Position
 
-Phase: 18 (drag-drop-sorting) — EXECUTING
-Plan: 2 of 4
+Phase: 18 (drag-drop-sorting) — COMPLETED
+Plan: 4 of 4
 
 ## Decisions
 
@@ -46,19 +46,21 @@ Plan: 2 of 4
 
 **Velocity:**
 
-- Total plans completed (v1.6): 2
-- Total plans completed (all): 44
+- Total plans completed (v1.6): 6
+- Total plans completed (all): 48
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 17 (レイアウト&アニメーション改善) | 2/2 | 1 task | 1 files |
-| 18 (ドラッグ&ドロップ並び替え) | 0/TBD | - | - |
-| Phase 17 P02 | 875 | 1 tasks | 1 files |
+| 17 (レイアウト&アニメーション改善) | 2/2 | 1.5 task | 1.5 files |
+| 18 (ドラッグ&ドロップ並び替え) | 4/4 | 2.25 tasks | 2.75 files |
+| Phase 17 P01 | 540 | 1 tasks | 1 files |
+| Phase 17 P02 | 875 | 2 tasks | 2 files |
 | Phase 18-drag-drop-sorting P01 | 287 | 2 tasks | 3 files |
 | Phase 18-drag-drop-sorting P02 | 1774380403 | 2 tasks | 3 files |
 | Phase 18-drag-drop-sorting P03 | 720 | 3 tasks | 3 files |
+| Phase 18-drag-drop-sorting P04 | 300 | 1 task | 0 files |
 
 ## Accumulated Context
 
@@ -80,11 +82,13 @@ Plan: 2 of 4
 
 ## Session Continuity
 
-Last session: 2026-03-24T19:29:26.039Z
-Stopped at: Completed Phase 18 Plan 03: DnD UI integration
+Last session: 2026-03-25T00:05:00.000Z
+Stopped at: Completed Phase 18 Plan 04: Migration and validation
 Resume file: None
 
 ---
 *State updated: 2026-03-25*
 *Phase 17 completed*
-*Ready for Phase 18*
+*Phase 18 completed*
+*Milestone v1.6 completed*
+*Ready for next milestone*

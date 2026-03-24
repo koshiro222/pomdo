@@ -78,7 +78,7 @@ export function useTodos() {
           const created = await createMutation.mutateAsync({ title })
           return created
         } else {
-          const added = storage.addTodo({ title, completed: false })
+          const added = storage.addTodo({ title })
           if (added) {
             addLocalTodo(added)
           }

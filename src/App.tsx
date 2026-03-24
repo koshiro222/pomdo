@@ -62,7 +62,15 @@ function TimerWidget({
   }
 
   return (
-    <div className="flex flex-col h-full items-center p-6">
+    <div className="flex flex-col h-full items-center p-4">
+      {/* ヘッダー */}
+      <div className="w-full flex items-center justify-between mb-4">
+        <p className="text-xs uppercase tracking-widest font-bold text-cf-text">
+          Pomodoro
+        </p>
+      </div>
+
+      {/* 既存のタイマー表示 */}
       <TimerDisplay
         remainingSecs={remainingSecs}
         totalSecs={totalSecs}

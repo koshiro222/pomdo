@@ -2,14 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: TodoカードUI/UX改善
-status: ready_to_plan
-stopped_at: Roadmap created for v1.6
-last_updated: "2026-03-25T00:00:00.000Z"
+status: planning
+stopped_at: Phase 17 context gathered
+last_updated: "2026-03-24T16:10:06.983Z"
 progress:
   total_phases: 2
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
+  percent: 0
 ---
 
 # STATE: Pomdo v1.6 TodoカードUI/UX改善
@@ -72,9 +73,9 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-03-25
-Stopped at: v1.6ロードマップ作成完了、Phase 17プランニング待ち
-Resume file: None
+Last session: 2026-03-24T16:10:06.980Z
+Stopped at: Phase 17 context gathered
+Resume file: .planning/phases/17-layout-animation-improvements/17-CONTEXT.md
 
 ---
 *State updated: 2026-03-25*

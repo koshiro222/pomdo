@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: カードヘッダー統一
 status: unknown
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-03-24T04:10:48.829Z"
+stopped_at: Completed 16-00-PLAN.md
+last_updated: "2026-03-24T04:14:09.279Z"
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # STATE: Pomdo v1.5 カードヘッダー統一
@@ -49,6 +49,7 @@ Plan: 1 of 2 → **16-02へ進行可能**
 |-------|-------|-------|----------|
 | 16 (カードヘッダー統一) | 0/TBD | - | - |
 | Phase 16 P01 | 91 | 3 tasks | 3 files |
+| Phase 16-card-header-unification P00 | 1774325647 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -70,8 +71,8 @@ Plan: 1 of 2 → **16-02へ進行可能**
 
 ## Session Continuity
 
-Last session: 2026-03-24T04:10:48.827Z
-Stopped at: Completed 16-01-PLAN.md
+Last session: 2026-03-24T04:14:09.277Z
+Stopped at: Completed 16-00-PLAN.md
 Resume file: None
 
 ---

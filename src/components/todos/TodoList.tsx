@@ -176,28 +176,30 @@ export default function TodoList({ }: TodoListProps) {
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={todos.map((t: Todo) => t.id)} strategy={verticalListSortingStrategy}>
-            {filteredTodos.length === 0 ? (
-              <div className="text-cf-subtext text-center py-8">
-                No tasks yet
-              </div>
-            ) : (
-              <AnimatePresence mode="popLayout">
-                {filteredTodos.map((todo: Todo) => (
-                  <TodoItem
-                    key={todo.id}
-                    id={todo.id}
-                    title={todo.title}
-                    completed={todo.completed}
-                    completedPomodoros={todo.completedPomodoros}
-                    isNew={newTodoId === todo.id}
-                    isSelected={selectedTodoId === todo.id}
-                    onClick={() => handleTodoClick(todo)}
-                    onToggle={(id) => updateTodo(id, { completed: !todo.completed })}
-                    onDelete={deleteTodo}
-                  />
-                ))}
-              </AnimatePresence>
-            )}
+            <div className="flex flex-col gap-0.5">
+              {filteredTodos.length === 0 ? (
+                <div className="text-cf-subtext text-center py-8">
+                  No tasks yet
+                </div>
+              ) : (
+                <AnimatePresence mode="popLayout">
+                  {filteredTodos.map((todo: Todo) => (
+                    <TodoItem
+                      key={todo.id}
+                      id={todo.id}
+                      title={todo.title}
+                      completed={todo.completed}
+                      completedPomodoros={todo.completedPomodoros}
+                      isNew={newTodoId === todo.id}
+                      isSelected={selectedTodoId === todo.id}
+                      onClick={() => handleTodoClick(todo)}
+                      onToggle={(id) => updateTodo(id, { completed: !todo.completed })}
+                      onDelete={deleteTodo}
+                    />
+                  ))}
+                </AnimatePresence>
+              )}
+            </div>
           </SortableContext>
         </DndContext>
 

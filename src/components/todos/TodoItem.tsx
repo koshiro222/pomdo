@@ -122,7 +122,7 @@ export default function TodoItem({
           e.stopPropagation()
           onDelete(id)
         }}
-        className="p-3 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-cf-subtext hover:text-cf-danger"
+        className="p-1 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-cf-subtext hover:text-cf-danger"
         aria-label="削除"
       >
         <Trash2 className="text-lg" />

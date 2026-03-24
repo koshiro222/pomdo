@@ -4,7 +4,7 @@ import TodoItem from './TodoItem'
 import { useState, useMemo } from 'react'
 import { CheckSquare } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { tapAnimation, hoverAnimation } from '@/lib/animation'
+import { tapAnimation, hoverAnimation, slideInVariants } from '@/lib/animation'
 
 type FilterType = 'all' | 'active' | 'done'
 
@@ -29,6 +29,10 @@ export default function TodoList({ }: TodoListProps) {
 
   const remainingTodos = todos.filter((t: Todo) => !t.completed).length
 
+  // 選択中タスクの計算
+  const selectedTodo = todos.find((t: Todo) => t.id === selectedTodoId && !t.completed)
+  const hasMoreTodos = todos.some((t: Todo) => !t.completed && t.id !== selectedTodoId)
+
   const handleAddTodo = async (title: string) => {
     const result = await addTodo(title)
     if (result?.id) {
@@ -40,6 +44,20 @@ export default function TodoList({ }: TodoListProps) {
   const handleTodoClick = (todo: Todo) => {
     if (!todo.completed) {
       setSelectedTodoId(todo.id)
+    }
+  }
+
+  const handleComplete = async () => {
+    if (selectedTodo) {
+      await updateTodo(selectedTodo.id, { completed: true })
+      setSelectedTodoId(null)
+    }
+  }
+
+  const handleSelectNext = () => {
+    const nextTodo = todos.find((t: Todo) => !t.completed && t.id !== selectedTodoId)
+    if (nextTodo) {
+      setSelectedTodoId(nextTodo.id)
     }
   }
 
@@ -64,6 +82,49 @@ export default function TodoList({ }: TodoListProps) {
             {remainingTodos} Left
           </span>
         </div>
+
+        {/* ハイライトセクション */}
+        <AnimatePresence mode="popLayout">
+          {selectedTodo && (
+            <motion.div
+              variants={slideInVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="bg-white/5 rounded-xl p-3 mb-4 flex items-center justify-between"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-widest text-cf-subtext font-bold mb-1">
+                  Current Task
+                </p>
+                <p className="text-base font-bold text-cf-text truncate">
+                  {selectedTodo.title}
+                </p>
+                <p className="text-sm text-cf-subtext">
+                  {selectedTodo.completedPomodoros || 0} done
+                </p>
+              </div>
+              <div className="flex gap-2 flex-shrink-0 ml-3">
+                <motion.button
+                  {...tapAnimation}
+                  onClick={handleComplete}
+                  className="bg-cf-primary hover:bg-cf-primary/80 text-white text-sm font-bold py-2 px-3 rounded-lg transition-colors"
+                >
+                  ✓ Complete
+                </motion.button>
+                {hasMoreTodos && (
+                  <motion.button
+                    {...tapAnimation}
+                    onClick={handleSelectNext}
+                    className="bg-white/10 hover:bg-white/20 text-cf-text text-sm font-bold py-2 px-3 rounded-lg transition-colors"
+                  >
+                    → Next
+                  </motion.button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* フィルタータブ */}
         <div className="flex gap-2 mb-4">

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Bento Grid再設計 & Todo統合
 status: unknown
-last_updated: "2026-03-23T22:08:17.635Z"
+last_updated: "2026-03-24T00:08:23.780Z"
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 4
+  completed_plans: 2
 ---
 
 # STATE: Pomdo v1.4 Bento Grid再設計 & Todo統合
@@ -26,8 +26,8 @@ See: `.planning/PROJECT.md` (updated 2026-03-24)
 
 ## Current Position
 
-Phase: 14 (bento-grid-redesign) — EXECUTING
-Plan: 1 of 1 — COMPLETE
+Phase: 15 (todolist-ui) — EXECUTING
+Plan: 1 of 3
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Plan: 1 of 1 — COMPLETE
 | 14. BentoGrid再設計 | 1 | 1 | - |
 | 15. TodoList統合UI | TBD | 0 | - |
 | Phase 14 P01 | 7分 | 2 tasks | 1 files |
+| Phase 15-todolist-ui P01 | 80 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -50,6 +51,8 @@ Plan: 1 of 1 — COMPLETE
 
 - **LAYOUT-01/LAYOUT-02 実装**: 12列システムから3カラム均等システムに簡素化（2026-03-23）
 - **CurrentTaskCard削除**: Phase 15でTodoList統合のためDOMから削除（2026-03-23）
+- [Phase 15-todolist-ui]: 選択中タスクはハイライトセクションで強調表示（背景色付きボックス）
+- [Phase 15-todolist-ui]: TodoItemの選択中表示は左ボーダーのみ（背景色変更なし）
 
 ### Technical Constraints
 

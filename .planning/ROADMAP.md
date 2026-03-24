@@ -97,7 +97,7 @@ Plans:
   3. TodoListカード内にCompleteボタンとNextボタンが表示され、クリックできる
   4. 画面にCurrentTaskCardが存在せず、その機能がTodoListカード内で動作する
   5. タスク未選択時にハイライトセクションが表示されない
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 15-01-PLAN.md — TodoListにハイライトセクションとTodoItem選択中スタイルを実装

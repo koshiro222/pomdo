@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: TodoカードUI/UX改善
 status: unknown
-stopped_at: "Completed Phase 18 Plan 01: DB order column + reorder mutation"
-last_updated: "2026-03-24T19:26:51.495Z"
+stopped_at: "Completed Phase 18 Plan 03: DnD UI integration"
+last_updated: "2026-03-24T19:29:26.041Z"
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # STATE: Pomdo v1.6 TodoカードUI/UX改善
@@ -38,6 +38,9 @@ Plan: 2 of 4
 - [Phase 17]: initial条件をisNewに連動させページリロード時のアニメーションを抑制
 - [Phase 18]: NewTodo型からorderフィールドを除外（addTodo内部で自動採番）
 - [Phase 18]: getTodosで古いデータにorderを付与（createdAt順の後方互換）
+- [Phase 18]: SortableContextのitemsに全todosを使用（filteredTodosではない）ことでフィルタリング中も正しい位置計算を維持
+- [Phase 18]: motion.divを外側のdivでラップしdnd-kitのtransformを制御することでFramer Motionのlayout propと共存
+- [Phase 18]: PointerSensorのactivationConstraintを8pxに設定しクリック誤検出を防止
 
 ## Performance Metrics
 
@@ -55,6 +58,7 @@ Plan: 2 of 4
 | Phase 17 P02 | 875 | 1 tasks | 1 files |
 | Phase 18-drag-drop-sorting P01 | 287 | 2 tasks | 3 files |
 | Phase 18-drag-drop-sorting P02 | 1774380403 | 2 tasks | 3 files |
+| Phase 18-drag-drop-sorting P03 | 720 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -76,8 +80,8 @@ Plan: 2 of 4
 
 ## Session Continuity
 
-Last session: 2026-03-24T19:26:51.493Z
-Stopped at: Completed Phase 18 Plan 01: DB order column + reorder mutation
+Last session: 2026-03-24T19:29:26.039Z
+Stopped at: Completed Phase 18 Plan 03: DnD UI integration
 Resume file: None
 
 ---

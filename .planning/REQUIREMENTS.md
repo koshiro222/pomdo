@@ -7,13 +7,13 @@
 
 ### レイアウト
 
-- [ ] **LAYOUT-01**: ヘッダー（Tasks/Current Task）とTodoリスト（タブ以降）の間に仕切り線がある
-- [ ] **LAYOUT-02**: 「Add a new task」入力がTodoリストの一番下に配置されている
+- [x] **LAYOUT-01**: ヘッダー（Tasks/Current Task）とTodoリスト（タブ以降）の間に仕切り線がある
+- [x] **LAYOUT-02**: 「Add a new task」入力がTodoリストの一番下に配置されている
 
 ### アニメーション
 
-- [ ] **ANIM-01**: タスク追加時に既存アイテムがスムーズにスライドして空間を作る（layoutアニメーション）
-- [ ] **ANIM-02**: 新しいタスクアイテムが展開するように出現する（高さ + フェードイン）
+- [x] **ANIM-01**: タスク追加時に既存アイテムがスムーズにスライドして空間を作る（layoutアニメーション）
+- [x] **ANIM-02**: 新しいタスクアイテムが展開するように出現する（高さ + フェードイン）
 
 ### ドラッグ&ドロップ
 
@@ -45,10 +45,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LAYOUT-01 | Phase 17 | Pending |
-| LAYOUT-02 | Phase 17 | Pending |
-| ANIM-01 | Phase 17 | Pending |
-| ANIM-02 | Phase 17 | Pending |
+| LAYOUT-01 | Phase 17 | Complete |
+| LAYOUT-02 | Phase 17 | Complete |
+| ANIM-01 | Phase 17 | Complete |
+| ANIM-02 | Phase 17 | Complete |
 | DND-01 | Phase 18 | Pending |
 | DND-02 | Phase 18 | Pending |
 

@@ -3,7 +3,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import { useEffect, useRef } from 'react'
 import { Trash2, GripVertical } from 'lucide-react'
-import { slideInVariants, tapAnimation, hoverAnimation } from '@/lib/animation'
+import { expandInVariants, tapAnimation, hoverAnimation } from '@/lib/animation'
 
 interface TodoItemProps {
   id: string
@@ -41,11 +41,13 @@ export default function TodoItem({
 
   return (
     <motion.div
+      layout
       onClick={onClick}
       {...hoverAnimation}
-      variants={slideInVariants}
-      initial={isNew ? 'hidden' : 'visible'}
+      variants={expandInVariants}
+      initial={isNew ? 'hidden' : false}
       animate="visible"
+      exit="exit"
       className={`group flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/5 hover:border-cf-primary/30 transition-colors ${
         completed ? 'opacity-60' : ''
       } ${isSelected && !completed ? 'border-l-2 border-cf-primary' : ''} ${onClick && !completed ? 'cursor-pointer' : ''}`}

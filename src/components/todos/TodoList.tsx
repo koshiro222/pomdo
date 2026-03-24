@@ -2,7 +2,6 @@ import { useTodos, type Todo } from '../../hooks/useTodos'
 import TodoInput from './TodoInput'
 import TodoItem from './TodoItem'
 import { useState, useMemo } from 'react'
-import { CheckSquare } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { tapAnimation, hoverAnimation, slideInVariants } from '@/lib/animation'
 
@@ -74,8 +73,7 @@ export default function TodoList({ }: TodoListProps) {
       {/* ヘッダー */}
       <div className="p-6 border-b border-white/10">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-cf-text">
-            <CheckSquare className="text-cf-primary" />
+          <h3 className="text-xs uppercase tracking-widest font-bold text-cf-text">
             Tasks
           </h3>
           <span className="text-xs bg-cf-primary/20 text-cf-primary px-2 py-0.5 rounded-full font-bold">

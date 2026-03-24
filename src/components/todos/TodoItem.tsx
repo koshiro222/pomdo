@@ -48,7 +48,7 @@ export default function TodoItem({
       animate="visible"
       className={`group flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/5 hover:border-cf-primary/30 transition-colors ${
         completed ? 'opacity-60' : ''
-      } ${isSelected && !completed ? 'bg-cf-primary/20 border-cf-primary/50' : ''} ${onClick && !completed ? 'cursor-pointer' : ''}`}
+      } ${isSelected && !completed ? 'border-l-2 border-cf-primary' : ''} ${onClick && !completed ? 'cursor-pointer' : ''}`}
     >
       {/* ドラッグハンドル */}
       <motion.button

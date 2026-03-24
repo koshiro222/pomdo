@@ -12,8 +12,8 @@
 
 ### アニメーション
 
-- [ ] **ANIM-01**: タスク追加時に既存アイテムがスムーズにスライドして空間を作る（layoutアニメーション）
-- [ ] **ANIM-02**: 新しいタスクアイテムが展開するように出現する（高さ + フェードイン）
+- [x] **ANIM-01**: タスク追加時に既存アイテムがスムーズにスライドして空間を作る（layoutアニメーション）
+- [x] **ANIM-02**: 新しいタスクアイテムが展開するように出現する（高さ + フェードイン）
 
 ### ドラッグ&ドロップ
 
@@ -47,8 +47,8 @@
 |-------------|-------|--------|
 | LAYOUT-01 | Phase 17 | Pending |
 | LAYOUT-02 | Phase 17 | Pending |
-| ANIM-01 | Phase 17 | Pending |
-| ANIM-02 | Phase 17 | Pending |
+| ANIM-01 | Phase 17 | Complete |
+| ANIM-02 | Phase 17 | Complete |
 | DND-01 | Phase 18 | Pending |
 | DND-02 | Phase 18 | Pending |
 

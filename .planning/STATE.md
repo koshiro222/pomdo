@@ -2,15 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: TodoカードUI/UX改善
-status: planning
-stopped_at: Phase 17 context gathered
-last_updated: "2026-03-24T16:10:06.983Z"
+status: unknown
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-03-24T18:00:23.170Z"
 progress:
   total_phases: 2
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # STATE: Pomdo v1.6 TodoカードUI/UX改善
@@ -28,16 +27,15 @@ See: `.planning/PROJECT.md` (updated 2026-03-25)
 
 ## Current Position
 
-Phase: 17 (レイアウト&アニメーション改善) — Ready to plan
-Plan: 0 of TBD
-Status: Ready to plan
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 17 (layout-animation-improvements) — EXECUTING
+Plan: 1 of 2
 
 ## Decisions
 
 - Phase 17にレイアウト+アニメーションを集約: 同一コンポーネント(TodoList)への変更で密結合のため、1フェーズで一括完成
 - Phase 18をD&D専用に分離: DBスキーマ変更（orderカラム追加）が伴い、Phase 17のDOM構造確定後に実装するのが安全
+- [Phase 17]: layout propを単体で使用: 既存アイテムがスムーズにスライド
+- [Phase 17]: initial条件をisNewに連動させページリロード時のアニメーションを抑制
 
 ## Performance Metrics
 
@@ -52,6 +50,7 @@ Progress: [░░░░░░░░░░] 0%
 |-------|-------|-------|----------|
 | 17 (レイアウト&アニメーション改善) | 0/TBD | - | - |
 | 18 (ドラッグ&ドロップ並び替え) | 0/TBD | - | - |
+| Phase 17-layout-animation-improvements P01 | 1 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -73,9 +72,9 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-03-24T16:10:06.980Z
-Stopped at: Phase 17 context gathered
-Resume file: .planning/phases/17-layout-animation-improvements/17-CONTEXT.md
+Last session: 2026-03-24T18:00:23.168Z
+Stopped at: Completed 17-01-PLAN.md
+Resume file: None
 
 ---
 *State updated: 2026-03-25*

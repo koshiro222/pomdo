@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: TodoカードUI/UX改善
 status: unknown
-stopped_at: Phase 18 context gathered
-last_updated: "2026-03-24T18:36:29.171Z"
+stopped_at: "Completed Phase 18 Plan 05: Gap closure - TypeScript build error fix + performance optimization"
+last_updated: "2026-03-24T21:33:42.798Z"
 progress:
   total_phases: 2
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 7
+  completed_plans: 7
 ---
 
 # STATE: Pomdo v1.6 TodoカードUI/UX改善
@@ -27,8 +27,10 @@ See: `.planning/PROJECT.md` (updated 2026-03-25)
 
 ## Current Position
 
-Phase: 17 (layout-animation-improvements) — EXECUTING
-Plan: 2 of 2 (COMPLETED)
+Phase: 18 (drag-drop-sorting) — COMPLETED
+Plan: 5 of 5
+
+Milestone v1.6 COMPLETE.
 
 ## Decisions
 
@@ -36,21 +38,33 @@ Plan: 2 of 2 (COMPLETED)
 - Phase 18をD&D専用に分離: DBスキーマ変更（orderカラム追加）が伴い、Phase 17のDOM構造確定後に実装するのが安全
 - [Phase 17]: layout propを単体で使用: 既存アイテムがスムーズにスライド
 - [Phase 17]: initial条件をisNewに連動させページリロード時のアニメーションを抑制
+- [Phase 18]: NewTodo型からorderフィールドを除外（addTodo内部で自動採番）
+- [Phase 18]: getTodosで古いデータにorderを付与（createdAt順の後方互換）
+- [Phase 18]: SortableContextのitemsに全todosを使用（filteredTodosではない）ことでフィルタリング中も正しい位置計算を維持
+- [Phase 18]: motion.divを外側のdivでラップしdnd-kitのtransformを制御することでFramer Motionのlayout propと共存
+- [Phase 18]: PointerSensorのactivationConstraintを8pxに設定しクリック誤検出を防止
+- [Phase 18]: tRPCミューテーションにオプティミスティックアップデートを実装し、ログイン時の並び替えパフォーマンスを改善
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed (v1.6): 2
-- Total plans completed (all): 44
+- Total plans completed (v1.6): 7
+- Total plans completed (all): 49
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 17 (レイアウト&アニメーション改善) | 2/2 | 1 task | 1 files |
-| 18 (ドラッグ&ドロップ並び替え) | 0/TBD | - | - |
-| Phase 17 P02 | 875 | 1 tasks | 1 files |
+| 17 (レイアウト&アニメーション改善) | 2/2 | 1.5 task | 1.5 files |
+| 18 (ドラッグ&ドロップ並び替え) | 4/4 | 2.25 tasks | 2.75 files |
+| Phase 17 P01 | 540 | 1 tasks | 1 files |
+| Phase 17 P02 | 875 | 2 tasks | 2 files |
+| Phase 18-drag-drop-sorting P01 | 287 | 2 tasks | 3 files |
+| Phase 18-drag-drop-sorting P02 | 1774380403 | 2 tasks | 3 files |
+| Phase 18-drag-drop-sorting P03 | 720 | 3 tasks | 3 files |
+| Phase 18-drag-drop-sorting P04 | 300 | 1 task | 0 files |
+| Phase 18-drag-drop-sorting P05 | fda8db0 | 1 task | 1 file |
 
 ## Accumulated Context
 
@@ -72,11 +86,13 @@ Plan: 2 of 2 (COMPLETED)
 
 ## Session Continuity
 
-Last session: 2026-03-24T18:36:29.161Z
-Stopped at: Phase 18 context gathered
-Resume file: .planning/phases/18-drag-drop-sorting/18-CONTEXT.md
+Last session: 2026-03-25T00:30:00.000Z
+Stopped at: Completed Phase 18 Plan 05: Gap closure - TypeScript build error fix + performance optimization
+Resume file: None
 
 ---
 *State updated: 2026-03-25*
 *Phase 17 completed*
-*Ready for Phase 18*
+*Phase 18 completed*
+*Milestone v1.6 completed*
+*Ready for next milestone*

@@ -7,6 +7,7 @@ export const todoSchema = z.object({
   title: z.string(),
   completed: z.boolean(),
   completedPomodoros: z.number().default(0),
+  order: z.number().int().default(0),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 })

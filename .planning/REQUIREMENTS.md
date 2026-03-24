@@ -17,8 +17,8 @@
 
 ### ドラッグ&ドロップ
 
-- [ ] **DND-01**: タスクをドラッグして並び替えができる
-- [ ] **DND-02**: 並び替えた順序が保存される（DB: `order`カラム追加、ゲスト: localStorage）
+- [x] **DND-01**: タスクをドラッグして並び替えができる
+- [x] **DND-02**: 並び替えた順序が保存される（DB: `order`カラム追加、ゲスト: localStorage）
 
 ## v2 Requirements
 
@@ -49,8 +49,8 @@
 | LAYOUT-02 | Phase 17 | Complete |
 | ANIM-01 | Phase 17 | Complete |
 | ANIM-02 | Phase 17 | Complete |
-| DND-01 | Phase 18 | Pending |
-| DND-02 | Phase 18 | Pending |
+| DND-01 | Phase 18 | Complete |
+| DND-02 | Phase 18 | Complete |
 
 **Coverage:**
 - v1.6 requirements: 6 total

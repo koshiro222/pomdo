@@ -17,6 +17,7 @@ export function useTodos() {
     addLocalTodo,
     updateLocalTodo,
     removeLocalTodo,
+    reorderLocalTodo,
     setLoading,
     setError,
     initFromStorage,
@@ -49,6 +50,42 @@ export function useTodos() {
     },
   })
 
+  const reorderMutation = trpc.todos.reorder.useMutation({
+    onMutate: async ({ id, newOrder }) => {
+      // オプティミスティックアップデートのために現在のデータをキャンセル
+      await utils.todos.getAll.cancel()
+
+      // 以前のデータを保存してロールバック用にする
+      const previousTodos = utils.todos.getAll.getData()
+
+      // オプティミスティックに更新
+      utils.todos.getAll.setData(undefined, (old: Todo[] | undefined) => {
+        if (!old) return old
+        const newTodos = [...old]
+        const oldIndex = newTodos.findIndex((t) => t.id === id)
+        if (oldIndex === -1) return old
+
+        const [moved] = newTodos.splice(oldIndex, 1)
+        newTodos.splice(newOrder, 0, moved)
+
+        // order値を再採番
+        return newTodos.map((t, i) => ({ ...t, order: i }))
+      })
+
+      return { previousTodos }
+    },
+    onError: (_err, _variables, context) => {
+      // エラー時に以前のデータに戻す
+      if (context?.previousTodos) {
+        utils.todos.getAll.setData(undefined, context.previousTodos)
+      }
+    },
+    onSettled: () => {
+      // 成功・失敗に関わらず、最新データを再取得
+      utils.todos.getAll.invalidate()
+    },
+  })
+
   // ローカルストレージから初期データを読み込み
   const initLocalTodos = useCallback(() => {
     setLoading(true)
@@ -71,7 +108,7 @@ export function useTodos() {
           const created = await createMutation.mutateAsync({ title })
           return created
         } else {
-          const added = storage.addTodo({ title, completed: false })
+          const added = storage.addTodo({ title })
           if (added) {
             addLocalTodo(added)
           }
@@ -130,6 +167,28 @@ export function useTodos() {
     [user, deleteMutation, removeLocalTodo, setError],
   )
 
+  const reorderTodo = useCallback(
+    async (id: string, newOrder: number) => {
+      try {
+        if (user) {
+          // ログイン時はtRPCミューテーションを使用（オプティミスティックアップデート付き）
+          reorderMutation.mutate({ id, newOrder })
+          return true
+        } else {
+          // ゲストモードではローカルストレージを直接更新
+          storage.reorder(id, newOrder)
+          reorderLocalTodo(id, newOrder)
+          return true
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Failed to reorder todo'
+        if (!user) setError(msg)
+        return false
+      }
+    },
+    [user, reorderMutation, reorderLocalTodo, setError],
+  )
+
   const migrateToApi = useCallback(
     async (localTodos: Todo[]): Promise<boolean> => {
       if (!user) return false
@@ -159,6 +218,7 @@ export function useTodos() {
     addTodo,
     updateTodo,
     deleteTodo,
+    reorderTodo,
     setSelectedTodoId,
     incrementCompletedPomodoros,
     refetch: () => {

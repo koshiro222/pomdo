@@ -51,7 +51,37 @@ export function useTodos() {
   })
 
   const reorderMutation = trpc.todos.reorder.useMutation({
-    onSuccess: () => {
+    onMutate: async ({ id, newOrder }) => {
+      // オプティミスティックアップデートのために現在のデータをキャンセル
+      await utils.todos.getAll.cancel()
+
+      // 以前のデータを保存してロールバック用にする
+      const previousTodos = utils.todos.getAll.getData()
+
+      // オプティミスティックに更新
+      utils.todos.getAll.setData(undefined, (old: Todo[] | undefined) => {
+        if (!old) return old
+        const newTodos = [...old]
+        const oldIndex = newTodos.findIndex((t) => t.id === id)
+        if (oldIndex === -1) return old
+
+        const [moved] = newTodos.splice(oldIndex, 1)
+        newTodos.splice(newOrder, 0, moved)
+
+        // order値を再採番
+        return newTodos.map((t, i) => ({ ...t, order: i }))
+      })
+
+      return { previousTodos }
+    },
+    onError: (_err, _variables, context) => {
+      // エラー時に以前のデータに戻す
+      if (context?.previousTodos) {
+        utils.todos.getAll.setData(undefined, context.previousTodos)
+      }
+    },
+    onSettled: () => {
+      // 成功・失敗に関わらず、最新データを再取得
       utils.todos.getAll.invalidate()
     },
   })
@@ -141,9 +171,11 @@ export function useTodos() {
     async (id: string, newOrder: number) => {
       try {
         if (user) {
-          await reorderMutation.mutateAsync({ id, newOrder })
+          // ログイン時はtRPCミューテーションを使用（オプティミスティックアップデート付き）
+          reorderMutation.mutate({ id, newOrder })
           return true
         } else {
+          // ゲストモードではローカルストレージを直接更新
           storage.reorder(id, newOrder)
           reorderLocalTodo(id, newOrder)
           return true

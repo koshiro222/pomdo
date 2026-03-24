@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: TodoカードUI/UX改善
 status: unknown
-stopped_at: Completed 17-02-PLAN.md
-last_updated: "2026-03-24T18:17:27.086Z"
+stopped_at: Phase 18 context gathered
+last_updated: "2026-03-24T18:36:29.171Z"
 progress:
   total_phases: 2
   completed_phases: 1
@@ -72,9 +72,9 @@ Plan: 2 of 2 (COMPLETED)
 
 ## Session Continuity
 
-Last session: 2026-03-24T18:15:10.000Z
-Stopped at: Completed 17-02-PLAN.md
-Resume file: None
+Last session: 2026-03-24T18:36:29.161Z
+Stopped at: Phase 18 context gathered
+Resume file: .planning/phases/18-drag-drop-sorting/18-CONTEXT.md
 
 ---
 *State updated: 2026-03-25*

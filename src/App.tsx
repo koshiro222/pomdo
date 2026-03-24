@@ -62,7 +62,7 @@ function TimerWidget({
   }
 
   return (
-    <div className="flex flex-col h-full items-center p-4">
+    <div className="flex flex-col h-full items-center p-4 sm:p-6">
       {/* ヘッダー */}
       <div className="w-full flex items-center justify-between mb-4">
         <p className="text-xs uppercase tracking-widest font-bold text-cf-text">

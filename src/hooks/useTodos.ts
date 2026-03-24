@@ -17,6 +17,7 @@ export function useTodos() {
     addLocalTodo,
     updateLocalTodo,
     removeLocalTodo,
+    reorderLocalTodo,
     setLoading,
     setError,
     initFromStorage,
@@ -44,6 +45,12 @@ export function useTodos() {
   })
 
   const deleteMutation = trpc.todos.delete.useMutation({
+    onSuccess: () => {
+      utils.todos.getAll.invalidate()
+    },
+  })
+
+  const reorderMutation = trpc.todos.reorder.useMutation({
     onSuccess: () => {
       utils.todos.getAll.invalidate()
     },
@@ -130,6 +137,26 @@ export function useTodos() {
     [user, deleteMutation, removeLocalTodo, setError],
   )
 
+  const reorderTodo = useCallback(
+    async (id: string, newOrder: number) => {
+      try {
+        if (user) {
+          await reorderMutation.mutateAsync({ id, newOrder })
+          return true
+        } else {
+          storage.reorder(id, newOrder)
+          reorderLocalTodo(id, newOrder)
+          return true
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Failed to reorder todo'
+        if (!user) setError(msg)
+        return false
+      }
+    },
+    [user, reorderMutation, reorderLocalTodo, setError],
+  )
+
   const migrateToApi = useCallback(
     async (localTodos: Todo[]): Promise<boolean> => {
       if (!user) return false
@@ -159,6 +186,7 @@ export function useTodos() {
     addTodo,
     updateTodo,
     deleteTodo,
+    reorderTodo,
     setSelectedTodoId,
     incrementCompletedPomodoros,
     refetch: () => {

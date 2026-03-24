@@ -1,5 +1,25 @@
 # Milestones
 
+## v1.5 カードヘッダー統一 (Shipped: 2026-03-24)
+
+**Phases completed:** 1 phases, 2 plans
+
+**Key accomplishments:**
+
+- TimerWidgetに統一スタイルの「Pomodoro」ヘッダーテキストを追加
+- BgmPlayerのヘッダーレイアウトを「BGM|Listボタン」に再配置
+- TodoListのヘッダーからアイコンを削除し、統一スタイルを適用
+- 全カードで `text-xs uppercase tracking-widest font-bold` スタイル統一
+- テストスケルトンをTDD形式で作成
+
+**Stats:**
+
+- Timeline: 1 day (2026-03-24)
+- Files changed: 6 files (+68/-9 LOC)
+- Git commits: 6 commits
+
+---
+
 ## v1.4 Bento Grid再設計 & Todo統合 (Shipped: 2026-03-24)
 
 **Phases completed:** 2 phases, 4 plans

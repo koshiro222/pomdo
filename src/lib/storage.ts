@@ -10,7 +10,7 @@ export type Todo = {
   updatedAt: string
 }
 
-export type NewTodo = Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>
+export type NewTodo = Omit<Todo, 'id' | 'completed' | 'order' | 'createdAt' | 'updatedAt'>
 export type UpdateTodo = Partial<Pick<Todo, 'title' | 'completed' | 'completedPomodoros'>>
 
 export type PomodoroSession = {
@@ -69,6 +69,7 @@ export const storage = {
     const maxOrder = todos.length > 0 ? Math.max(...todos.map(t => t.order ?? 0)) : -1
     const newTodo: Todo = {
       id: crypto.randomUUID(),
+      completed: false,
       ...todo,
       order: maxOrder + 1,
       createdAt: now,

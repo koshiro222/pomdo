@@ -77,7 +77,10 @@ export function BgmPlayer() {
       {/* コンパクト表示（常時表示） */}
       <div className="flex-1 flex flex-col p-4 sm:p-6">
         {/* ヘッダー */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs uppercase tracking-widest font-bold text-cf-text">
+            BGM
+          </p>
           <motion.button
             {...hoverAnimation}
             {...tapAnimation}
@@ -90,10 +93,6 @@ export function BgmPlayer() {
               <List className="w-5 h-5" />
             </motion.div>
           </motion.button>
-          <p className="text-xs uppercase tracking-widest text-cf-subtext font-bold">
-            BGM
-          </p>
-          <div className="w-5" /> {/* スペーサー */}
         </div>
 
         {/* アルバムアートと情報 */}

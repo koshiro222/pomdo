@@ -4,6 +4,8 @@ import TodoItem from './TodoItem'
 import { useState, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { tapAnimation, hoverAnimation, slideInVariants } from '@/lib/animation'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 
 type FilterType = 'all' | 'active' | 'done'
 
@@ -11,7 +13,7 @@ interface TodoListProps {
 }
 
 export default function TodoList({ }: TodoListProps) {
-  const { todos, selectedTodoId, loading, addTodo, updateTodo, deleteTodo, setSelectedTodoId } = useTodos()
+  const { todos, selectedTodoId, loading, addTodo, updateTodo, deleteTodo, setSelectedTodoId, reorderTodo } = useTodos()
   const [newTodoId, setNewTodoId] = useState<string | null>(null)
   const [filterType, setFilterType] = useState<FilterType>('all')
 
@@ -25,6 +27,25 @@ export default function TodoList({ }: TodoListProps) {
         return todos
     }
   }, [todos, filterType])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      const oldIndex = todos.findIndex((t: Todo) => t.id === active.id)
+      const newIndex = todos.findIndex((t: Todo) => t.id === over.id)
+      if (oldIndex !== -1 && newIndex !== -1) {
+        reorderTodo(todos[oldIndex].id, newIndex)
+      }
+    }
+  }
 
   const remainingTodos = todos.filter((t: Todo) => !t.completed).length
 
@@ -149,28 +170,36 @@ export default function TodoList({ }: TodoListProps) {
 
       {/* スクロールエリア（TodoList + TodoInput） */}
       <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-3 -mx-4 sm:-mx-6 px-4 sm:px-6">
-        {filteredTodos.length === 0 ? (
-          <div className="text-cf-subtext text-center py-8">
-            No tasks yet
-          </div>
-        ) : (
-          <AnimatePresence mode="popLayout">
-            {filteredTodos.map((todo: Todo) => (
-              <TodoItem
-                key={todo.id}
-                id={todo.id}
-                title={todo.title}
-                completed={todo.completed}
-                completedPomodoros={todo.completedPomodoros}
-                isNew={newTodoId === todo.id}
-                isSelected={selectedTodoId === todo.id}
-                onClick={() => handleTodoClick(todo)}
-                onToggle={(id) => updateTodo(id, { completed: !todo.completed })}
-                onDelete={deleteTodo}
-              />
-            ))}
-          </AnimatePresence>
-        )}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={todos.map((t: Todo) => t.id)} strategy={verticalListSortingStrategy}>
+            {filteredTodos.length === 0 ? (
+              <div className="text-cf-subtext text-center py-8">
+                No tasks yet
+              </div>
+            ) : (
+              <AnimatePresence mode="popLayout">
+                {filteredTodos.map((todo: Todo) => (
+                  <TodoItem
+                    key={todo.id}
+                    id={todo.id}
+                    title={todo.title}
+                    completed={todo.completed}
+                    completedPomodoros={todo.completedPomodoros}
+                    isNew={newTodoId === todo.id}
+                    isSelected={selectedTodoId === todo.id}
+                    onClick={() => handleTodoClick(todo)}
+                    onToggle={(id) => updateTodo(id, { completed: !todo.completed })}
+                    onDelete={deleteTodo}
+                  />
+                ))}
+              </AnimatePresence>
+            )}
+          </SortableContext>
+        </DndContext>
 
         {/* TodoInputを最後に移動 */}
         <TodoInput onAdd={handleAddTodo} />

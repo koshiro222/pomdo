@@ -61,6 +61,7 @@ export const todos = pgTable("todos", {
   title: text("title").notNull(),
   completed: boolean("completed").notNull().default(false),
   completedPomodoros: integer("completed_pomodoros").notNull().default(0),
+  order: integer("order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

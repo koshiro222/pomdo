@@ -7,9 +7,9 @@
 
 ### カードヘッダー統一
 
-- [ ] **HEADER-01**: タイマーカードに「Pomodoro」ヘッダーテキストが左上・統一スタイル（`text-xs uppercase tracking-widest font-bold`）で表示される
-- [ ] **HEADER-02**: BGMカードのヘッダーテキストが左上配置、Listボタンが右上配置になる
-- [ ] **HEADER-03**: TodoListカードのヘッダーテキストのスタイルが他カードと統一される（`text-lg font-bold` → `text-xs uppercase tracking-widest font-bold`）
+- [x] **HEADER-01**: タイマーカードに「Pomodoro」ヘッダーテキストが左上・統一スタイル（`text-xs uppercase tracking-widest font-bold`）で表示される
+- [x] **HEADER-02**: BGMカードのヘッダーテキストが左上配置、Listボタンが右上配置になる
+- [x] **HEADER-03**: TodoListカードのヘッダーテキストのスタイルが他カードと統一される（`text-lg font-bold` → `text-xs uppercase tracking-widest font-bold`）
 
 ## v2 Requirements
 
@@ -35,9 +35,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HEADER-01 | Phase 16 | Pending |
-| HEADER-02 | Phase 16 | Pending |
-| HEADER-03 | Phase 16 | Pending |
+| HEADER-01 | Phase 16 | Complete |
+| HEADER-02 | Phase 16 | Complete |
+| HEADER-03 | Phase 16 | Complete |
 
 **Coverage:**
 - v1.5 requirements: 3 total

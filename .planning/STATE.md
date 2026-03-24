@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: カードヘッダー統一
-status: planning
-stopped_at: Phase 16 context gathered
-last_updated: "2026-03-24T03:01:46.881Z"
-last_activity: 2026-03-24 — Roadmap作成完了
+status: unknown
+stopped_at: Completed 16-00-PLAN.md
+last_updated: "2026-03-24T04:17:06.139Z"
 progress:
   total_phases: 1
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # STATE: Pomdo v1.5 カードヘッダー統一
@@ -29,12 +27,14 @@ See: `.planning/PROJECT.md` (updated 2026-03-24)
 
 ## Current Position
 
-Phase: 16 of 16 (カードヘッダー統一)
-Plan: — (未着手)
-Status: Ready to plan
-Last activity: 2026-03-24 — Roadmap作成完了
+Phase: 16 (card-header-unification) — EXECUTING
+Plan: 1 of 2 → **16-02へ進行可能**
 
-Progress: [░░░░░░░░░░] 0%
+## Decisions
+
+- padding統一: TimerWidgetのp-6をp-4に変更して視覚的バランス調整
+- スペーサー削除: BgmPlayerのw-5スペーサーを削除し、flex justify-betweenで自然に左右配置
+- アイコン削除: TodoListのCheckSquareアイコンを削除し、テキストオンリーで統一
 
 ## Performance Metrics
 
@@ -48,6 +48,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 16 (カードヘッダー統一) | 0/TBD | - | - |
+| Phase 16 P01 | 91 | 3 tasks | 3 files |
+| Phase 16-card-header-unification P00 | 1774325647 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -69,9 +71,9 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-03-24T03:01:46.873Z
-Stopped at: Phase 16 context gathered
-Resume file: .planning/phases/16-card-header-unification/16-CONTEXT.md
+Last session: 2026-03-24T04:14:09.277Z
+Stopped at: Completed 16-00-PLAN.md
+Resume file: None
 
 ---
 *State updated: 2026-03-24*

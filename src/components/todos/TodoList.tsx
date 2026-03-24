@@ -71,7 +71,7 @@ export default function TodoList({ }: TodoListProps) {
   return (
     <div className="bento-card flex flex-col min-h-64 sm:h-full p-4 sm:p-6">
       {/* ヘッダー */}
-      <div className="border-b border-white/10 pb-4 mb-4">
+      <div className="pb-4 sm:pb-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xs uppercase tracking-widest font-bold text-cf-text">
             Tasks
@@ -123,30 +123,31 @@ export default function TodoList({ }: TodoListProps) {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* フィルタータブ */}
-        <div className="flex gap-2 mb-4">
-          {(['all', 'active', 'done'] as FilterType[]).map((type) => (
-            <motion.button
-              key={type}
-              {...hoverAnimation}
-              {...tapAnimation}
-              onClick={() => setFilterType(type)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                filterType === type
-                  ? 'bg-cf-primary text-white'
-                  : 'bg-white/5 text-cf-subtext hover:bg-white/10 hover:text-cf-text'
-              }`}
-            >
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-            </motion.button>
-          ))}
-        </div>
-
-        <TodoInput onAdd={handleAddTodo} />
       </div>
 
-      {/* Todoリスト */}
+      {/* 仕切り線 */}
+      <div className="border-b border-white/10 my-3" />
+
+      {/* フィルタータブ */}
+      <div className="flex gap-2 mb-3">
+        {(['all', 'active', 'done'] as FilterType[]).map((type) => (
+          <motion.button
+            key={type}
+            {...hoverAnimation}
+            {...tapAnimation}
+            onClick={() => setFilterType(type)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              filterType === type
+                ? 'bg-cf-primary text-white'
+                : 'bg-white/5 text-cf-subtext hover:bg-white/10 hover:text-cf-text'
+            }`}
+          >
+            {type.charAt(0).toUpperCase() + type.slice(1)}
+          </motion.button>
+        ))}
+      </div>
+
+      {/* スクロールエリア（TodoList + TodoInput） */}
       <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-3 -mx-4 sm:-mx-6 px-4 sm:px-6">
         {filteredTodos.length === 0 ? (
           <div className="text-cf-subtext text-center py-8">
@@ -170,6 +171,9 @@ export default function TodoList({ }: TodoListProps) {
             ))}
           </AnimatePresence>
         )}
+
+        {/* TodoInputを最後に移動 */}
+        <TodoInput onAdd={handleAddTodo} />
       </div>
     </div>
   )

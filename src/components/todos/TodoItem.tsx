@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils'
 import { useEffect, useRef } from 'react'
 import { Trash2, GripVertical } from 'lucide-react'
 import { expandInVariants, tapAnimation, hoverAnimation } from '@/lib/animation'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface TodoItemProps {
   id: string
@@ -28,6 +30,22 @@ export default function TodoItem({
   onToggle,
   onDelete,
 }: TodoItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
+  }
+
   const checkboxRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -40,26 +58,29 @@ export default function TodoItem({
   }, [completed])
 
   return (
-    <motion.div
-      layout
-      onClick={onClick}
-      {...hoverAnimation}
-      variants={expandInVariants}
-      initial={isNew ? 'hidden' : false}
-      animate="visible"
-      exit="exit"
-      className={`group flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/5 hover:border-cf-primary/30 transition-colors ${
-        completed ? 'opacity-60' : ''
-      } ${isSelected && !completed ? 'border-l-2 border-cf-primary' : ''} ${onClick && !completed ? 'cursor-pointer' : ''}`}
-    >
-      {/* ドラッグハンドル */}
-      <motion.button
-        {...tapAnimation}
-        onClick={(e) => e.stopPropagation()}
-        className="opacity-30 group-hover:opacity-50 transition-opacity cursor-grab active:cursor-grabbing text-cf-subtext"
+    <div ref={setNodeRef} style={style} className={isDragging ? 'relative' : ''}>
+      <motion.div
+        layout
+        onClick={onClick}
+        {...hoverAnimation}
+        variants={expandInVariants}
+        initial={isNew ? 'hidden' : false}
+        animate="visible"
+        exit="exit"
+        className={`group flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/5 hover:border-cf-primary/30 transition-colors ${
+          completed ? 'opacity-60' : ''
+        } ${isSelected && !completed ? 'border-l-2 border-cf-primary' : ''} ${onClick && !completed ? 'cursor-pointer' : ''}`}
       >
-        <GripVertical className="text-sm" />
-      </motion.button>
+        {/* ドラッグハンドル */}
+        <motion.button
+          {...tapAnimation}
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+          className="opacity-30 group-hover:opacity-50 transition-opacity cursor-grab active:cursor-grabbing text-cf-subtext"
+        >
+          <GripVertical className="text-sm" />
+        </motion.button>
       <Checkbox
         ref={checkboxRef}
         checked={completed}
@@ -107,5 +128,6 @@ export default function TodoItem({
         <Trash2 className="text-lg" />
       </motion.button>
     </motion.div>
+    </div>
   )
 }

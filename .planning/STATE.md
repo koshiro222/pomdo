@@ -4,7 +4,7 @@ milestone: v1.5
 milestone_name: カードヘッダー統一
 status: unknown
 stopped_at: Completed 16-00-PLAN.md
-last_updated: "2026-03-24T04:14:09.279Z"
+last_updated: "2026-03-24T04:17:06.139Z"
 progress:
   total_phases: 1
   completed_phases: 1

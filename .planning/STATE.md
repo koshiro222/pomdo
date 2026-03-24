@@ -4,7 +4,7 @@ milestone: v1.6
 milestone_name: TodoカードUI/UX改善
 status: unknown
 stopped_at: Completed 17-02-PLAN.md
-last_updated: "2026-03-24T18:16:25.370Z"
+last_updated: "2026-03-24T18:17:27.086Z"
 progress:
   total_phases: 2
   completed_phases: 1

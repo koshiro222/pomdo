@@ -101,3 +101,33 @@ export const timerTransition = {
   duration: 0.3,
   ease: [0, 0, 0.2, 1] as const,
 }
+
+/**
+ * 新規Todoアイテムの展開アニメーション
+ * height: 0 → auto + opacity: 0 → 1
+ */
+export const expandInVariants: Variants = {
+  hidden: {
+    opacity: 0,
+    height: 0,
+    marginBottom: 0,
+  },
+  visible: {
+    opacity: 1,
+    height: 'auto',
+    marginBottom: 12, // gap-3相当
+    transition: {
+      height: { duration: 0.25, ease: [0, 0, 0.2, 1] },
+      opacity: { duration: 0.2, delay: 0.05, ease: [0, 0, 0.2, 1] },
+    },
+  },
+  exit: {
+    opacity: 0,
+    height: 0,
+    marginBottom: 0,
+    transition: {
+      height: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+      opacity: { duration: 0.15, ease: [0.4, 0, 1, 1] },
+    },
+  },
+}

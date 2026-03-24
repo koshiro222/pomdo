@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: TodoカードUI/UX改善
 status: unknown
-stopped_at: Completed 17-01-PLAN.md
-last_updated: "2026-03-24T18:00:23.170Z"
+stopped_at: Completed 17-02-PLAN.md
+last_updated: "2026-03-24T18:16:25.370Z"
 progress:
   total_phases: 2
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # STATE: Pomdo v1.6 TodoカードUI/UX改善
@@ -28,7 +28,7 @@ See: `.planning/PROJECT.md` (updated 2026-03-25)
 ## Current Position
 
 Phase: 17 (layout-animation-improvements) — EXECUTING
-Plan: 1 of 2
+Plan: 2 of 2 (COMPLETED)
 
 ## Decisions
 
@@ -41,16 +41,16 @@ Plan: 1 of 2
 
 **Velocity:**
 
-- Total plans completed (v1.6): 0
-- Total plans completed (all): 42
+- Total plans completed (v1.6): 2
+- Total plans completed (all): 44
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 17 (レイアウト&アニメーション改善) | 0/TBD | - | - |
+| 17 (レイアウト&アニメーション改善) | 2/2 | 1 task | 1 files |
 | 18 (ドラッグ&ドロップ並び替え) | 0/TBD | - | - |
-| Phase 17-layout-animation-improvements P01 | 1 | 2 tasks | 2 files |
+| Phase 17 P02 | 875 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -72,10 +72,11 @@ Plan: 1 of 2
 
 ## Session Continuity
 
-Last session: 2026-03-24T18:00:23.168Z
-Stopped at: Completed 17-01-PLAN.md
+Last session: 2026-03-24T18:15:10.000Z
+Stopped at: Completed 17-02-PLAN.md
 Resume file: None
 
 ---
 *State updated: 2026-03-25*
-*Roadmap created for v1.6*
+*Phase 17 completed*
+*Ready for Phase 18*

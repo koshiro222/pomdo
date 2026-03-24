@@ -1,5 +1,24 @@
 # Milestones
 
+## v1.4 Bento Grid再設計 & Todo統合 (Shipped: 2026-03-24)
+
+**Phases completed:** 2 phases, 4 plans
+
+**Key accomplishments:**
+
+- BentoGridを12列複雑システムから3カラム均等システムに簡素化
+- デスクトップ横3列・モバイル縦積みのレスポンシブレイアウトを実現
+- TodoListにCurrentTaskハイライトセクションとComplete/Nextボタンを統合
+- E2Eテスト30テスト全パス（Chromium/Firefox/WebKit各10テスト）
+
+**Stats:**
+
+- Timeline: 2 days (2026-03-23 → 2026-03-24)
+- Files changed: 3
+- Git commits: 2 feat commits
+
+---
+
 ## v1.3 アクセシビリティ&品質改善 (Shipped: 2026-03-23)
 
 **Phases completed:** 3 phases, 8 plans, 4 tasks

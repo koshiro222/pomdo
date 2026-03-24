@@ -5,6 +5,7 @@ export type Todo = {
   title: string
   completed: boolean
   completedPomodoros?: number
+  order: number
   createdAt: string
   updatedAt: string
 }
@@ -51,7 +52,12 @@ export const storage = {
   getTodos(): Todo[] {
     try {
       const data = localStorage.getItem(STORAGE_KEY)
-      return data ? JSON.parse(data) : []
+      const todos = data ? JSON.parse(data) : []
+      // 古いデータにorderを付与（createdAt順）
+      return todos.map((t: Todo, i: number) => ({
+        ...t,
+        order: typeof t.order === 'number' ? t.order : i
+      }))
     } catch {
       return []
     }
@@ -60,9 +66,11 @@ export const storage = {
   addTodo(todo: NewTodo): Todo {
     const todos = this.getTodos()
     const now = new Date().toISOString()
+    const maxOrder = todos.length > 0 ? Math.max(...todos.map(t => t.order ?? 0)) : -1
     const newTodo: Todo = {
       id: crypto.randomUUID(),
       ...todo,
+      order: maxOrder + 1,
       createdAt: now,
       updatedAt: now,
     }
@@ -92,6 +100,20 @@ export const storage = {
     if (filtered.length === todos.length) return false
 
     saveTodos(filtered)
+    return true
+  },
+
+  reorder(id: string, newOrder: number): boolean {
+    const todos = this.getTodos()
+    const oldIndex = todos.findIndex(t => t.id === id)
+    if (oldIndex === -1) return false
+
+    const [moved] = todos.splice(oldIndex, 1)
+    todos.splice(newOrder, 0, moved)
+
+    // order値を再採番
+    todos.forEach((t, i) => { t.order = i })
+    saveTodos(todos)
     return true
   },
 

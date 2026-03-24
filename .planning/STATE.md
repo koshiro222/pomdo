@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: TodoカードUI/UX改善
 status: unknown
-stopped_at: Phase 18 context gathered
-last_updated: "2026-03-24T18:36:29.171Z"
+stopped_at: "Completed Phase 18 Plan 01: DB order column + reorder mutation"
+last_updated: "2026-03-24T19:26:51.495Z"
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 6
+  completed_plans: 4
 ---
 
 # STATE: Pomdo v1.6 TodoカードUI/UX改善
@@ -27,8 +27,8 @@ See: `.planning/PROJECT.md` (updated 2026-03-25)
 
 ## Current Position
 
-Phase: 17 (layout-animation-improvements) — EXECUTING
-Plan: 2 of 2 (COMPLETED)
+Phase: 18 (drag-drop-sorting) — EXECUTING
+Plan: 2 of 4
 
 ## Decisions
 
@@ -36,6 +36,8 @@ Plan: 2 of 2 (COMPLETED)
 - Phase 18をD&D専用に分離: DBスキーマ変更（orderカラム追加）が伴い、Phase 17のDOM構造確定後に実装するのが安全
 - [Phase 17]: layout propを単体で使用: 既存アイテムがスムーズにスライド
 - [Phase 17]: initial条件をisNewに連動させページリロード時のアニメーションを抑制
+- [Phase 18]: NewTodo型からorderフィールドを除外（addTodo内部で自動採番）
+- [Phase 18]: getTodosで古いデータにorderを付与（createdAt順の後方互換）
 
 ## Performance Metrics
 
@@ -51,6 +53,8 @@ Plan: 2 of 2 (COMPLETED)
 | 17 (レイアウト&アニメーション改善) | 2/2 | 1 task | 1 files |
 | 18 (ドラッグ&ドロップ並び替え) | 0/TBD | - | - |
 | Phase 17 P02 | 875 | 1 tasks | 1 files |
+| Phase 18-drag-drop-sorting P01 | 287 | 2 tasks | 3 files |
+| Phase 18-drag-drop-sorting P02 | 1774380403 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,9 +76,9 @@ Plan: 2 of 2 (COMPLETED)
 
 ## Session Continuity
 
-Last session: 2026-03-24T18:36:29.161Z
-Stopped at: Phase 18 context gathered
-Resume file: .planning/phases/18-drag-drop-sorting/18-CONTEXT.md
+Last session: 2026-03-24T19:26:51.493Z
+Stopped at: Completed Phase 18 Plan 01: DB order column + reorder mutation
+Resume file: None
 
 ---
 *State updated: 2026-03-25*

@@ -27,7 +27,7 @@
 | 13. 動きと一貫性 | v1.3 | 2/2 | Complete | 2026-03-24 |
 | 14. BentoGrid 3カラム再設計 | v1.4 | 1/1 | Complete | 2026-03-23 |
 | 15. TodoList統合UI | v1.4 | 3/3 | Complete | 2026-03-24 |
-| 16. カードヘッダー統一 | v1.5 | 0/TBD | Not started | - |
+| 16. カードヘッダー統一 | v1.5 | 0/1 | Planning | - |
 
 **Completed:** 40/40 plans (v1.0-v1.4)
 
@@ -83,11 +83,11 @@
   2. BGMカードのヘッダーテキストが左上に配置され、Listボタンが右上に独立して配置される
   3. TodoListカードのヘッダーテキストが `text-xs uppercase tracking-widest font-bold` スタイルに変更され、他カードと見た目が揃う
   4. 3カードを横並びで見たとき、各カード左上のヘッダーテキストが同一の視覚ウェイトと大文字スタイルで統一されている
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 16-01: TBD
+- [ ] 16-01-PLAN.md — ヘッダー統一実装（TimerWidget/BgmPlayer/TodoListの3カード）
 
 ---
 *Roadmap updated: 2026-03-24*
-*v1.5 milestone started*
+*Phase 16 planning complete*

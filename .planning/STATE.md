@@ -5,7 +5,7 @@ milestone_name: カードヘッダー統一
 status: planning
 last_updated: "2026-03-24"
 progress:
-  total_phases: 0
+  total_phases: 1
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,36 +20,55 @@ progress:
 
 See: `.planning/PROJECT.md` (updated 2026-03-24)
 
-**Core Value:** ユーザーが集中して作業を完了できるようにする。タイマー、タスク、BGMがシームレスに連携する。
+**Core Value:** ユーザーが集中して作業を完了できるようにする。タイマー、タスク、BGMがシームレすに連携する。
 
 **Current Milestone Goal:** 全カードのヘッダーテキストスタイルと配置を統一し、視覚的一貫性を確保する
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-24 — Milestone v1.5 started
+Phase: 16 of 16 (カードヘッダー統一)
+Plan: — (未着手)
+Status: Ready to plan
+Last activity: 2026-03-24 — Roadmap作成完了
+
+Progress: [░░░░░░░░░░] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed (v1.5): 0
+- Total plans completed (all): 40
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| 16 (カードヘッダー統一) | 0/TBD | - | - |
 
 ## Accumulated Context
 
 ### Technical Constraints
 
 - Edge Runtime（Cloudflare Workers）— Node.js API使用不可
-- Tailwind CSS — グリッドはTailwindユーティリティで実装
-- Framer Motion — layout="position" でレイアウトシフト防止済み
-- lucide-react（アイコン）
+- Tailwind CSS — スタイルはユーティリティクラスで実装
 - **カラースキーム**: Deep Forest（プライマリー #22c55e）
+- **統一スタイル**: `text-xs uppercase tracking-widest font-bold`
 
 ### Technical Debt (Carried Over)
 
 - TEST-01〜TEST-04: tRPCルーター単体テスト等がプレースホルダー状態
-- prefers-reduced-motion対応が未実装
+- prefers-reduced-motion対応が未実装（v2へ繰り越し）
 
 ### Blockers
 
 なし
 
+## Session Continuity
+
+Last session: 2026-03-24
+Stopped at: ロードマップ作成完了。Phase 16の実装プランニング待ち。
+Resume file: None
+
 ---
 *State updated: 2026-03-24*
-*Milestone v1.5 started*
+*Roadmap created for v1.5*

@@ -69,7 +69,7 @@
 **Milestone Goal:** BentoGridを3カラム構成に再設計し、CurrentTaskCardをTodoListに統合してUXを改善する
 
 - [x] **Phase 14: BentoGrid 3カラム再設計** - デスクトップ3カラム・モバイル縦積みのレイアウト基盤を確立する (completed 2026-03-23)
-- [ ] **Phase 15: TodoList統合UI** - CurrentTaskCardをTodoListカードに統合し、ハイライトセクションとアクションボタンを実装する
+- [x] **Phase 15: TodoList統合UI** - CurrentTaskCardをTodoListカードに統合し、ハイライトセクションとアクションボタンを実装する (completed 2026-03-24)
 
 ## Phase Details
 
@@ -97,7 +97,7 @@ Plans:
   3. TodoListカード内にCompleteボタンとNextボタンが表示され、クリックできる
   4. 画面にCurrentTaskCardが存在せず、その機能がTodoListカード内で動作する
   5. タスク未選択時にハイライトセクションが表示されない
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 15-01-PLAN.md — TodoListにハイライトセクションとTodoItem選択中スタイルを実装

@@ -12,10 +12,10 @@
 
 ### Todo統合
 
-- [ ] **TODO-01**: ユーザーはTodoListカード上部に選択中タスクのハイライトセクションを確認できる
-- [ ] **TODO-02**: ユーザーはハイライトセクションでタスク名とPomodoro進捗（完了数）を確認できる
-- [ ] **TODO-03**: ユーザーはTodoListカード内でCompleteおよびNextボタンを操作できる
-- [ ] **TODO-04**: CurrentTaskCardが削除され、既存機能がTodoListカードに統合されている
+- [x] **TODO-01**: ユーザーはTodoListカード上部に選択中タスクのハイライトセクションを確認できる
+- [x] **TODO-02**: ユーザーはハイライトセクションでタスク名とPomodoro進捗（完了数）を確認できる
+- [x] **TODO-03**: ユーザーはTodoListカード内でCompleteおよびNextボタンを操作できる
+- [x] **TODO-04**: CurrentTaskCardが削除され、既存機能がTodoListカードに統合されている
 
 ## Future Requirements
 
@@ -34,10 +34,10 @@
 |-------------|-------|--------|
 | LAYOUT-01 | Phase 14 | Complete |
 | LAYOUT-02 | Phase 14 | Complete |
-| TODO-01 | Phase 15 | Pending |
-| TODO-02 | Phase 15 | Pending |
-| TODO-03 | Phase 15 | Pending |
-| TODO-04 | Phase 15 | Pending |
+| TODO-01 | Phase 15 | Complete |
+| TODO-02 | Phase 15 | Complete |
+| TODO-03 | Phase 15 | Complete |
+| TODO-04 | Phase 15 | Complete |
 
 **Coverage:**
 - v1.4 requirements: 6 total

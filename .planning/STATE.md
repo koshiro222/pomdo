@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: TodoカードUI/UX改善
 status: completed
-stopped_at: "Completed Phase 18 Plan 04: Migration and validation"
-last_updated: "2026-03-25T00:05:00.000Z"
+stopped_at: "Completed Phase 18 Plan 05: Gap closure - TypeScript build error fix + performance optimization"
+last_updated: "2026-03-25T00:30:00.000Z"
 progress:
   total_phases: 2
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 7
+  completed_plans: 7
 ---
 
 # STATE: Pomdo v1.6 TodoカードUI/UX改善
@@ -28,7 +28,9 @@ See: `.planning/PROJECT.md` (updated 2026-03-25)
 ## Current Position
 
 Phase: 18 (drag-drop-sorting) — COMPLETED
-Plan: 4 of 4
+Plan: 5 of 5
+
+Milestone v1.6 COMPLETE.
 
 ## Decisions
 
@@ -41,13 +43,14 @@ Plan: 4 of 4
 - [Phase 18]: SortableContextのitemsに全todosを使用（filteredTodosではない）ことでフィルタリング中も正しい位置計算を維持
 - [Phase 18]: motion.divを外側のdivでラップしdnd-kitのtransformを制御することでFramer Motionのlayout propと共存
 - [Phase 18]: PointerSensorのactivationConstraintを8pxに設定しクリック誤検出を防止
+- [Phase 18]: tRPCミューテーションにオプティミスティックアップデートを実装し、ログイン時の並び替えパフォーマンスを改善
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed (v1.6): 6
-- Total plans completed (all): 48
+- Total plans completed (v1.6): 7
+- Total plans completed (all): 49
 
 **By Phase:**
 
@@ -61,6 +64,7 @@ Plan: 4 of 4
 | Phase 18-drag-drop-sorting P02 | 1774380403 | 2 tasks | 3 files |
 | Phase 18-drag-drop-sorting P03 | 720 | 3 tasks | 3 files |
 | Phase 18-drag-drop-sorting P04 | 300 | 1 task | 0 files |
+| Phase 18-drag-drop-sorting P05 | fda8db0 | 1 task | 1 file |
 
 ## Accumulated Context
 
@@ -82,8 +86,8 @@ Plan: 4 of 4
 
 ## Session Continuity
 
-Last session: 2026-03-25T00:05:00.000Z
-Stopped at: Completed Phase 18 Plan 04: Migration and validation
+Last session: 2026-03-25T00:30:00.000Z
+Stopped at: Completed Phase 18 Plan 05: Gap closure - TypeScript build error fix + performance optimization
 Resume file: None
 
 ---

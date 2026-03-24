@@ -39,13 +39,13 @@ export default function CurrentTaskCard({}: CurrentTaskCardProps) {
   const hasMoreTodos = todos.some((t: Todo) => !t.completed && t.id !== selectedTodoId)
 
   return (
-    <div className="bento-card p-6 h-full flex flex-col relative">
+    <div className="bento-card p-4 sm:p-6 h-full flex flex-col relative">
       {currentTodo ? (
         <>
           {/* ヘッダー */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
-              <p className="text-xs uppercase tracking-widest text-cf-subtext font-bold mb-2">
+              <p className="text-xs uppercase tracking-widest font-bold text-cf-text mb-2">
                 Current Task
               </p>
               <h3 className="text-xl font-bold text-cf-text line-clamp-2">

@@ -1,5 +1,15 @@
 # Milestones
 
+## v1.6 TodoカードUI/UX改善 (Shipped: 2026-03-25)
+
+**Phases completed:** 2 phases, 7 plans, 0 tasks
+
+**Key accomplishments:**
+
+- (none recorded)
+
+---
+
 ## v1.5 カードヘッダー統一 (Shipped: 2026-03-24)
 
 **Phases completed:** 1 phases, 2 plans

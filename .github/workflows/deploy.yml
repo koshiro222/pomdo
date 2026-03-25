@@ -13,12 +13,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Git encoding
-        run: |
-          git config --global core.quotePath false
-          git config --global i18n.commitencoding utf-8
-          git config --global i18n.logoutputencoding utf-8
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -31,9 +25,16 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Get commit message
+        id: commit
+        run: echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
+        env:
+          LANG: C.UTF-8
+          LC_ALL: C.UTF-8
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=pomdo
+          command: pages deploy dist --project-name=pomdo --branch=${{ github.ref_name }} --commit-hash=${{ github.sha }}

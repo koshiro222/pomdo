@@ -25,10 +25,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Get commit message
-        id: commit
-        run: echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
-
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         env:

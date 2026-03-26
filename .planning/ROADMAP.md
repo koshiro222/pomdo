@@ -111,7 +111,7 @@ Plans:
   1. アルバムアートはBGM再生中に点滅+パルスアニメーションを表示する
   2. BGM停止時、アルバムアートは静止した状態で表示される
   3. 回転アニメーション（album-art-spinningクラス）がコードベースから完全に削除されている
-**Plans:** 1/1 plans
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 20-01: AlbumArtコンポーネント修正（アニメーション適用 + spinning削除）

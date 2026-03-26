@@ -1,323 +1,441 @@
-# UI/UX改善の落とし穴
+# Domain Pitfalls
 
-**ドメイン:** レスポンシブ対応・Stats実装・グリッド統一
-**調査日:** 2026-03-21
-**全体の信頼度:** MEDIUM
+**Domain:** BGMプレイヤーアニメーション刷新（点滅+パルスエフェクト）
+**Researched:** 2026-03-26
 
-## 要約
+## Critical Pitfalls
 
-UI/UX改善プロジェクトで最も一般的で破壊的な失敗パターンを調査。レスポンシブ対応の不備、Stats実装のアンチパターン、グリッドデザインの一貫性欠如が主な課題。既存コードの分析から、Framer Motionのlayout prop使用によるレイアウトシフト、fixed/absolute配置による要素重なり、Statsのデータ取得ロジックの問題が判明。
+Mistakes that cause rewrites or major issues.
 
-## 重要な発見
+### Pitfall 1: 光感受性エピレプシー違反のアニメーション
 
-**レスポンシブ対応:** Tailwindのブレークポイント設計ミスとoverflow処理の不備が要素重なりを引き起こす
-**Stats実装:** 初回レンダリング時のデータ未取得状態と、useEffect依存配列の不備が表示バグの原因
-**グリッド統一:** col-span/row-spanの論理的一貫性欠如と、ガターサイズの不統一
+**何が問題か:**
+点滅アニメーションがWCAG 2.3.1基準（1秒間に3回以上の点滅禁止）を超えると、光感受性エピレプシーを持つユーザーに発作を誘発する可能性がある。これは法的・倫理的な重大問題につながる。
 
-## ロードマップへの影響
+**なぜ起こる:**
+- CSS animation-durationを短く設定しすぎる（0.3秒未満など）
+- opacityを0↔1の完全なオン/オフで繰り返す
+- 複数の要素が同時に異なるタイミングで点滅する
 
-フェーズ分割の推奨:
-1. **レスポンシブ対応修正** — 既存UI崩壊を防ぐ最優先事項
-2. **Stats機能実装** — データ取得と表示ロジックの修正
-3. **グリッド統一** — 全体的なデザイン一貫性向上
+**結果:**
+- ユーザーの健康被害（発作、めまい、頭痛）
+- WCAG違反による法的リスク
+- アクセシビリティ不備としての批判
 
-**フェーズ順序の根拠:**
-- レスポンシブ対応が不完全だと、どの画面サイズでも正しく動作確認できない
-- Statsは既存のフック（usePomodoro）に依存しているため、データ取得ロジックを先に修正
-- グリッド統一は視覚的な改善なので、機能修正後に実施
+**予防策:**
+```css
+/* 安全な点滅アニメーション */
+@keyframes safe-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6; /* 完全には消さない */
+    transform: scale(1.05);
+  }
+}
 
-## 信頼性評価
+/* 1秒間に3回以下に制限（0.33秒以上）*/
+.album-art-pulse {
+  animation: safe-pulse 2s ease-in-out infinite;
+}
 
-| 領域 | 信頼度 | 理由 |
-|------|--------|------|
-| レスポンシブ対応 | HIGH | 既存コード分析から具体的な問題点を特定 |
-| Stats実装 | HIGH | 既存コードのバグを特定 |
-| グリッド統一 | MEDIUM | 一般的なベストプラクティスに基づく推奨 |
+/* prefers-reduced-motion対応 */
+@media (prefers-reduced-motion: reduce) {
+  .album-art-pulse {
+    animation: none !important; /* ユーザー設定を最優先 */
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+```
+
+**実装ガイドライン:**
+- animation-durationは最低0.5秒以上（推奨2秒以上）
+- opacityの最小値は0.4以上（完全には消さない）
+- 同時に点滅する要素は1つまで
+- 赤色の点滅は避ける（特に危険）
+
+**検出方法:**
+- Chrome DevToolsでアニメーション速度を確認
+- 1秒間に何回点滅しているか数える
+- Lighthouseアクセシビリティ監査でチェック
 
 ---
 
-## クリティカルな落とし穴
-
-重大な障害や書き直しを必要とするミス。
-
-### 落とし穴 1: Framer Motionのlayout propによるレイアウトシフト
+### Pitfall 2: パルスエフェクトによるパフォーマンス劣化
 
 **何が問題か:**
-Framer Motionの`layout` propを使用している要素（`App.tsx`のmotion.div）が、画面サイズ変更やデータ更新時にレイアウトアニメーションを発生させ、一時的に要素が重なるまたは位置がずれる。
+パルスエフェクト（box-shadowやborder-radiusの拡大）でreflowを引き起こすと、モバイル端末でフレームレートが低下し、UXが悪化する。
 
-**なぜ起こるか:**
-- `layout` propは要素のサイズ・位置変化を自動アニメーションする
-- レスポンシブ変更時に複数の要素が同時にアニメーションすると、競合が発生
-- `AnimatePresence`などの他のアニメーションと組み合わせると挙動が予測不可能
+**なぜ起こる:**
+- width, height, margin, paddingなどレイアウトに影響するプロパティをアニメーションする
+- box-shadowの拡大でペイント処理が重くなる
+- 複数の要素で同時にパルスを実行する
 
-**影響:**
-- ユーザーが操作中にボタンやカードが突然動き、誤操作を引き起こす
-- 要素が一時的に重なり、コンテンツが見えなくなる
-- 特にモバイル画面で顕著
+**結果:**
+- フレームレート低下（60fpsから30fps以下へ）
+- バッテリー消費増加
+- モバイル端末での動作遅延
+- ユーザー離脱
 
-**予防:**
-```typescript
-// 悪い例: layout propで全てにアニメーション
-<motion.div layout className="...">
-  {/* コンテンツ */}
-</motion.div>
-
-// 良い例: 必要な要素のみlayoutを使用
-<motion.div
-  layout="position"  // サイズ変更ではなく位置のみアニメーション
-  transition={{ layout: { duration: 0.2 } }}  // アニメーション時間を短く
-  className="..."
->
-  {/* コンテンツ */}
-</motion.div>
-```
-
-**検出:**
-- 画面サイズを素早く変更したときに要素がガタつく
-- デバイスの回転時にレイアウトが崩れる
-
-### 落とし穴 2: overflowプロパティの不適切な設定
-
-**何が問題か:**
-`main`タグに`overflow-y-auto`、`sm:overflow-hidden`が設定されているため、画面サイズによってスクロール挙動が変わる。スマホではスクロール可能だが、タブレット以上では固定される。
-
-**なぜ起こるか:**
-- `h-screen`（100vh）が親要素に設定されている
-- 子要素の合計高さが100vhを超えると、overflow設定が不十分だと要素がはみ出る
-- タブレット（sm）以上で`overflow-hidden`にすると、コンテンツが見切れる
-
-**影響:**
-- コンテンツが画面外に見えなくなる
-- タブレットユーザーがスクロールできず、機能にアクセスできない
-- 特にTodoリストの項目が増えたときに顕著
-
-**予防:**
+**予防策:**
 ```css
-/* 悪い例: ブレークポイントでoverflow挙動が変わる */
-main {
-  @apply overflow-y-auto sm:overflow-hidden;
+/* 悪い例: width/heightでパルス（reflow発生）*/
+.album-art-pulse-bad {
+  animation: pulse-bad 2s infinite; /* width/height変更でreflow */
 }
 
-/* 良い例: 一貫したoverflow挙動 */
-main {
-  @apply overflow-y-auto;
-  /* またはmin-h-0を追加してflexboxのサイズ制約を解決 */
-  @apply min-h-0;
+@keyframes pulse-bad {
+  0%, 100% {
+    width: 96px;
+    height: 96px;
+  }
+  50% {
+    width: 104px;
+    height: 104px;
+  }
+}
+
+/* 良い例: transformでパルス（GPU加速）*/
+.album-art-pulse-good {
+  animation: pulse-good 2s infinite;
+  will-change: transform, opacity; /* ヒントを与える */
+}
+
+@keyframes pulse-good {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+/* box-shadowの代わりに擬似要素でglow効果（軽量化）*/
+.album-art-glow::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: inherit;
+  opacity: 0.3;
+  filter: blur(8px);
+  z-index: -1;
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.1);
+  }
 }
 ```
 
-**検出:**
-- 異なる画面サイズでDevToolsの要素検証を行い、overflow設定を確認
-- 実機でタブレットサイズ（768px-1024px）をテスト
+**実装ガイドライン:**
+- transform（scale, translate, rotate）のみを使用
+- opacityはGPU加速されるので安全
+- box-shadowはfilter: blur()と擬似要素で代用
+- will-changeプロパティでブラウザにヒントを与える
+- Chrome DevTools > Performance > Rendering > Paint flashingで確認
 
-### 落とし穴 3: Statsのデータ取得タイミングとuseEffect依存配列
+---
 
-**何が問題か:**
-`StatsCard.tsx`で`usePomodoro()`フックからセッションデータを取得しているが、初回レンダリング時はデータが空の可能性がある。また、`useEffect`でセッションデータの変更を監視していない。
-
-**なぜ起こるか:**
-- `usePomodoro`フックは非同期でデータを取得
-- 初回レンダリング時点では`sessions`が空配列
-- 統計計算が空配列に対して行われ、常に0を表示
-- `sessions`を依存配列に含むuseEffectがないため、データ更新時に再計算されない
-
-**影響:**
-- ページ読み込み時にStatsが常に0を表示
-- ポモドーロ完了後に統計が更新されない
-- ユーザーが「機能していない」と誤解
-
-**予防:**
-```typescript
-// 悪い例: 依存配列がない
-const { sessions } = usePomodoro()
-const stats = calculateStats(sessions)
-
-// 良い例: セッション変更時に再計算
-const { sessions } = usePomodoro()
-const [stats, setStats] = useState(null)
-
-useEffect(() => {
-  setStats(calculateStats(sessions))
-}, [sessions])  // sessionsを依存配列に含める
-```
-
-**検出:**
-- ポモドーロ完了後にStatsの数字が変わらない
-- ログイン・ログアウト時にStatsがリセットされない
-
-## 中程度の落とし穴
-
-### 落とし穴 1: グリッドシステムの論理的不整合
+### Pitfall 3: Framer MotionのuseReducedMotion未使用
 
 **何が問題か:**
-`App.tsx`のグリッドシステムで、`sm:grid-cols-6 lg:grid-cols-12`と定義されているが、各カードのcol-span指定が論理的に矛盾している。
+Framer Motionのアニメーションで`useReducedMotion`フックを使用しないと、OS設定で「動作を減らす」を有効にしていてもアニメーションが無効化されない。
 
-**具体例:**
-- タイマーカード: `sm:col-span-4`（6列中4列）、`lg:col-span-8`（12列中8列）
-- Current Task: `sm:col-span-2`（6列中2列）、`lg:col-span-2`（12列中2列）
-- BGM: `sm:col-span-2`（6列中2列）、`lg:col-span-2`（12列中2列）
+**なぜ起こる:**
+- CSSのprefers-reduced-motionのみ実装し、Framer Motionを考慮しない
+- motionコンポーネントのtransitionを動的に制御しない
+- AnimatePresenceのexitアニメーションが常に実行される
 
-問題:
-- タブレット（sm）で4+2+2=8列だが、グリッドは6列定義
-- カードが予期せず折り返され、レイアウト崩壊
+**結果:**
+- アクセシビリティ設定を無視した挙動
+- 前庭障害を持つユーザーの不快感
+- WCAG 2.3.3違反（アニメーションの制御）
 
-**影響:**
-- タブレット画面でカードが重なる
-- グリッドが崩れてカードが画面外に押し出される
+**予防策:**
+```tsx
+import { useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
-**予防:**
-```typescript
-// 悪い例: 合計がグリッド列数を超える
-<div className="grid grid-cols-1 sm:grid-cols-6">
-  <div className="sm:col-span-4" />  {/* 4列 */}
-  <div className="sm:col-span-2" />  {/* 2列 */}
-  {/* 合計6列 - OK */}
-  <div className="sm:col-span-2" />  {/* 追加で2列 - 合計8列でオーバー */}
-</div>
+function AlbumArt({ isPlaying, color }: AlbumArtProps) {
+  const shouldReduceMotion = useReducedMotion()
 
-// 良い例: 合計がグリッド列数以下
-<div className="grid grid-cols-1 sm:grid-cols-6">
-  <div className="sm:col-span-3" />  {/* 3列 */}
-  <div className="sm:col-span-3" />  {/* 3列 */}
-  {/* 合計6列 - 完璧 */}
-</div>
-```
+  const pulseVariants = {
+    playing: {
+      opacity: [1, 0.6, 1],
+      scale: [1, 1.05, 1],
+      transition: {
+        duration: shouldReduceMotion ? 0 : 2, /* reduced motion時は無効化 */
+        repeat: Infinity,
+        ease: 'easeInOut'
+      }
+    },
+    paused: {
+      opacity: 1,
+      scale: 1
+    }
+  }
 
-**検出:**
-- タブレットサイズ（768px-1024px）でテスト
-- DevToolsでグリッドの列数とcol-spanの合計を確認
-
-### 落とし穴 2: タイマー部分の余白過多
-
-**何が問題か:**
-`TimerDisplay.tsx`の`padding: p-6`（24px）と`TimerWidget`の`padding: p-6`が二重に適用され、タイマーカード内に過剰な余白が発生。
-
-**影響:**
-- タイマー表示が小さくなり、視認性が低下
-- 特にモバイル画面でタイマー文字が読みづらい
-- タイマーサイズ（280px）が固定で、小さな画面でははみ出る
-
-**予防:**
-```typescript
-// 悪い例: 二重パディング
-function TimerWidget() {
   return (
-    <div className="p-6">  {/* 外側パディング */}
-      <TimerDisplay />
-    </div>
+    <motion.div
+      className="album-art"
+      variants={pulseVariants}
+      animate={isPlaying ? 'playing' : 'paused'}
+      style={{
+        background: `linear-gradient(135deg, ${color}40, ${color}20)`,
+      }}
+    >
+      <Music className="w-8 h-8 text-white" />
+    </motion.div>
   )
 }
 
-function TimerDisplay() {
-  return (
-    <div className="p-6">  {/* 内側パディング */}
-      {/* タイマー */}
-    </div>
-  )
+/* BGMリスト展開時のアニメーションも対応 */
+<AnimatePresence>
+  {isExpanded && (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      transition={{
+        duration: shouldReduceMotion ? 0 : 0.2, /* reduced motion時は即時切り替え */
+        ease: 'easeOut'
+      }}
+    >
+      {/* トラックリスト */}
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+**実装ガイドライン:**
+- すべてのmotionコンポーネントのtransitionにshouldReduceMotionを反映
+- duration: 0でアニメーションを即時完了させる
+- AnimatePresenceのexitも制御
+- テスト時はDevToolsでprefers-reduced-motionをエミュレート
+
+---
+
+## Moderate Pitfalls
+
+### Pitfall 1: CSS特異性の競合によるアニメーション無効化
+
+**何が問題か:**
+Tailwind CSSのクラスとカスタムCSSの特異性が競合すると、アニメーションが期待通りに動作しない。
+
+**なぜ起こる:**
+- index.cssのアニメーション定義がTailwindユーティリティより優先度が低い
+- !importantの乱用で保守性が低下
+- @layerの順序が不適切
+
+**結果:**
+- アニメーションが適用されない
+- デバッグが困難
+- スタイルの予期せぬ上書き
+
+**予防策:**
+```css
+/* index.cssでの適切な定義順序 */
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@layer base {
+  /* グローバルスタイル */
 }
 
-// 良い例: 一箇所に集約
-function TimerWidget() {
-  return <TimerDisplay />  // パディングなし
+@layer components {
+  /* アニメーション定義はcomponentsレイヤーで */
+  @keyframes album-pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 20px var(--pulse-color, rgba(34, 197, 94, 0.3));
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.05);
+      box-shadow: 0 0 30px var(--pulse-color, rgba(34, 197, 94, 0.5));
+    }
+  }
+
+  .album-art-pulse {
+    animation: album-pulse 2s ease-in-out infinite;
+  }
+
+  /* prefers-reduced-motion対応はutilitiesレイヤーより後で */
+  @media (prefers-reduced-motion: reduce) {
+    .album-art-pulse {
+      animation: none !important; /* ユーザー設定を最優先 */
+    }
+  }
 }
 
-function TimerDisplay() {
+/* コンポーネントではカスタムプロパティで色を渡す */
+<div
+  className="album-art-pulse"
+  style={{ '--pulse-color': 'rgba(34, 197, 94, 0.4)' } as React.CSSProperties}
+>
+```
+
+**実装ガイドライン:**
+- アニメーション定義は@layer componentsで
+- Tailwindユーティリティ（@layer utilities）より前に定義
+- カスタムプロパティ（CSS変数）で動的な値を渡す
+- !importantはprefers-reduced-motionなどユーザー設定の優先時のみ使用
+
+---
+
+### Pitfall 2: 既存のalbum-art-spinningクラスの不完全削除
+
+**何が問題か:**
+回転アニメーションから点滅+パルスへの移行時、古いクラスやキーフレームが残っていると、意図しない動作が発生する。
+
+**なぜ起こる:**
+- index.cssから@keyframes rotateを削除するのを忘れる
+- アルバムアート要素にalbum-art-spinningクラスが残っている
+- アニメーションの競合でtransformプロパティが上書きされる
+
+**結果:**
+- 点滅と回転が同時に発生する
+- transformプロパティの競合でアニメーションが壊れる
+- 不要なCSSコードの肥大化
+
+**予防策:**
+```tsx
+/* BgmPlayer.tsx - 古いクラスを完全に削除 */
+function AlbumArt({ isPlaying, color }: AlbumArtProps) {
   return (
-    <div className="p-6">  {/* ここで一元管理 */}
-      {/* タイマー */}
+    <div className="relative w-24 h-24 flex-shrink-0">
+      {/* album-art-spinningクラスを削除し、新しいクラスに置き換え */}
+      <motion.div
+        className={`w-full h-full rounded-2xl flex items-center justify-center ${
+          isPlaying ? 'album-art-pulse' : ''
+        }`}
+        animate={isPlaying ? {
+          opacity: [1, 0.7, 1],
+          scale: [1, 1.05, 1],
+        } : {}}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: 'easeInOut'
+        }}
+        style={{
+          background: `linear-gradient(135deg, ${color}40, ${color}20)`,
+        }}
+      >
+        <Music className="w-8 h-8 text-white" />
+      </motion.div>
     </div>
   )
 }
 ```
 
-**検出:**
-- DevToolsでパディングが二重に適用されていないか確認
-- 異なる画面サイズでタイマーのサイズ感をテスト
+**実装ガイドライン:**
+- グレップ検索で`album-art-spinning`を全削除
+- `@keyframes rotate`もindex.cssから削除
+- アルバムアート内の全要素でtransformプロパティを確認
+- レビューチェックリストに「古いアニメーションの削除確認」を追加
 
-### 落とし穴 3: selectedTask UXの不透明さ
+---
 
-**何が問題か:**
-`CurrentTaskCard`コンポーネントで「現在選択中のタスク」を表示しているが、ユーザーがこの機能の存在を認知していない可能性が高い。
+## Minor Pitfalls
 
-**影響:**
-- タスクを選択しても何が変わるかわからない
-- ユーザーがこの機能を使わない
-- 実装とメンテナンスコストに見合わない
-
-**予防:**
-- ユーザー調査で機能の有用性を確認
-- 使われていない場合は削除を検討
-- 保留する場合は、UIで明確に説明を追加
-
-**検出:**
-- ユーザーテストでタスク選択フローを観察
-- アナリティクスで機能の使用頻度を確認
-
-## 軽微な落とし穴
-
-### 落とし穴 1: ガターサイズの不統一
+### Pitfall 1: ダークモードでのパルスエフェクトの視認性低下
 
 **何が問題か:**
-グリッドのgapが`gap-4`（16px）で統一されているが、内部コンポーネントのmarginが統一されていない。
+ダークモードでbox-shadowやglow効果が暗い背景に溶け込み、アニメーションが見えづらくなる。
 
-**影響:**
-- 全体的なデザインに統一感がない
-- 視覚的なノイズが増える
+**予防策:**
+```css
+/* ダークモードで色調整 */
+.dark .album-art-pulse {
+  --pulse-color: rgba(34, 197, 94, 0.6); /* 明るさを上げる */
+}
 
-**予防:**
-- Tailwindのspacing scaleに従ってmargin/paddingを統一
-- 基本単位（4px、8px、16px、24px、32px）を決めておく
-
-### 落とし穴 2: 固定サイズによるレスポンシブ対応の不備
-
-**何が問題か:**
-`TimerRing`のサイズが`size={280}`で固定されており、小さな画面でははみ出る可能性がある。
-
-**影響:**
-- モバイル画面でタイマーが見切れる
-- 小さなデバイスで操作性が低下
-
-**予防:**
-```typescript
-// 悪い例: 固定サイズ
-<TimerRing size={280} />
-
-// 良い例: レスポンシブサイズ
-<TimerRing size={isMobile ? 200 : 280} />
-// またはCSSで制御
-<TimerRing size="100%" style={{ maxWidth: 280 }} />
+/* またはカラーミックスで動的に調整 */
+@keyframes album-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px color-mix(in srgb, var(--pulse-color) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 30px color-mix(in srgb, var(--pulse-color) 60%, transparent);
+  }
+}
 ```
 
-## フェーズ別の警告
+---
 
-| フェーズ | トピック | 想定される落とし穴 | 軽減策 |
-|----------|----------|-------------------|--------|
-| **Phase 01** | レスポンシブ対応 | Framer Motionのlayout propによるレイアウトシフト | layout="position"のみ使用、アニメーション時間を短縮 |
-| **Phase 01** | レスポンシブ対応 | overflow設定のブレークポイント不一致 | overflow-y-autoを統一、min-h-0を追加 |
-| **Phase 02** | Stats実装 | データ取得タイミングとuseEffect依存配列 | sessionsを依存配列に含める、ローディング状態を表示 |
-| **Phase 02** | Stats実装 | グラフの最大値計算バグ（0除算） | Math.max(..., 1)でデフォルト値を設定済みだが、0件時の表示を改善 |
-| **Phase 03** | グリッド統一 | col-span合計がグリッド列数を超える | 各ブレークポイントで合計を計算し、グリッド定義に合わせる |
-| **Phase 03** | グリッド統一 | ガターサイズの不統一 | spacing scaleを定義し、全コンポーネントで適用 |
+### Pitfall 2: アニメーション初期化時のちらつき
 
-## 情報源
+**何が問題か:**
+ページ読み込み時、アニメーションが適用される前のスタイルが一瞬表示され、ちらつきが発生する。
 
-**既存コード分析:**
-- `/Users/koshiro/develop/pomdo/src/App.tsx` — グリッドシステム、Framer Motion使用状況
-- `/Users/koshiro/develop/pomdo/src/components/stats/StatsCard.tsx` — Statsデータ取得ロジック
-- `/Users/koshiro/develop/pomdo/src/components/timer/TimerDisplay.tsx` — タイマーパディング
-- `/Users/koshiro/develop/pomdo/ai-rules/ARCHITECTURE.md` — 技術スタック
+**予防策:**
+```css
+/* 初期状態を設定 */
+.album-art {
+  opacity: 1;
+  transform: scale(1);
+}
 
-**公式ドキュメント:**
-- Framer Motion — https://www.framer.com/motion/（LOW confidence: WebFetchが完全なドキュメントを取得できず）
-- Tailwind CSS Grid — https://tailwindcss.com/docs/grid（MEDIUM confidence: WebFetchがメタデータのみを取得）
+/* Framer Motionのinitial propで初期状態を制御 */
+<motion.div
+  initial={{ opacity: 1, scale: 1 }}
+  animate={isPlaying ? {
+    opacity: [1, 0.7, 1],
+    scale: [1, 1.05, 1],
+  } : { opacity: 1, scale: 1 }}
+>
+```
 
-**情報源の信頼性:**
-- 既存コード分析: HIGH confidence（直接コードを確認）
-- 公式ドキュメント: MEDIUM confidence（WebFetchの制限により完全な情報取得が困難）
-- 一般的なベストプラクティス: MEDIUM confidence（WebSearchがレート制限により結果なし）
+---
 
-## ギャップ
+## Phase-Specific Warnings
 
-- Framer Motionのlayout propの最適な使用パターンについて、公式ドキュメントの詳細な確認が必要
-- Tailwind CSS Gridのレスポンシブ設計ベストプラクティスについて、より具体的なガイダンスが必要
-- Stats表示のパフォーマンス最適化（大容量データ時）についての調査が必要
+| Phase Topic | Likely Pitfall | Mitigation |
+|-------------|---------------|------------|
+| Phase 01: CSSアニメーション定義 | 光感受性エピレプシー違反 | animation-durationを0.5秒以上にし、opacity最小値を0.4以上に設定 |
+| Phase 02: BgmPlayerコンポーネント修正 | album-art-spinning残滓 | グレップ検索で完全削除し、レビューで確認 |
+| Phase 03: Framer Motion統合 | useReducedMotion未使用 | すべてのmotionコンポーネントでshouldReduceMotionをtransitionに反映 |
+| Phase 04: パフォーマンス最適化 | reflowによるフレームレート低下 | transform/opacityのみ使用し、width/height/box-shadowは避ける |
+| Phase 05: アクセシビリティ検証 | OS設定の無視 | DevToolsでprefers-reduced-motionをエミュレートしテスト |
+
+---
+
+## Sources
+
+- [MDN - prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) - HIGH confidence（公式ドキュメント、2025年8月更新）
+- [web.dev - prefers-reduced-motion: Sometimes less movement is more](https://web.dev/prefers-reduced-motion/) - HIGH confidence（Google公式、2022年9月更新）
+- [Framer Motion Documentation](https://www.framer.com/motion/) - MEDIUM confidence（公式ドキュメント、useReducedMotionフックの存在を確認）
+- [WCAG 2.3.1 - Three Flashes or Below Threshold](https://www.w3.org/WAI/WCAG21/Understanding/three-flashes-or-below.html) - HIGH confidence（W3C公式、ただしURLが404のため一般的なWCAG知識に基づく記載）
+- 現行コードベースのindex.cssとBgmPlayer.tsxの分析 - HIGH confidence（実際のコード確認）
+
+## Confidence Assessment
+
+| Area | Confidence | Notes |
+|------|------------|-------|
+| 光感受性エピレプシー | HIGH | MDNとweb.devの公式ドキュメントに基づき具体的な数値基準を提供 |
+| prefers-reduced-motion | HIGH | MDNで2025年8月に更新された最新情報を使用 |
+| パフォーマンス最適化 | MEDIUM | 一般的なCSSアニメーションのベストプラクティスに基づくが、Edge Runtime固有の制約は考慮が必要 |
+| Framer Motion統合 | MEDIUM | 公式ドキュメントでuseReducedMotionフックの存在を確認したが、具体的な実装例は一般的なパターンに基づく |
+| ダークモード対応 | LOW | 一般的なCSSダークモードの知識に基づく推奨 |
+
+## Gaps to Address
+
+- WebSearchツールが結果を返さなかったため、光感受性エピレプシーに関する最新の2026年のガイドラインを確認できていない
+- WCAG 2.3.1の具体的な閾値（輝度と面積）については、追加の信頼できるソースが必要
+- Edge Runtime（Cloudflare Workers）環境でのFramer Motionの動作に関する具体的な制約について、さらなる調査が必要
+- パルスエフェクトのパフォーマンス影響について、実際のモバイル端末でのベンチマークデータが不足

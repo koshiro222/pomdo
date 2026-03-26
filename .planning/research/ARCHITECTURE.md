@@ -1,7 +1,7 @@
 # Architecture Research
 
-**Domain:** UI/UX改善（レスポンシブ対応、デザイン統一、Stats実装）
-**Researched:** 2026-03-21
+**Domain:** BGMプレイヤーアニメーション刷新（点滅+パルスエフェクト）
+**Researched:** 2026-03-26
 **Confidence:** HIGH
 
 ## Standard Architecture
@@ -9,380 +9,199 @@
 ### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              Presentation Layer                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │  TimerWidget │  │  TodoList    │  │  StatsCard   │  │  BgmPlayer   │   │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘   │
-│         │                 │                 │                 │             │
-│         └─────────────────┴─────────────────┴─────────────────┘             │
-│                                    ↓                                        │
-│                        ┌───────────────────┐                                │
-│                        │     App.tsx       │                                │
-│                        │  (Bento Grid)     │                                │
-│                        └─────────┬─────────┘                                │
-├──────────────────────────────────┼──────────────────────────────────────────┤
-│                                  ↓                                          │
-│                        ┌───────────────────┐                                │
-│                        │  Custom Hooks     │                                │
-│  ┌────────────────────┼───────────────────┼────────────────────┐           │
-│  │  useTimer          │  useTodos         │  usePomodoro       │           │
-│  │  useAuth           │  useBgm           │  useLocalStorage   │           │
-│  └────────────────────┴───────────────────┴────────────────────┘           │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                  ↓                                          │
-│                        ┌───────────────────┐                                │
-│                        │  Data Layer       │                                │
-│  ┌────────────────────┼───────────────────┼────────────────────┐           │
-│  │  localStorage      │  tRPC Client     │  React Query       │           │
-│  │  (ゲストモード)     │  (認証済み)       │  (キャッシュ)       │           │
-│  └────────────────────┴───────────────────┴────────────────────┘           │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                        BgmPlayer                             │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │                    AlbumArt                          │    │
+│  │  ┌──────────────────────────────────────────────┐   │    │
+│  │  │         アニメーションレイヤー構造            │   │    │
+│  │  │  1. 背景コンテナ（点滅エフェクト）            │   │    │
+│  │  │  2. パルスレイヤー（広がるglow）              │   │    │
+│  │  │  3. メインコンテンツ（Musicアイコン）          │   │    │
+│  │  │  4. 中心インジケーター（点滅）                 │   │    │
+│  │  └──────────────────────────────────────────────┘   │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+           ↓ (isPlaying state)
+┌─────────────────────────────────────────────────────────────┐
+│              CSSアニメーション定義（index.css）                │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │ @keyframes   │  │ @keyframes   │  │  Class制御   │      │
+│  │   blink      │  │   pulse      │  │   条件付き   │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
 | Component | Responsibility | Typical Implementation |
 |-----------|----------------|------------------------|
-| **App.tsx** | Bento Gridレイアウト、ブレイクポイント管理 | 12列グリッドシステム、`grid-cols-{n}` と `col-span-{n}` |
-| **TimerWidget** | タイマー表示、コントロール | `TimerDisplay` + `TimerControls`、円形プログレス |
-| **StatsCard** | 週次統計、グラフ表示 | ローカルストレージからセッションデータを集計 |
-| **TodoList** | タスク一覧、フィルター | スクロール可能なリスト、フィルタータブ |
-| **BgmPlayer** | 音楽再生、プレイリスト | 展開/縮小アニメーション、音量コントロール |
-| **usePomodoro** | セッション管理、localStorage/DB切り替え | ゲスト: localStorage、認証済み: tRPC |
-| **useLocalStorage** | ローカルデータ永続化 | useState + useEffectで同期 |
+| AlbumArt | 再生中のビジュアルフィードバック、isPlayingに応じたアニメーション制御 | 条件付きCSSクラス付与、style属性での動的色指定 |
+| BgmPlayer | useBgmフック経由で再生状態を管理、AlbumArtにpropsを渡す | State管理のみ、アニメーションロジックは含まない |
+| index.css | @keyframes定義、アニメーションクラスのグローバル定義 | Tailwind CSSベース、カスタムアニメーション追加 |
 
 ## Recommended Project Structure
 
 ```
 src/
 ├── components/
-│   ├── layout/           # レイアウトコンポーネント
-│   │   ├── Header.tsx    # グローバルヘッダー（ナビゲーション）
-│   │   └── Footer.tsx    # グローバルフッター
-│   ├── timer/            # タイマー関連
-│   │   ├── TimerDisplay.tsx
-│   │   ├── TimerControls.tsx
-│   │   └── TimerRing.tsx
-│   ├── todos/            # タスク管理
-│   │   ├── TodoList.tsx
-│   │   ├── TodoItem.tsx
-│   │   └── TodoInput.tsx
-│   ├── stats/            # 統計表示
-│   │   └── StatsCard.tsx
-│   ├── bgm/              # BGMプレイヤー
-│   │   ├── BgmPlayer.tsx
-│   │   └── TrackList.tsx
-│   └── ui/               # 共通UIコンポーネント
-│       └── checkbox.tsx
-├── hooks/                # カスタムフック
-│   ├── useTimer.ts       # タイマー状態管理
-│   ├── usePomodoro.ts    # セッション管理
-│   ├── useTodos.ts       # タスクCRUD
-│   ├── useAuth.ts        # 認証状態
-│   └── useBgm.ts         # BGM再生
-├── lib/                  # ユーティリティ
-│   ├── storage.ts        # localStorageラッパー
-│   ├── animation.ts      # Framer Motionバリアント
-│   └── trpc.tsx          # tRPCクライアント
-└── index.css             # Tailwind + カスタムスタイル
+│   └── bgm/
+│       ├── BgmPlayer.tsx       # AlbumArt呼び出し、isPlaying state管理
+│       └── AlbumArt.tsx        # 新CSSクラス適用、点滅+パルスエフェクト実装
+├── lib/
+│   └── animation.ts            # 既存アニメーション定義（Framer Motion）
+└── index.css                   # 新@keyframes定義（blink, pulse-bg）
 ```
 
 ### Structure Rationale
 
-- **`components/`**: 機能領域で分割（timer、todos、stats、bgm）→ 各機能の独立性を確保
-- **`hooks/`**: カスタムフックで状態管理とビジネスロジックを分離 → コンポーネントの肥大化防止
-- **`lib/storage.ts`**: localStorage操作を一元化 → ゲストモードと認証モードの切り替えを容易に
+- **components/bgm/**: BGM関連UIコンポーネントを集約、AlbumArtはBgmPlayerからのみ使用
+- **lib/animation.ts**: Framer MotionのVariants定義、今回は使用せずCSSアニメーションで実装
+- **index.css**: グローバルな@keyframes定義、Tailwind CSSとの統合
 
 ## Architectural Patterns
 
-### Pattern 1: Bento Grid（ベントグリッド）レイアウト
+### Pattern 1: 条件付きCSSクラスによるアニメーション制御
 
-**What:** CSS Gridを使ったカードベースのダッシュボードレイアウト。各カードが異なるサイズのグリッドセルを占める。
+**What:** `isPlaying` stateに基づいてCSSアニメーションクラスを条件付きで付与
 
-**When to use:** ダッシュボード、 analytics、 複数のウィジェットを1画面に表示する場合
+**When to use:** 状態に応じたアニメーションの有効/無効を切り替える場合
 
 **Trade-offs:**
-- ✓ 視覚的階層を作りやすい、情報密度を調整しやすい
-- ✗ 複雑なグリッドではレスポンシブ対応が難しくなる
+- ✓ シンプルで理解しやすい
+- ✓ CSS側にアニメーションロジックを集約できる
+- ✓ JavaScriptのパフォーマンス影響が最小限
+- ✗ 複雑なアニメーション制御には不向き
 
 **Example:**
-```tsx
-// 12列グリッドシステム（Tailwind CSS v4）
-<div className="grid grid-cols-1 sm:grid-cols-6 lg:grid-cols-12 gap-4">
-  {/* タイマー: デスクトップ8列×2行 */}
-  <div className="sm:col-span-4 sm:row-span-2 lg:col-span-8 lg:row-span-2">
-    <TimerWidget />
-  </div>
+```typescript
+// AlbumArt.tsx
+<div className={`base-class ${isPlaying ? 'animate-blink' : ''}`}>
+  {/* コンテンツ */}
+</div>
+```
 
-  {/* Current Task: 2列×1行 */}
-  <div className="sm:col-span-2 sm:row-span-1 lg:col-span-2 lg:row-span-1">
-    <CurrentTaskCard />
-  </div>
+### Pattern 2: 多層アニメーションレイヤー
 
-  {/* BGM: 2列×1行 */}
-  <div className="sm:col-span-2 sm:row-span-1 lg:col-span-2 lg:row-span-1">
-    <BgmPlayer />
-  </div>
+**What:** 単一のコンポーネント内に複数のアニメーション効果をレイヤー状に重ねる
 
-  {/* Stats: 4列×1行 */}
-  <div className="sm:col-span-2 sm:row-span-1 lg:col-span-4 lg:row-span-1">
-    <StatsCard />
-  </div>
+**When to use:** 複数の独立したアニメーション効果を組み合わせる場合
 
-  {/* Todo: 12列×1行（全幅） */}
-  <div className="sm:col-span-6 sm:row-span-1 lg:col-span-12 lg:row-span-1">
-    <TodoList />
+**Trade-offs:**
+- ✓ 視覚効果の組み合わせが容易
+- ✓ 各レイヤーを独立して制御可能
+- ✗ DOM深度が増す可能性
+- ✗ アニメーション同期の考慮が必要
+
+**Example:**
+```typescript
+// レイヤー構造
+<div className="background-container"> {/* 点滅エフェクト */}
+  <div className="pulse-layer"> {/* パルスエフェクト */}
+    <div className="content-layer"> {/* メインコンテンツ */}
+      <Music className="icon" />
+    </div>
   </div>
 </div>
 ```
 
-**ブレイクポイント設計（Tailwind CSS v4 デフォルト）:**
-| プレフィックス | 最小幅 | 使用ケース |
-|---------------|---------|-----------|
-| （なし） | 0px | モバイル（デフォルトスタイル） |
-| `sm:` | 640px | タブレット縦、大型スマホ |
-| `md:` | 768px | タブレット横、小型ノート |
-| `lg:` | 1024px | デスクトップ、ラップトップ |
-| `xl:` | 1280px | 大型デスクトップ |
-| `2xl:` | 1536px | 超ワイドディスプレイ |
+### Pattern 3: Tailwind CSSのanimate-*
 
-### Pattern 2: Custom Hook for Data Persistence
+**What:** Tailwind CSS v4の`tw-animate-css`を使用して標準アニメーションを適用
 
-**What:** localStorageへの読み書きをカスタムフックにカプセル化し、React状態と同期するパターン。
-
-**When to use:** ユーザー設定、一時データ、ゲストモードでのデータ永続化
+**When to use:** シンプルな点滅・パルスエフェクトなど、標準的なアニメーションの場合
 
 **Trade-offs:**
-- ✓ コンポーネントからデータ永続化ロジックを分離、再利用可能
-- ✗ レースコンディションのリスク（mount時の読み込み）
+- ✓ 追加のCSS記述が不要
+- ✓ ビルド時の最適化が自動
+- ✗ カスタマイズには@keyframes定義が必要
+- ✗ 複雑なタイミング制御には制限あり
 
 **Example:**
 ```typescript
-// storage.ts
-export const storage = {
-  getPomodoroSessions(): PomodoroSession[] {
-    try {
-      const data = localStorage.getItem('pomdo_pomodoro')
-      return data ? JSON.parse(data) : []
-    } catch {
-      return []
-    }
-  },
-
-  addPomodoroSession(session: NewPomodoroSession): PomodoroSession {
-    const sessions = this.getPomodoroSessions()
-    const newSession = {
-      id: crypto.randomUUID(),
-      ...session,
-      createdAt: new Date().toISOString(),
-    }
-    const updated = [...sessions, newSession]
-    localStorage.setItem('pomdo_pomodoro', JSON.stringify(updated))
-    return newSession
-  },
-}
-
-// usePomodoro.ts
-export function usePomodoro() {
-  const { user } = useAuth()
-  const [localSessions, setLocalSessions] = useState<Session[]>([])
-
-  // ゲストモード: localStorage、認証済み: tRPC
-  const sessions = user
-    ? (sessionsQuery.data ?? [])
-    : localSessions
-
-  const startSession = async (type: SessionType, durationSecs: number) => {
-    if (user) {
-      return await createSessionMutation.mutateAsync({ type, durationSecs })
-    } else {
-      const created = storage.addPomodoroSession({ type, durationSecs, ... })
-      setLocalSessions((prev) => [...prev, created])
-      return created
-    }
-  }
-
-  return { sessions, startSession, ... }
-}
-```
-
-### Pattern 3: Framer Motion Layout Animation
-
-**What:** Framer Motionの`layout` propと`AnimatePresence`を使ったスムーズなレイアウトトランジション。
-
-**When to use:** グリッドの再配置、リスト項目の追加/削除、展開/折りたたみ
-
-**Trade-offs:**
-- ✓ ユーザー体験の向上、状態遷移の視覚化
-- ✗ パフォーマンスへの影響（多くの要素でアニメーションすると重い）
-
-**Example:**
-```tsx
-import { motion, AnimatePresence } from 'framer-motion'
-
-// グリッドカードのスタガードアニメーション
-<motion.div
-  className="glass rounded-3xl overflow-hidden sm:col-span-4 lg:col-span-8"
-  variants={fadeInUpVariants}
-  initial="hidden"
-  animate="visible"
-  custom={0} // 遅延インデックス
-  layout // レイアウト変化をアニメート
->
-  <TimerWidget />
-</motion.div>
-
-// 展開/折りたたみアニメーション
-<AnimatePresence>
-  {isExpanded && (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: 'auto' }}
-      exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: 0.2 }}
-    >
-      {/* 展開コンテンツ */}
-    </motion.div>
-  )}
-</AnimatePresence>
+// Tailwind標準アニメーション
+<div className="animate-pulse"> {/* Tailwind標準 */}
 ```
 
 ## Data Flow
 
-### Request Flow
+### State Flow
 
 ```
-[User Action] タイマー開始ボタンクリック
-    ↓
-[TimerControls] onClickハンドラ
-    ↓
-[useTimer] start()関数
-    ↓
-[usePomodoro] startSession(type, durationSecs)
-    ↓
-    ├── [user authenticated] → tRPC createSession.mutateAsync()
-    │                                ↓
-    │                           [API] pomodoroRouter.createSession
-    │                                ↓
-    │                           [DB] pomodoro_sessions テーブル
-    │
-    └── [guest mode] → storage.addPomodoroSession()
-                         ↓
-                      [localStorage] pomdo_pomodoro キー
-    ↓
-[React Query] invalidateQueries → データ再取得
-    ↓
-[Component] 再レンダリング → UI更新
+useBgm Hook
+    ↓ (isPlaying: boolean)
+BgmPlayer Component
+    ↓ (prop: isPlaying)
+AlbumArt Component
+    ↓ (conditional class)
+DOM Element (className="animate-blink animate-pulse")
+    ↓ (browser renders)
+CSS Animation (@keyframes)
 ```
 
-### State Management
+### Animation Flow
 
 ```
-[Local Storage] ←→ [Custom Hooks] ←→ [Components]
-     ↓                  ↓                  ↓
-  pomdo_todos      useTodos          TodoList
-  pomdo_pomodoro   usePomodoro       StatsCard
-  pomdo_timer      useTimer          TimerWidget
-  pomdo_bgm        useBgm            BgmPlayer
-
-同期フロー:
-1. マウント時: localStorage → useState
-2. 更新時: useState更新 → useEffectでlocalStorageに保存
-3. ログイン時: localStorageデータ → tRPCでDBにマイグレーション
+isPlaying === true
+    ↓
+AlbumArt applies classes:
+  - "album-art-blink" (opacity: 0.7 ↔ 1.0)
+  - "album-art-pulse" (scale: 1.0 ↔ 1.1, glow spread)
+    ↓
+CSS @keyframes execute:
+  - blink: 2s ease-in-out infinite
+  - pulse-bg: 2s ease-out infinite
+    ↓
+Visual Output:
+  - 背景が明滅
+  - グローが広がる
+  - 中心インジケーターが点滅
 ```
 
 ### Key Data Flows
 
-1. **Statsデータフロー（localStorage → 表示）:**
-   - `usePomodoro`フックが`storage.getPomodoroSessions()`でセッションデータを取得
-   - `StatsCard`コンポーネントが`sessions`を受け取り、本日・週次データを集計
-   - 週次チャートは`weeklyData.map()`で各日のバーを描画
-   - **問題点**: `sessions`が空の場合、グラフが表示されない
-
-2. **レスポンシブグリッドフロー:**
-   - デフォルト（モバイル）: `grid-cols-1`（1列）
-   - `sm:`以上: `sm:grid-cols-6`（6列）
-   - `lg:`以上: `lg:grid-cols-12`（12列）
-   - 各カードは`col-span-{n}`で幅を指定
-   - **問題点**: スマートフォンで要素が重なることがある
-
-3. **selectedTaskデータフロー:**
-   - `TodoList`でタスククリック → `setSelectedTodoId(id)`
-   - `CurrentTaskCard`が`selectedTodoId`に対応するタスクを表示
-   - タスク完了時 → `setSelectedTodoId(null)`で選択解除
+1. **再生状態伝達:** `useBgm()` → `BgmPlayer` → `AlbumArt` （props経由）
+2. **アニメーション適用:** `AlbumArt` → DOM `className` → CSS `@keyframes`
+3. **動的スタイル:** `currentTrack.color` → inline `style` → `background`, `boxShadow`
 
 ## Scaling Considerations
 
 | Scale | Architecture Adjustments |
 |-------|--------------------------|
-| 0-1k users | 現行アーキテクチャで対応可能。localStorage + tRPCハイブリッド |
-| 1k-100k users | React Queryのキャッシュ戦略を見直し、APIレスポンスの最適化 |
-| 100k+ users | Stats集計をDBで行うAPIを作成、CDNで静的アセット配信 |
+| 現在（1アニメーション） | CSS @keyframesで十分、パフォーマンス問題なし |
+| 複数アニメーション（5+） | アニメーション設定を別ファイルに抽出、テーマ化 |
+| カスタマイズ要件増加 | CSS Variablesを使用してアニメーション速度を動的制御 |
 
 ### Scaling Priorities
 
-1. **First bottleneck:** Statsの週次集計処理
-   - セッション数が増えるとクライアント側での集計が重くなる
-   - **解決策**: `pomodoroRouter`に集計エンドポイントを追加
-
-2. **Second bottleneck:** localStorageの容量制限（5-10MB）
-   - ゲストモードで長期間使用すると容量超過のリスク
-   - **解決策**: 古いセッションデータの自動削除、IndexedDBへの移行
+1. **First bottleneck:** アニメーション速度のハードコーディング → CSS Variablesで解決
+2. **Second bottleneck:** 複数の@keyframes定義の散乱 → 専用CSSファイルへの分離
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: ブレイクポイントの乱用
+### Anti-Pattern 1: JavaScript側でのアニメーション制御
 
-**What people do:** すべての画面サイズに対応しようとして過剰にブレイクポイントを設定
+**What people do:** `requestAnimationFrame`や`setInterval`で直接DOMを操作
 
-**Why it's wrong:** コードが複雑になり、メンテナンスが困難になる
+**Why it's wrong:** パフォーマンス劣化、メインスレッドブロック、コード複雑化
 
-**Do this instead:**
-- モバイルファーストでデフォルトスタイルを定義
-- 必要最小限のブレイクポイント（`sm:`, `lg:`）のみ使用
-- ```tsx
-  // Bad
-  <div className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl">
+**Do this instead:** CSSアニメーションを使用（GPUアクセラレーションが自動適用）
 
-  // Good
-  <div className="text-sm sm:text-base lg:text-lg">
-  ```
+### Anti-Pattern 2: 単一クラスに複数の@keyframesを混在
 
-### Anti-Pattern 2: localStorageへの直接的アクセス
+**What people do:** 1つのクラスで回転・点滅・パルスを全て制御しようとする
 
-**What people do:** 各コンポーネントで直接`localStorage.getItem()`を呼ぶ
+**Why it's wrong:** アニメーションの個別制御が不可能、保守性低下
 
-**Why it's wrong:** データの不整合、テスト困難、エラーハンドリングの重複
+**Do this instead:** 責務を分離（blinkクラス、pulseクラス、pausedクラス）
 
-**Do this instead:**
-- `lib/storage.ts`のような一元化されたアクセスレイヤーを作成
-- カスタムフック経由でアクセス
-- ```tsx
-  // Bad
-  const sessions = JSON.parse(localStorage.getItem('pomdo_pomodoro') || '[]')
+### Anti-Pattern 3: !importantでのCSS上書き乱用
 
-  // Good
-  const { sessions } = usePomodoro()
-  ```
+**What people do:** アニメーション競合を!importantで解決
 
-### Anti-Pattern 3: グリッドカラムの固定
+**Why it's wrong:** 保守不可能、スタイル優先順序の混乱
 
-**What people do:** すべての画面サイズで同じグリッド構造を使用
-
-**Why it's wrong:** モバイルでカードが潰れたり、重なったりする
-
-**Do this instead:**
-- モバイルでは1列、タブレットでは中程度の列数、デスクトップで最大列数
-- カードサイズに応じて`col-span`を調整
-- ```tsx
-  // Bad: モバイルでも12列
-  <div className="grid grid-cols-12 gap-4">
-
-  // Good: モバイルで1列、デスクトップで12列
-  <div className="grid grid-cols-1 sm:grid-cols-6 lg:grid-cols-12 gap-4">
-  ```
+**Do this instead:** クラスの設計を見直し、セレクタの特異度を適切に管理
 
 ## Integration Points
 
@@ -390,140 +209,85 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 | Service | Integration Pattern | Notes |
 |---------|---------------------|-------|
-| tRPC API | `trpc.{router}.{procedure}.useQuery()` | 認証済みユーザーのみ使用 |
-| Google OAuth | Better Auth Client | `/api/auth/*` エンドポイント |
-| React Query | `@tanstack/react-query` | tRPCが内部的に使用 |
+| なし | — | アニメーションは完全にクライアントサイドで完結 |
 
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| Components ↔ Hooks | Props return値 | hooksはUIを持たない純粋なロジック |
-| Hooks ↔ Storage | 関数呼び出し | 非同期処理は`async/await` |
-| Guest Mode ↔ Auth Mode | `user`状態で分岐 | `useAuth()`で判定 |
+| BgmPlayer ↔ AlbumArt | Props（isPlaying, color） | 一方向データフロー、Eventなし |
+| AlbumArt ↔ CSS | className条件付き付与 | 直接的なDOM操作なし |
+| index.css ↔ Tailwind | @layer baseでの統合 | 既存の@keyframesパターンに従う |
 
-## 統合ポイント（v1.2で新規実装）
+## Implementation Guide
 
-### 1. レスポンシブ対応の統合ポイント
+### 変更範囲
 
-**新規コンポーネント:**
-- なし（既存コンポーネントのTailwindクラス調整）
+**削除:**
+- `album-art-spinning` クラス（回転アニメーション）
+- `album-art-paused` クラス（アニメーション一時停止、現在は未使用）
 
-**変更コンポーネント:**
-- `App.tsx`: Bento Gridのグリッド定義を修正
-  - 現在: `grid-cols-1 sm:grid-cols-6 lg:grid-cols-12`
-  - 課題: スマートフォンで要素が重なる
-  - 解決策: `gap`の調整、カード内の`padding`最適化
+**追加:**
+1. **@keyframes定義（index.css）**
+   - `blink`: opacity 0.7 ↔ 1.0, scale 0.98 ↔ 1.0
+   - `pulse-bg`: box-shadowの広がり + scale微増
 
-- 全コンポーネント: レスポンシブなサイズ指定
-  - タイマー: `text-5xl sm:text-6xl lg:text-7xl`
-  - カード内パディング: `p-4 sm:p-6`
+2. **CSSクラス（index.css）**
+   - `.album-art-blink`: 点滅アニメーション適用
+   - `.album-art-pulse`: パルスエフェクト適用
 
-**統合方法:**
-```tsx
-// App.tsx
-<main className="flex-1 p-2 sm:p-4 overflow-y-auto sm:overflow-hidden">
-  <div className="grid grid-cols-1 sm:grid-cols-6 lg:grid-cols-12 gap-2 sm:gap-4">
-    {/* 各カード */}
-  </div>
-</main>
-```
+3. **AlbumArtコンポーネント（BgmPlayer.tsx内）**
+   - 既存の `album-art-spinning` を `album-art-blink album-art-pulse` に置換
+   - 背景コンテナにもアニメーションクラスを追加
 
-### 2. グリッドデザイン統一
+### ビルド順序
 
-**新規コンポーネント:**
-- `src/components/ui/BentoCard.tsx`（共通カードラッパー）
+1. **CSSの定義**（`src/index.css`）
+   - @keyframesを追加
+   - アニメーションクラスを定義
 
-**変更コンポーネント:**
-- 全カードコンポーネントが`BentoCard`を使用
+2. **AlbumArtの修正**（`src/components/bgm/BgmPlayer.tsx`）
+   - クラス名を置換
+   - アニメーション適用対象を拡張
 
-**統合方法:**
-```tsx
-// src/components/ui/BentoCard.tsx（新規）
-interface BentoCardProps {
-  children: React.ReactNode
-  className?: string
+3. **動作確認**
+   - 再生時: 点滅+パルスが有効
+   - 停止時: アニメーション無効
+   - ゲストモード: localStorageベースでも動作
+
+### 既存スタイルとの統合
+
+```css
+/* 既存のアニメーションパターンに従う */
+@keyframes rotate { ... } /* 既存 */
+
+/* 新規追加: 回転の隣に配置 */
+@keyframes blink {
+  0%, 100% { opacity: 0.7; transform: scale(0.98); }
+  50% { opacity: 1.0; transform: scale(1.0); }
 }
 
-export function BentoCard({ children, className = '' }: BentoCardProps) {
-  return (
-    <div className={`glass rounded-3xl overflow-hidden ${className}`}>
-      {children}
-    </div>
-  )
+@keyframes pulse-bg {
+  0% { box-shadow: 0 8px 24px var(--color); transform: scale(1); }
+  50% { box-shadow: 0 12px 40px var(--color); transform: scale(1.05); }
+  100% { box-shadow: 0 8px 24px var(--color); transform: scale(1); }
 }
 
-// 使用例
-<BentoCard className="sm:col-span-4 lg:col-span-8">
-  <TimerWidget />
-</BentoCard>
+/* 既存クラスパターンに従う */
+.album-art-spinning { animation: rotate 8s linear infinite; } /* 既存 */
+
+/* 新規追加: spinningの隣に配置 */
+.album-art-blink { animation: blink 2s ease-in-out infinite; }
+.album-art-pulse { animation: pulse-bg 2s ease-out infinite; }
 ```
-
-### 3. Statsデータフローの設計
-
-**新規機能:**
-- 週次統計のリアルタイム更新
-- グラフのアニメーション改善
-
-**変更コンポーネント:**
-- `StatsCard.tsx`: データ集計ロジックの強化
-
-**データフロー:**
-```
-[localStorage: pomdo_pomodoro]
-    ↓
-[usePomodoro: sessions state]
-    ↓
-[StatsCard: 集計処理]
-    ├── 今日: sessions.filter(今日 &完了).reduce(集計)
-    └── 週次: 7日分のデータをmapで生成
-    ↓
-[表示: カウント + チャート]
-```
-
-**課題解決:**
-```tsx
-// 現在の問題点
-const { sessions } = usePomodoro()
-// → sessionsが空の場合、何も表示されない
-
-// 解決策: ローディング状態と空状態を明示的に実装
-const { sessions, loading } = usePomodoro()
-
-if (loading) return <div>Loading...</div>
-if (sessions.length === 0) return <div>No data yet</div>
-```
-
-### 4. selectedTask UXの改善
-
-**変更コンポーネント:**
-- `CurrentTaskCard.tsx`: 選択時の視覚的フィードバック強化
-- `TodoList.tsx`: 選択状態の表示改善
-
-**データフロー:**
-```
-[TodoItem クリック]
-    ↓
-[handleTodoClick] → setSelectedTodoId(id)
-    ↓
-[useTodos: selectedTodoId state]
-    ↓
-[CurrentTaskCard: 選択タスクを表示]
-[TodoItem: 選択状態のハイライト]
-```
-
-**UX改善案:**
-- 選択時にアニメーションでフィードバック
-- タイマー起動中は選択タスクを強調表示
-- 完了時に次のタスクを自動選択するオプション
 
 ## Sources
 
-- [Tailwind CSS - Responsive Design](https://tailwindcss.com/docs/responsive-design) (HIGH confidence - 公式ドキュメント)
-- [Tailwind CSS v4.2 Release Notes](https://tailwindcss.com/blog) (MEDIUM confidence - 公式ブログ)
-- [Framer Motion - Layout Animations](https://www.framer.com/motion/layout-animation/) (MEDIUM confidence - 公式ドキュメント)
-- 既存コードベースの分析 (`src/App.tsx`, `src/hooks/usePomodoro.ts`, etc.)
+- 既存コードベース（src/index.css, src/components/bgm/BgmPlayer.tsx）
+- Tailwind CSS v4公式ドキュメント（animate-*ユーティリティ）
+- CSS Animation仕様（@keyframes, animationプロパティ）
+- Framer Motion使用実績（src/lib/animation.ts）— 今回は未使用だが参考として
 
 ---
-*Architecture research for: UI/UX改善（レスポンシブ対応、デザイン統一、Stats実装）*
-*Researched: 2026-03-21*
+*Architecture research for: BGMプレイヤーアニメーション刷新*
+*Researched: 2026-03-26*

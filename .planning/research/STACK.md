@@ -1,180 +1,173 @@
 # Technology Stack
 
-**Project:** Pomdo v1.2 UI/UX改善
-**Researched:** 2026-03-21
+**Project:** Pomdo v1.6.1 BGMプレイヤーアニメーション刷新
+**Researched:** 2026-03-26
+**Overall Confidence:** HIGH
 
-## Recommended Stack
+## 要約
 
-### Core Framework（既存）
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| React | ^19.2.0 | UIフレームワーク | 既存採用、最新版で安定 |
-| TypeScript | ~5.9.3 | 型安全 | 既存採用 |
-| Vite | ^7.3.1 | バンドラ | 既存採用、高速開発 |
-| Tailwind CSS | ^4.2.1 | スタイリング | **既存採用、v4の新機能を活用** |
+点滅+パルスエフェクトの実装に**新規ライブラリは不要**。既存のTailwind CSS v4とCSS keyframesのみで完結可能。Framer Motionは他コンポーネントで利用中だが、今回のアニメーションにはCSS keyframesを選択（パフォーマンス・シンプルさのため）。
 
-### グラフライブラリ（Stats機能用）
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| **Recharts** | ^2.15.0 | 統計グラフ表示 | **Reactネイティブ、宣言的API、Tree-shaking対応** |
-| Chart.js | - | （代替案） | CanvasベースだがReact統合が不自然 |
-| Victory | - | （代替案） | ReactネイティブだがBundleサイズが大きい |
+## 推奨スタック
 
-### レスポンシブ対応（Tailwind CSS v4）
-| 機能 | バージョン | Purpose | Why |
-|------|----------|---------|-----|
-| **Tailwind CSS v4** | ^4.2.1 | レスポンシブユーティリティ | **既存導入済み、Container Queries対応** |
-| @tailwindcss/vite | ^4.2.1 | Viteプラグイン | **既存導入済み、自動コンテンツ検出** |
-| tw-animate-css | ^1.4.0 | アニメーション | **既存導入済み、Statsアニメーションに使用** |
+### アニメーション実装方式
 
-### Supporting Libraries（既存）
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| framer-motion | ^12.35.1 | アニメーション | **Statsのバーチャートアニメーションで既に使用** |
-| lucide-react | ^0.575.0 | アイコン | 既存採用 |
-| clsx + tailwind-merge | ^2.1.1, ^3.5.0 | クラス結合 | 既存採用 |
+| 技術 | バージョン | 用途 | 採用理由 |
+|------|----------|------|----------|
+| **CSS keyframes** | 標準 | 点滅アニメーション（opacity/scale） | パフォーマンス良好、GPUアクセラレーション効く、シンプル |
+| **CSS keyframes** | 標準 | パルスエフェクト（box-shadow拡散） | glow効果はCSSで実装済みパターン、Framer Motionより軽量 |
+| **Tailwind CSS v4** | 4.2.1 | ユーティリティクラス適用 | 既存プロジェクトで導入済み、`animate-[<value>]`構文でカスタムアニメーション適用可能 |
 
-## Installation
+### 削除対象
 
-### Stats用グラフライブラリ
-```bash
-npm install recharts
-```
+| 技術 | 理由 |
+|------|------|
+| `album-art-spinning` クラス | 回転アニメーション削除 |
+| `rotate` @keyframes | 使用箇所がBGMプレイヤーのみのため削除可能 |
 
-**依存関係（自動インストール）:**
-- `react`: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0（✓ 既存）
-- `react-dom`: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0（✓ 既存）
+## 比較検討
 
-**Bundleサイズ:**
-- 圧縮時: ~40KB（Tree-shakingで最小化可能）
-- Victory: ~200KB（却下理由）
-- Chart.js: ~60KB（却下理由: React統備が不自然）
+### アニメーション方式: CSS keyframes vs Framer Motion
 
-### レスポンシブ対応
-**追加インストール不要** — Tailwind CSS v4に以下が含まれています:
-- モバイルファーストブレークポイント（`sm:`, `md:`, `lg:`, `xl:`, `2xl:`）
-- Container Queries（`@container`, `@sm`, `@md`, ...）
-- Max-width variants（`max-sm:`, `max-md:`, ...）
+| 基準 | CSS keyframes | Framer Motion | 結論 |
+|------|--------------|---------------|------|
+| パフォーマンス | GPUアクセラレーション効く | JavaScript制御、JSスレッド依存 | **CSS採用** |
+| コード量 | keyframes定義 + クラス付与のみ | variants定義 + motionコンポーネント | **CSS採用** |
+| 柔軟性 | 固定キーフレーム | 動的制御可能 | **Framer Motion** |
+| メンテナンス | CSSファイルで一元管理 | TypeScriptで型安全 | **Framer Motion** |
+| ファイルサイズ | 追加なし | 既存のframer-motion利用 | **CSS採用** |
 
-## Alternatives Considered
+**結論**: 点滅/パルスのような単純なループアニメーションにはCSS keyframesが最適。Framer Motionは複雑なインタラクション（ドラッグ&ドロップ、条件付きアニメーション）に留める。
 
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| グラフライブラリ | Recharts | Chart.js | HTML5 CanvasベースでReact統備が不自然、宣言的APIではない |
-| グラフライブラリ | Recharts | Victory | Bundleサイズが大きい（~200KB）、メンテナンスが停滞 |
-| レスポンシブ | Tailwind CSS v4 | CSS Modules | ユーティリティファーストの方が迅速な反復が可能 |
-| レスポンシブ | Tailwind CSS v4 | CSS-in-JS | ランタイムオーバーヘッド、Edge Runtimeで不安定 |
+### Tailwind `animate-pulse` vs カスタムkeyframes
 
-## Integration Details
+| 基準 | `animate-pulse` | カスタムkeyframes | 結論 |
+|------|-----------------|------------------|------|
+| 機能 | opacity: 1 → 0.5 → 1 | opacity/scale/box-shadow制御可能 | **カスタム採用** |
+| 柔軟性 | 固定 | 完全カスタム | **カスタム採用** |
+| 実装コスト | クラス付与のみ | keyframes定義必要 | **`animate-pulse`** |
 
-### Rechartsで実装するStatsグラフ
+**結論**: opacityのみなら`animate-pulse`で十分。scaleとbox-shadowを含むパルスエフェクトにはカスタムkeyframes定義が必要。
 
-**既存のカスタム実装を置き換え:**
-```tsx
-// src/components/stats/StatsCard.tsx（既存）
-// → framer-motionで手作りしたバーチャート
+## 追加定義が必要なCSS keyframes
 
-// 新しい実装例:
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+### 点滅アニメーション（blink）
 
-<ResponsiveContainer width="100%" height="100%">
-  <BarChart data={weeklyData}>
-    <XAxis dataKey="date" tickFormatter={getDayLabel} />
-    <YAxis hide />
-    <Tooltip cursor={{ fill: 'rgba(255,255,255,0.1)' }} />
-    <Bar
-      dataKey="focusMinutes"
-      fill="var(--df-accent-primary)"
-      radius={[4, 4, 0, 0]}
-    />
-  </BarChart>
-</ResponsiveContainer>
-```
-
-**Edge Runtime互換性:**
-- ✅ Rechartsはクライアントサイドのみで動作
-- ✅ Server ComponentsではないのでEdge Runtimeの制約を受けない
-- ✅ CanvasではなくSVGベース（軽量）
-
-### Tailwind CSS v4でのレスポンシブ対応
-
-**既存の課題:**
-- 要素が重なり、ボタンがクリックできない
-- 各グリッドに統一感がない
-- タイマー部分の余白が大きすぎる
-
-**解決アプローチ:**
 ```css
-/* src/index.css（既存の@themeディレクティブを拡張） */
-@import "tailwindcss";
-
-@theme {
-  /* カスタムブレークポイントの追加（必要な場合） */
-  --breakpoint-mobile: 20rem;  /* 320px */
-  --breakpoint-tablet: 48rem;  /* 768px */
+@keyframes blink {
+  0%, 100% { opacity: 1; scale: 1; }
+  50% { opacity: 0.6; scale: 0.95; }
 }
 ```
 
-```tsx
-/* グリッドデザイン統一の例 */
-<div className="
-  grid
-  grid-cols-1
-  mobile:grid-cols-2
-  md:grid-cols-3
-  lg:grid-cols-4
-  gap-4
-  p-4
-">
-  {/* Bento Gridカード */}
-</div>
+### パルスエフェクト（pulse-glow）
 
-/* Container Queriesでカード内のレスポンシブ */
-<div className="@container">
-  <div className="flex flex-col @md:flex-row">
-    {/* 小さいコンテナでは縦並び、大きいコンテナでは横並び */}
-  </div>
-</div>
+```css
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 var(--color);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 20px 10px var(--color-alpha);
+    opacity: 0.8;
+  }
+  100% {
+    box-shadow: 0 0 0 0 var(--color);
+    opacity: 1;
+  }
+}
 ```
 
-**タイマー余白の調整:**
+**注意**: `--color` と `--color-alpha` はインラインスタイルで動的に設定。
+
+## 推奨アニメーションパターン
+
+### パターン1: シンプル点滅（opacityのみ）
+
 ```tsx
-/* 左右の無駄な余白を削減 */
-<div className="
-  w-full
-  max-w-7xl
-  mx-auto
-  px-4 sm:px-6 lg:px-8  /* レスポンシブなパディング */
-">
-  {/* Timerコンテンツ */}
-</div>
+<div className="animate-pulse" />
 ```
 
-## Pitfalls to Avoid
+**用途**: 最小限の実装で即座に点滅効果。
 
-### Recharts
-1. **Server Componentsで使用しない** — `'use client'`が必要
-2. **データ変換を忘れない** — Recharts expects `{ name: string, value: number }[]`
-3. **ツールチップのスタイル** — デフォルトが白背景なのでDark Modeで調整が必要
+### パターン2: カスタム点滅+スケール
 
-### Tailwind CSS v4
-1. **v3とのAPI変更** — `tailwind.config.js`ではなく`@theme`ディレクティブを使用
-2. **ブレークポイントの意味** — `sm:`は「640px以上」で「小さい画面のみ」ではない
-3. **Container Queriesの乱用** — 深いネストでパフォーマンス低下
+```tsx
+<div style={{ animation: 'blink 2s ease-in-out infinite' }} />
+```
 
-## Edge Runtime Compatibility
+**用途**: よりリッチな表現が必要な場合。
 
-| Library | Compatible | Notes |
-|---------|-----------|-------|
-| Recharts | ✅ YES | クライアントサイドのみ、SVGベースで軽量 |
-| Tailwind CSS v4 | ✅ YES | ビルドタイムでCSS生成、ランタイム依存なし |
-| framer-motion | ✅ YES | 既に使用中、問題なし |
+### パターン3: パルスエフェクト（glow拡散）
+
+```tsx
+<div
+  style={{
+    '--color': color,
+    '--color-alpha': `${color}40`,
+    animation: 'pulse-glow 3s ease-in-out infinite',
+  } as React.CSSProperties}
+/>
+```
+
+**用途**: BGM再生中の視覚的フィードバック。
+
+## インストール
+
+**不要**。既存パッケージのみで完結。
+
+- `tailwindcss@^4.2.1` - 既存
+- `framer-motion@^12.35.1` - 既存（他コンポーネントで使用）
+
+## 避けるべきアンチパターン
+
+### アンチパターン1: Framer Motion for simple looping
+
+```tsx
+❌ <motion.div animate={{ opacity: [1, 0.5, 1] }} transition={{ repeat: Infinity }} />
+```
+
+**理由**: JavaScriptスレッドで制御、オーバーヘッド大。CSS keyframesで十分。
+
+### アンチパターン2: inline styleでkeyframes定義
+
+```tsx
+❌ <div style={{ animation: 'blink 2s infinite' }} keyframes={...} />
+```
+
+**理由**: Reactではinline styleでkeyframes定義不可。必ずCSSファイルで定義。
+
+### アンチパターン3: 既存のFramer Motion variantsを無理に活用
+
+```tsx
+❌ const blinkVariants = { ... }
+<motion.div variants={blinkVariants} animate="blink" />
+```
+
+**理由**: 単純なループアニメーションにvariantsは過剰。CSSクラスで十分。
+
+## 移行計画
+
+### ステップ1: 既存回転アニメーション削除
+
+1. `index.css` から `rotate` keyframes削除
+2. `album-art-spinning` クラス削除
+3. `BgmPlayer.tsx` でクラス参照削除
+
+### ステップ2: 新規アニメーション定義追加
+
+1. `index.css` に `blink` と `pulse-glow` keyframes定義追加
+2. `BgmPlayer.tsx` でAlbumArtコンポーネント修正
+
+### ステップ3: スタイル適用
+
+1. 条件付きクラス付与: `isPlaying ? 'animate-[blink_2s_ease-in-out_infinite]' : ''`
+2. インラインスタイルで色変数設定
 
 ## Sources
 
-- [Recharts Official Documentation](https://recharts.org) — HIGH confidence
-- [Recharts npm package](https://www.npmjs.com/package/recharts) — HIGH confidence
-- [Chart.js Official Documentation](https://www.chartjs.org) — HIGH confidence
-- [Victory Official Documentation](https://formidable.com/open-source/victory) — HIGH confidence
-- [Tailwind CSS v4 Documentation](https://tailwindcss.com/docs/responsive-design) — HIGH confidence
-- [Tailwind CSS v4 Alpha Announcement](https://tailwindcss.com/blog/tailwindcss-v4-alpha) — HIGH confidence
+- **HIGH confidence**: [Framer Motion Animation公式ドキュメント](https://www.framer.com/motion/animation/) - keyframes、repeat、transitionオプション確認
+- **HIGH confidence**: [Framer Motion Transition公式ドキュメント](https://www.framer.com/motion/transition/) - repeat、repeatType、repeatDelayパラメータ確認
+- **HIGH confidence**: [Tailwind CSS v4 Animation公式ドキュメント](https://tailwindcss.com/docs/animation) - animate-pulse、animate-[<value>]構文確認
+- **HIGH confidence**: 既存コードベース分析 - `src/index.css`, `src/components/bgm/BgmPlayer.tsx`, `src/lib/animation.ts`

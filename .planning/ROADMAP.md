@@ -97,7 +97,7 @@
 **Success Criteria** (what must be TRUE):
   1. index.cssにblink@keyframesが定義され、opacity 0.6↔1.0、scale 1↔1.02、2s周期で変化する
   2. index.cssにpulse-glow@keyframesが定義され、box-shadowの多層構造でglowエフェクトが広がる
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 19-01: CSS keyframes定義（blink + pulse-glow + rotate削除）

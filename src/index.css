@@ -227,6 +227,26 @@
   animation-play-state: paused;
 }
 
+/* Album art glow pulse animation - Phase 19 */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0px currentColor,
+      0 0 8px currentColor,
+      0 0 16px currentColor;
+  }
+  50% {
+    box-shadow:
+      0 0 4px currentColor,
+      0 0 12px currentColor,
+      0 0 24px currentColor;
+  }
+}
+
+.album-art-pulsing {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
 /* アニメーション定義 */
 
 /* タスク追加 - 上からスライドイン */

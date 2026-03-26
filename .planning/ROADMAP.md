@@ -25,9 +25,9 @@
 | 14-15 | v1.4 | 4/4 | Complete | 2026-03-24 |
 | 16 | v1.5 | 2/2 | Complete | 2026-03-24 |
 | 17-18 | v1.6 | 7/7 | Complete | 2026-03-25 |
-| 19-20 | v1.6.1 | 0/4 | Not started | - |
+| 19-20 | v1.6.1 | 1/2 | In Progress | - |
 
-**Completed:** 48/52 plans (v1.0-v1.6)
+**Completed:** 49/52 plans (v1.0-v1.6)
 
 ## Phases
 
@@ -88,7 +88,7 @@
 
 **Start Date:** 2026-03-26
 
-**Phases:** 2 phases (4-6 plans estimated)
+**Phases:** 2 phases (2 plans)
 
 ### Phase 19: CSSアニメーション定義
 **Goal**: 点滅とパルスエフェクトのCSSアニメーションを定義
@@ -100,7 +100,7 @@
 **Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 19-01: CSS keyframes定義（blink + pulse-glow + rotate削除）
+- [x] 19-01: CSS keyframes定義（blink + pulse-glow + rotate削除）
 
 
 ### Phase 20: BgmPlayerコンポーネント修正
@@ -111,11 +111,10 @@ Plans:
   1. アルバムアートはBGM再生中に点滅+パルスアニメーションを表示する
   2. BGM停止時、アルバムアートは静止した状態で表示される
   3. 回転アニメーション（album-art-spinningクラス）がコードベースから完全に削除されている
-**Plans**: TBD
+**Plans:** 1/1 plans
 
 Plans:
-- [ ] 20-01: AlbumArtに新しいアニメーションクラス適用（isPlaying条件付き）
-- [ ] 20-02: album-art-spinningクラスの完全削除
+- [ ] 20-01: AlbumArtコンポーネント修正（アニメーション適用 + spinning削除）
 
 ---
 

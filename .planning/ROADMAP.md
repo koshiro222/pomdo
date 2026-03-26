@@ -1,7 +1,7 @@
 # Roadmap: Pomdo
 
 **Created:** 2026-02-28
-**Last Updated:** 2026-03-25
+**Last Updated:** 2026-03-26
 
 ## Milestones
 
@@ -12,9 +12,7 @@
 - ✅ **v1.4 Bento Grid再設計 & Todo統合** — Phases 14-15 (shipped 2026-03-24)
 - ✅ **v1.5 カードヘッダー統一** — Phase 16 (shipped 2026-03-24)
 - ✅ **v1.6 TodoカードUI/UX改善** — Phases 17-18 (shipped 2026-03-25)
-
-- 📋 **v1.7 テスト基盤整備** — Phases 19-20 (planned)
-- 📋 **v1.8 アクセシビリティ対応** — Phase 21 (planned)
+- 🚧 **v1.6.1 BGMプレイヤーアニメーション刷新** — Phases 19-20 (in progress)
 
 ## Progress Summary
 
@@ -27,8 +25,9 @@
 | 14-15 | v1.4 | 4/4 | Complete | 2026-03-24 |
 | 16 | v1.5 | 2/2 | Complete | 2026-03-24 |
 | 17-18 | v1.6 | 7/7 | Complete | 2026-03-25 |
+| 19-20 | v1.6.1 | 0/4 | Not started | - |
 
-**Completed:** 48/48 plans (v1.0-v1.6)
+**Completed:** 48/52 plans (v1.0-v1.6)
 
 ## Phases
 
@@ -80,3 +79,47 @@
 **Details:** `.planning/milestones/v1.6-ROADMAP.md`
 
 </details>
+
+---
+
+## 🚧 v1.6.1 BGMプレイヤーアニメーション刷新 (In Progress)
+
+**Milestone Goal:** BGM再生中のアルバムアートアニメーションを、点滅しながらパルスを発する表現に刷新する
+
+**Start Date:** 2026-03-26
+
+**Phases:** 2 phases (4-6 plans estimated)
+
+### Phase 19: CSSアニメーション定義
+**Goal**: 点滅とパルスエフェクトのCSSアニメーションを定義
+**Depends on**: Phase 18
+**Requirements**: BGMAN-01, BGMAN-02
+**Success Criteria** (what must be TRUE):
+  1. index.cssにblink@keyframesが定義され、opacity 0.6↔1.0、scale 1↔1.02、2s周期で変化する
+  2. index.cssにpulse-glow@keyframesが定義され、box-shadowの多層構造でglowエフェクトが広がる
+**Plans**: TBD
+
+Plans:
+- [ ] 19-01: blink @keyframes定義（opacity/scale変化）
+- [ ] 19-02: pulse-glow @keyframes定義（box-shadow多層構造）
+
+### Phase 20: BgmPlayerコンポーネント修正
+**Goal**: アルバムアートが再生中のみ点滅+パルスし、回転アニメーションを削除する
+**Depends on**: Phase 19
+**Requirements**: BGMAN-03, BGMAN-04
+**Success Criteria** (what must be TRUE):
+  1. アルバムアートはBGM再生中に点滅+パルスアニメーションを表示する
+  2. BGM停止時、アルバムアートは静止した状態で表示される
+  3. 回転アニメーション（album-art-spinningクラス）がコードベースから完全に削除されている
+**Plans**: TBD
+
+Plans:
+- [ ] 20-01: AlbumArtに新しいアニメーションクラス適用（isPlaying条件付き）
+- [ ] 20-02: album-art-spinningクラスの完全削除
+
+---
+
+## Future Milestones (Planned)
+
+- 📋 **v1.7 テスト基盤整備** — TBD
+- 📋 **v1.8 アクセシビリティ対応（prefers-reduced-motion）** — TBD

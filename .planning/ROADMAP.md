@@ -97,11 +97,11 @@
 **Success Criteria** (what must be TRUE):
   1. index.cssにblink@keyframesが定義され、opacity 0.6↔1.0、scale 1↔1.02、2s周期で変化する
   2. index.cssにpulse-glow@keyframesが定義され、box-shadowの多層構造でglowエフェクトが広がる
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 19-01: blink @keyframes定義（opacity/scale変化）
-- [ ] 19-02: pulse-glow @keyframes定義（box-shadow多層構造）
+- [ ] 19-01: CSS keyframes定義（blink + pulse-glow + rotate削除）
+
 
 ### Phase 20: BgmPlayerコンポーネント修正
 **Goal**: アルバムアートが再生中のみ点滅+パルスし、回転アニメーションを削除する

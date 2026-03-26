@@ -207,18 +207,20 @@
   transition: stroke-dashoffset 0.5s ease-in-out;
 }
 
-/* Rotating album art */
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
+/* Album art breathing animation - Phase 19 */
+@keyframes blink {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
   }
-  to {
-    transform: rotate(360deg);
+  50% {
+    opacity: 1.0;
+    transform: scale(1.02);
   }
 }
 
-.album-art-spinning {
-  animation: rotate 8s linear infinite;
+.album-art-blinking {
+  animation: blink 2s ease-in-out infinite;
 }
 
 .album-art-paused {

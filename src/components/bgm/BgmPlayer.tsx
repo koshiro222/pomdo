@@ -23,10 +23,9 @@ function AlbumArt({ isPlaying, color }: AlbumArtProps) {
       >
         {/* アイコンまたは回転するディスク */}
         <div
-          className={`w-20 h-20 rounded-full flex items-center justify-center ${isPlaying ? 'album-art-spinning' : ''}`}
+          className="w-20 h-20 rounded-full flex items-center justify-center"
           style={{
             background: `linear-gradient(135deg, ${color}60, ${color}30)`,
-            animationDuration: '12s',
           }}
         >
           <Music className={`w-8 h-8 text-white ${isPlaying ? '' : 'album-art-paused'}`} />

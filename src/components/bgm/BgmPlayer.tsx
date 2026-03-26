@@ -14,9 +14,10 @@ function AlbumArt({ isPlaying, color }: AlbumArtProps) {
     <div className="relative w-24 h-24 flex-shrink-0">
       {/* アルバムアート背景 */}
       <div
-        className={`w-full h-full rounded-2xl flex items-center justify-center ${isPlaying ? 'album-art-spinning' : ''}`}
+        className={`w-full h-full rounded-2xl flex items-center justify-center ${isPlaying ? 'album-art-blinking album-art-pulsing' : ''}`}
         style={{
           background: `linear-gradient(135deg, ${color}40, ${color}20)`,
+          color: color,
           boxShadow: `0 8px 24px ${color}40`,
         }}
       >

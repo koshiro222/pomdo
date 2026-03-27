@@ -209,7 +209,7 @@ export default function StatsCard() {
                 <YAxis yAxisId="left" tickLine={false} axisLine={false} stroke="#9ca3af" />
                 <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} stroke="#9ca3af" />
                 <Tooltip />
-                <Bar yAxisId="left" dataKey="sessions" fill="#22c55e" name="セッション数" />
+                <Bar yAxisId="left" dataKey="sessions" fill="#22c55e" name="セッション数" radius={8} />
                 <Line yAxisId="right" type="monotone" dataKey="cumulativeMinutes" stroke="#22c55e" strokeWidth={2} name="累積時間(分)" />
               </ComposedChart>
             </ResponsiveContainer>

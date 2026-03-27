@@ -13,9 +13,9 @@ Statsカードのデザイン改善のための要件。曜日表示の修正と
 
 ### グラフ見やすさ
 
-- [ ] **STAT-02**: グラフサイズと余白の調整（Phase 22）
+- [x] **STAT-02**: グラフサイズと余白の調整（Phase 22で完了）
 - [ ] **STAT-03**: 水平グリッドラインの追加（スコープ外 — CONTEXT.mdで「追加しない」決定）
-- [ ] **STAT-04**: 軸スタイルの改善（shadcn/ui準拠）（Phase 22）
+- [x] **STAT-04**: 軸スタイルの改善（shadcn/ui準拠）（Phase 22で完了）
 
 ## v2 Requirements
 
@@ -49,9 +49,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | STAT-01 | Phase 21 | Complete |
-| STAT-02 | Phase 22 | Pending |
+| STAT-02 | Phase 22 | Complete |
 | STAT-03 | Phase 22 | Out of scope（CONTEXT.mdで「追加しない」決定） |
-| STAT-04 | Phase 22 | Pending |
+| STAT-04 | Phase 22 | Complete |
 
 **Coverage:**
 - v1.6.2 requirements: 4 total
@@ -61,4 +61,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-27*
-*Last updated: 2026-03-27 after Phase 22 planning*
+*Last updated: 2026-03-27 after Phase 22 completion*

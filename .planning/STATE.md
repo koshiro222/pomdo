@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-27T05:00:56.051Z"
+last_updated: "2026-03-27T05:36:52.826Z"
 progress:
   total_phases: 22
-  completed_phases: 21
-  total_plans: 51
-  completed_plans: 51
+  completed_phases: 22
+  total_plans: 52
+  completed_plans: 52
 ---
 
 # STATE: Pomdo
 
 **Last Updated:** 2026-03-27
-**Milestone:** v1.6.2 Statsカードデザイン改善 — IN PROGRESS
+**Milestone:** v1.6.2 Statsカードデザイン改善 — COMPLETE
 
 ## Project Reference
 
@@ -22,12 +22,12 @@ See: `.planning/PROJECT.md` (updated 2026-03-27)
 
 **Core Value:** ユーザーが集中して作業を完了できるようにする。タイマー、タスク、BGMがシームレスに連携する。
 
-**Current Focus:** Phase 21 — 曜日表示修正
+**Current Focus:** Phase 22 (graph-ui-improvements) — COMPLETE
 
 ## Current Position
 
-Phase: 21 (曜日表示修正) — EXECUTING
-Plan: 1 of 1
+Phase: 22 (graph-ui-improvements) — COMPLETE
+Plan: 1 of 1 — COMPLETE
 
 ## Decisions
 
@@ -43,23 +43,29 @@ Plan: 1 of 1
 - 2フェーズ構成: データ修正（Phase 21）→ UI改善（Phase 22）
 - 曜日表示を日曜始まりに変更（日本のカレンダー文化に対応）
 - Recharts標準機能のみ使用（追加ライブラリ不要）
+- 動的aspect比計算でレスポンシブ対応（`Math.max(200, containerWidth * 0.4)`）
+- shadcn/ui準拠のミニマル軸スタイル（`tickLine={false}`, `axisLine={false}`, `stroke="#9ca3af"`）
+- Barコンポーネントに`radius={8}`で角を丸めてデザイン統一
 
 ## Performance Metrics
 
 **Velocity:**
 
 - Total plans completed (v1.6.1): 2
-- Total plans completed (all): 51
+- Total plans completed (v1.6.2): 2
+- Total plans completed (all): 52
 
 **By Phase:**
 
 - Phase 19 (css): 1 plan (2 min, 2 tasks, 1 file)
 - Phase 20 (bgmplayer): 1 plan (15 min, 3 tasks, 1 file)
+- Phase 21 (stats-week-start): 1 plan (5 min, 2 tasks, 1 file)
+- Phase 22 (graph-ui-improvements): 1 plan (15 min, 3 tasks, 1 file)
 
 **Current Milestone (v1.6.2):**
 
-- Phase 21: 0/1 plans
-- Phase 22: 0/3 plans
+- Phase 21: 1/1 plans — COMPLETE
+- Phase 22: 1/1 plans — COMPLETE
 
 ## Accumulated Context
 
@@ -80,27 +86,26 @@ Plan: 1 of 1
 
 なし
 
-### Todos
+### Completed Requirements
 
 **Phase 21: 曜日表示修正**
 
-- [ ] STAT-01: 曜日配列を日曜始まりに変更
-- [ ] getDayLabel()関数のロジック修正
-- [ ] 曜日表示の検証
+- [x] STAT-01: 曜日配列を日曜始まりに変更
+- [x] getDayLabel()関数のロジック修正
+- [x] 曜日表示の検証
 
 **Phase 22: グラフUI改善**
 
-- [ ] STAT-02: グラフサイズと余白の調整
-- [ ] STAT-03: 水平グリッドラインの追加
-- [ ] STAT-04: 軸スタイルの改善（shadcn/ui準拠）
+- [x] STAT-02: グラフサイズと余白の調整
+- [x] STAT-04: 軸スタイルの改善（shadcn/ui準拠）
 
 ## Session Continuity
 
-Last session: 2026-03-27T05:00:56.045Z
-Resume file: .planning/phases/22-graph-ui-improvements/22-CONTEXT.md
+Last session: 2026-03-27T05:34:05.000Z
+Resume file: .planning/phases/22-graph-ui-improvements/22-01-SUMMARY.md
 
-**Milestone v1.6.2 roadmap created. Next: /gsd:plan-phase 21**
+**Milestone v1.6.2 COMPLETE. Summary created at 22-01-SUMMARY.md**
 
 ---
 *State updated: 2026-03-27*
-*Milestone v1.6.2 roadmap created*
+*Phase 22 COMPLETE — All tasks executed and documented*

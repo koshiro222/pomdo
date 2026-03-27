@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-27T04:51:10.922Z"
+last_updated: "2026-03-27T05:00:56.051Z"
 progress:
-  total_phases: 21
+  total_phases: 22
   completed_phases: 21
   total_plans: 51
   completed_plans: 51
@@ -96,8 +96,8 @@ Plan: 1 of 1
 
 ## Session Continuity
 
-Last session: 2026-03-27
-Resume file: None
+Last session: 2026-03-27T05:00:56.045Z
+Resume file: .planning/phases/22-graph-ui-improvements/22-CONTEXT.md
 
 **Milestone v1.6.2 roadmap created. Next: /gsd:plan-phase 21**
 

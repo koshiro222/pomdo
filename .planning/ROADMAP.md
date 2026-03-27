@@ -13,7 +13,7 @@
 - ✅ **v1.5 カードヘッダー統一** — Phase 16 (shipped 2026-03-24)
 - ✅ **v1.6 TodoカードUI/UX改善** — Phases 17-18 (shipped 2026-03-25)
 - ✅ **v1.6.1 BGMプレイヤーアニメーション刷新** — Phases 19-20 (shipped 2026-03-27)
-- 🔄 **v1.6.2 Statsカードデザイン改善** — Phases 21-22 (in progress)
+- ✅ **v1.6.2 Statsカードデザイン改善** — Phases 21-22 (shipped 2026-03-27)
 
 ## Progress Summary
 
@@ -27,9 +27,9 @@
 | 16 | v1.5 | 2/2 | Complete | 2026-03-24 |
 | 17-18 | v1.6 | 7/7 | Complete | 2026-03-25 |
 | 19-20 | v1.6.1 | 2/2 | Complete | 2026-03-27 |
-| 21-22 | v1.6.2 | 1/2 | In progress | - |
+| 21-22 | v1.6.2 | 2/2 | Complete | 2026-03-27 |
 
-**Completed:** 51/51 plans (v1.0-v1.6.1)
+**Completed:** 52/52 plans (v1.0-v1.6.2)
 
 ## Phases
 
@@ -125,7 +125,7 @@
 4. キーボードナビゲーションとスクリーンリーダー対応が有効化されている
 
 **Plans:**
-- [ ] 22-01-PLAN.md — グラフサイズと余白の調整、軸スタイルの改善（shadcn/ui準拠）
+- [x] 22-01-PLAN.md — グラフサイズと余白の調整、軸スタイルの改善（shadcn/ui準拠）
 
 </details>
 

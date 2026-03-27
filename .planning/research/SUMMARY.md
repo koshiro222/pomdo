@@ -1,137 +1,157 @@
-# プロジェクト研究サマリー
+# Project Research Summary
 
-**Project:** Pomdo v1.6.1 BGMプレイヤーアニメーション刷新
-**Domain:** フロントエンドUIアニメーション / CSSアニメーション
-**Researched:** 2026-03-26
+**Project:** Pomdo v1.6.2 Statsカードデザイン改善
+**Domain:** 統計グラフ改善（既存アプリへの改良）
+**Researched:** 2026-03-27
 **Confidence:** HIGH
 
-## エグゼクティブサマリー
+## Executive Summary
 
-BGMプレイヤーのアニメーション刷新は、既存の回転円盤アニメーションから点滅+パルスエフェクトへの移行プロジェクトです。研究の結果、**新規ライブラリは不要**であり、既存のTailwind CSS v4とCSS keyframesのみで完結可能であることが明らかになりました。Framer Motionはプロジェクトで既に使用されていますが、単純なループアニメーションにはCSS keyframesが最適であり、パフォーマンスとシンプルさの観点から推奨されます。
+PomdoのStatsカードグラフ改善は、既存のRecharts 3.8.0を使用した改良プロジェクトです。追加ライブラリは不要で、Rechartsの標準機能でサイズ調整、余白、ラベル、色のカスタマイズが可能です。専門家はデータ可視化において「シンプルさ」と「正確性」を重視し、過度な装飾や3D効果は避けるべきであるとしています。
 
-推奨されるアプローチは、`index.css`に`blink`と`pulse-glow`の@keyframesを定義し、`AlbumArt`コンポーネントで条件付きCSSクラスを適用することです。主要なリスクとして、光感受性エピレプシー違反（WCAG 2.3.1）、パフォーマンス劣化（reflow）、アクセシビリティ（prefers-reduced-motion）の3つが特定されました。これらは適切なガイドラインに従うことで回避可能です。
+推奨されるアプローチは、3段階のフェーズで改善を行うことです。まず曜日表示を日曜始まりに変更（データロジック修正）、次にグラフ設定の改善（余白、軸スタイル、ツールチップ）、最後にレスポンシブ対応を強化します。主要なリスクは、レスポンシブデザインの破綻（モバイルでグラフが潰れる）、アクセシビリティ不足（アニメーションと色コントラスト）、国際化対応の不備です。これらは`prefers-reduced-motion`の制御、CSS変数によるテーマ対応、`Intl.DateTimeFormat`の使用で軽減可能です。
 
-## 主要な発見
+## Key Findings
 
-### 推奨スタック
+### Recommended Stack
 
-**新規ライブラリは不要**。既存パッケージのみで完結します。
+追加ライブラリは不要です。既存のRecharts 3.8.0で全機能が実現可能です。
 
-**コア技術:**
-- **CSS keyframes** — 点滅・パルスアニメーション — GPUアクセラレーションが効き、パフォーマンス良好
-- **Tailwind CSS v4** — ユーティリティクラス適用 — `animate-[<value>]`構文でカスタムアニメーション適用可能
-- **framer-motion** — 他コンポーネントで使用中 — 今回のアニメーションには使用せず、CSS keyframesを採用
+**Core technologies:**
+- **Recharts 3.8.0**: グラフ描画 — Reactネイティブで軽量、宣言的API。既に導入済みでv3.8+は高度なカスタマイズ機能を備える
+- **React 19.2.0**: UIフレームワーク — 既存コードベース
+- **TypeScript 5.9.3**: 型安全 — 既存コードベース
+- **Tailwind CSS 4.2.1**: スタイリング — 既存コードベース
 
-### 期待される機能
+Recharts 3.8.0の標準機能で実現可能な改善点：
+- グラフサイズ調整：`ResponsiveContainer`の`width`/`height`/`minHeight`
+- 余白調整：`ComposedChart`の`margin`プロパティ
+- 軸ラベル改善：`XAxis`/`YAxis`の`tick`/`tickMargin`/`fontSize`
+- 色のカスタマイズ：`Bar`/`Line`の`fill`/`stroke`プロパティ
+- 日曜始まり表示：データ配列の順序調整（ロジック側で対応）
 
-**必須機能（Table Stakes）:**
-- **点滅アニメーション（Blink）** — 再生中かどうかを瞬時に認識するため必須
-- **パルスエフェクト（Pulse）** — 音楽の「鼓動」を視覚的に表現するために必須
-- **prefers-reduced-motion対応** — アクセシビリティ要件（WCAG 2.3.3）
+### Expected Features
 
-**競争力のある機能（Differentiators）:**
-- **カラーに応じたパルス色** — BGMトラックの色に合わせたglow効果
+**Must have (table stakes):**
+- **曜日ラベルの表示** — グラフの軸が何を表しているか理解するために必要
+- **余白とパディングの適切さ** — グラフ要素が窮屈だと読みにくい
+- **カラーコントラスト** — データが視認できないと意味がない
+- **ホバー時のツールチップ** — 正確な数値を確認するために必要
+- **レスポンシブ対応** — モバイルとデスクトップ両方で見る必要がある
 
-**延期（v2+）:**
-- **ユニークな点滅パターン** — 複数のkeyframeを組み合わせたリズミカルな表現はMVP後の改善候補
+**Should have (competitive):**
+- **日曜始まりの曜日表示** — 日本のカレンダー文化（日曜始まり）に合わせる
+- **複合チャート（Bar + Line）** — 1つのグラフで2つの指標を同時に把握できる（既に実装済み）
+- **タブ切り替え（Today/Week/Month）** — 異なる時間軸で同じデータを素早く確認できる（既に実装済み）
+- **空状態のデザイン** — データがない時も混乱させない親切なUI（既に実装済み）
 
-### アーキテクチャアプローチ
+**Defer (v2+):**
+- **3Dグラフ** — データの歪み、可読性低下、パフォーマンス悪化の原因
+- **過度なアニメーション** — 気分の悪さ、データの追跡困難、アクセシビリティ低下
+- **多数のデータ系列** — 情報過多、主要なインサイトが見えなくなる
+- **複雑なツールチップ** — ホバー時の認知負荷増加
 
-アニメーションは完全にクライアントサイドで完結し、外部サービスは不要です。`useBgm()`フックから再生状態（`isPlaying`）が`BgmPlayer`コンポーネントに伝達され、さらに`AlbumArt`コンポーネントへpropsとして渡されます。`AlbumArt`は`isPlaying`に基づいてCSSクラスを条件付きで付与し、CSS @keyframesがアニメーションを実行します。
+### Architecture Approach
 
-**主要コンポーネント:**
-1. **AlbumArt** — 再生中のビジュアルフィードバック、isPlayingに応じたアニメーション制御
-2. **BgmPlayer** — useBgmフック経由で再生状態を管理、AlbumArtにpropsを渡す
-3. **index.css** — @keyframes定義、アニメーションクラスのグローバル定義
+Statsカードの改善は既存の`StatsCard.tsx`単一ファイル内で完結します。新規ファイルは不要です。データフローは`usePomodoro` → `sessions` → `weeklyData`で変更ありません。
 
-### 重要な落とし穴
+**Major components:**
+1. **StatsCard.tsx** — 統計UIのレンダリング、タブ管理、データ集計
+2. **usePomodoro Hook** — セッションデータの取得・保存・同期
+3. **getDayLabel()** — 曜日ラベルの生成（日曜始まり対応）
+4. **ComposedChart** — 週間統計のグラフ描画
 
-1. **光感受性エピレプシー違反** — animation-durationは最低0.5秒以上（推奨2秒以上）、opacityの最小値は0.4以上
-2. **パフォーマンス劣化（reflow）** — width/height/margin/paddingを避け、transform/opacityのみ使用
-3. **prefers-reduced-motion未対応** — `@media (prefers-reduced-motion: reduce)`でアニメーションを無効化
-4. **既存album-art-spinningクラスの残滓** — グレップ検索で完全削除し、レビューで確認
+改善パターンは3段階です。まず`getDayLabel`関数を修正（曜日配列を日曜始まりに変更、計算ロジック簡素化）。次に`ComposedChart`のpropsを追加（margin, axisLine, tickLine等）で見た目を改善。最後に`ResponsiveContainer`の高さを`100%`に変更し、親コンテナに`flex-1 min-h-[200px]`を追加してレスポンシブ対応を強化します。
 
-## ロードマップへの影響
+### Critical Pitfalls
 
-研究に基づき、推奨フェーズ構造：
+1. **レスポンシブコンテナの親要素サイズ不足** — モバイルでグラフが潰れるのを防ぐため、`flex-1` + `min-h-0`の組み合わせを維持し、グラフの高さを固定値（200など）で指定する
+2. **アニメーションとprefers-reduced-motionの競合** — `isAnimationActive={!prefersReducedMotion}`で制御し、光感受性ユーザーに配慮する
+3. **色コントラスト不足による視認性低下** — CSS変数経由で色を取得（テーマ対応）し、複数の背景色パターンでコントラストを検証する
+4. **日付フォーマットの国際化非対応** — `Intl.DateTimeFormat`でフォーマットし、ユーザーのロケール設定を取得する
+5. **データ追加時の不要な再レンダリング** — `useMemo`でデータ集計をメモ化し、セッション変更時のみ再計算する
 
-### Phase 1: CSSアニメーション定義
-**根拠:** すべてのアニメーションの基盤となるCSS keyframes定義を最初に完了させることで、以降のコンポーネント修正がスムーズになります。
-**成果:** index.cssにblinkとpulse-glowの@keyframes定義、アニメーションクラス
-**対応機能:** FEATURES.mdの点滅アニメーション、パルスエフェクト
-**回避すべき落とし穴:** PITFALLS.mdの光感受性エピレプシー違反（durationとopacityの適切な設定）
+## Implications for Roadmap
 
-### Phase 2: BgmPlayerコンポーネント修正
-**根拠:** AlbumArtコンポーネントはBgmPlayer内で定義されているため、CSS定義の完了後にコンポーネント修正を行います。
-**成果:** album-art-spinningクラスの削除、新しいアニメーションクラスの適用
-**使用スタック:** STACK.mdのCSS keyframes、ARCHITECTURE.mdの条件付きクラスパターン
-**実装:** ARCHITECTURE.mdのAlbumArtコンポーネント
-**回避すべき落とし穴:** PITFALLS.mdの既存クラスの残滓
+Based on research, suggested phase structure:
 
-### Phase 3: prefers-reduced-motion対応
-**根拠:** アクセシビリティ対応はアニメーション実装の完了後に検証します。基本機能が動作してから、OS設定を尊重する機能を追加します。
-**成果:** @mediaクエリによるアニメーション無効化、静的な状態変更
-**対応機能:** FEATURES.mdのprefers-reduced-motion対応
-**使用スタック:** PITFALLS.mdの予防策
+### Phase 1: 曜日表示修正（日曜始まり対応）
+**Rationale:** データ変更はUI変更よりも影響範囲が大きいため、最初に検証する必要がある
+**Delivers:** 日曜始まりの曜日ラベル表示
+**Addresses:** 日本のカレンダー文化に合わせる（Table Stakes）
+**Avoids:** 曜日順序のハードコーディングによるインデックス計算ミス
 
-### Phase 4: パフォーマンス検証
-**根拠:** 実装完了後、実際にモバイル端末でフレームレートを確認し、必要に応じて最適化を行います。
-**成果:** Chrome DevToolsでのパフォーマンス確認、will-changeプロパティの追加
-**回避すべき落とし穴:** PITFALLS.mdのパフォーマンス劣化（reflow）
+### Phase 2: グラフ設定改善
+**Rationale:** データが正しい状態であれば、UI調整は安全に反復可能
+**Delivers:** 余白調整、軸スタイリング、ツールチップ改善、グリッドライン追加
+**Uses:** Recharts ComposedChartのmargin, XAxis/YAxisスタイル, Tooltipカスタマイズ
+**Implements:** 視覚的な読みやすさ向上（Table Stakes + Differentiators）
 
-### フェーズ順序の根拠
+### Phase 3: レスポンシブ対応強化
+**Rationale:** 最後にレスポンシブ挙動を調整することで、他の変更に影響されない
+**Delivers:** モバイルとデスクトップ両方での最適表示
+**Addresses:** レスポンシブ対応（Table Stakes）
+**Avoids:** 親要素サイズ不足によるレイアウト崩れ
 
-- **CSS定義→コンポーネント修正**の順序により、コンポーネント修正時にCSSクラスが既に存在することを保証
-- **基本機能→アクセシビリティ対応**の順序により、まずアニメーションが動作することを確認してから、OS設定を尊重する機能を追加
-- **実装→検証**の順序により、実際のパフォーマンス問題を特定してから最適化を実施
+### Phase 4: アクセシビリティ対応
+**Rationale:** アニメーション制御と色コントラストは、基本機能完成後の品質向上フェーズで実装
+**Delivers:** prefers-reduced-motion対応、テーマ対応の色設定
+**Uses:** CSS変数、メディアクエリ
+**Avoids:** アニメーションによるアクセシビリティ低下、色コントラスト不足
 
-この順序により、各フェーズで前のフェーズの出力を利用でき、反復作業を回避できます。
+### Phase Ordering Rationale
 
-### 研究フラグ
+- 曜日表示を最初に修正する理由：データロジックの変更が最も影響範囲が大きく、UI変更前の正確性を担保する必要があるため
+- グラフ設定を次に行う理由：データが正しい状態であれば、視覚的な調整は安全に反復可能で、フィードバックループを回しやすい
+- レスポンシブ対応を後に行う理由：他の変更による影響を受けず、最終的なレイアウト確認ができる
+- アクセシビリティ対応を最後に行う理由：基本機能完成後の品質向上として、追加の複雑さを導入しない
 
-**追加研究が必要なフェーズ:**
-- **なし** — すべてのフェーズで標準的なCSSアニメーションパターンを使用しており、研究から得られた情報で十分
+この順序で行うことで、アーキテクチャパターン（データ→UI→レスポンシブ→品質）に従い、各段階での落とし穴を回避できます。
 
-**標準パターンのフェーズ（研究フェーズをスキップ）:**
-- **Phase 1:** CSS @keyframes定義は標準的なWeb開発パターン
-- **Phase 2:** 条件付きCSSクラス付与はReactの基本パターン
-- **Phase 3:** prefers-reduced-motion対応はMDNで文書化された標準手法
-- **Phase 4:** パフォーマンス検証はChrome DevToolsの標準機能
+### Research Flags
 
-## 信頼性評価
+Phases likely needing deeper research during planning:
+- **Phase 4（アクセシビリティ対応）:** 複雑な統合、CSS変数のテーマ対応でのコントラスト検証が必要
 
-| 領域 | 信頼度 | 理由 |
-|------|--------|------|
-| スタック | HIGH | 公式ドキュメント（Framer Motion、Tailwind CSS）と既存コードベースの分析に基づく |
-| 機能 | HIGH | MDNとW3Cの公式ドキュメントに基づき、具体的な数値基準を提供 |
-| アーキテクチャ | HIGH | 既存コードベースの分析と標準的なReactパターンに基づく |
-| 落とし穴 | HIGH | MDNとweb.devの公式ドキュメント、WCAGガイドラインに基づく |
+Phases with standard patterns (skip research-phase):
+- **Phase 1（曜日表示修正）:** よく文書化されたDate APIパターン、既存コードでの実装経験あり
+- **Phase 2（グラフ設定改善）:** Recharts公式ドキュメントで完全にサポートされている標準機能
+- **Phase 3（レスポンシブ対応強化）:** FlexboxとResponsiveContainerの確立されたパターン
 
-**全体の信頼度:** HIGH
+## Confidence Assessment
 
-### 対処すべきギャップ
+| Area | Confidence | Notes |
+|------|------------|-------|
+| Stack | HIGH | 型定義ファイルから直接検証。Recharts 3.8.0の全機能を確認 |
+| Features | MEDIUM | 一般的なデータ可視化ベストプラクティスに基づくが、ウェブ検索はレートリミットにより実行不可 |
+| Architecture | HIGH | 既存コードベースとRechartsパターンに基づく |
+| Pitfalls | MEDIUM | 既存コード分析と一般的な落とし穴に基づくが、実際のデバイスでの検証が必要 |
 
-- **光感受性エピレプシーの最新ガイドライン:** WebSearchツールが結果を返さなかったため、2026年の最新ガイドラインを確認できていない。ただし、MDNとWCAGの情報に基づき安全なデフォルト値（duration: 2s、opacity min: 0.4）を設定しているため、実装上の問題はない
-- **Edge Runtime固有の制約:** Cloudflare Workers環境でのCSSアニメーション動作に関する具体的な制約は、クライアントサイドアニメーションであるため影響しない
-- **モバイル端末でのベンチマーク:** パルスエフェクトの実際のパフォーマンス影響については、Phase 4での検証で確認
+**Overall confidence:** HIGH
 
-## 情報源
+### Gaps to Address
 
-### 主要（HIGH信頼度）
-- [Framer Motion Animation公式ドキュメント](https://www.framer.com/motion/animation/) — keyframes、repeat、transitionオプション
-- [Tailwind CSS v4 Animation公式ドキュメント](https://tailwindcss.com/docs/animation) — animate-pulse、animate-[<value>]構文
-- [MDN: @keyframes](https://developer.mozilla.org/en-US/docs/Web/CSS/@keyframes) — CSSアニメーション基本
-- [W3C WAI: C39 - Using the CSS reduce-motion query](https://www.w3.org/WAI/WCAG21/Techniques/css/C39.html) — prefers-reduced-motion実装
-- [MDN: prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) — 2025年8月更新の最新情報
-- [web.dev: prefers-reduced-motion](https://web.dev/prefers-reduced-motion/) — Google公式ベストプラクティス
-- 既存コードベース（`src/index.css`、`src/components/bgm/BgmPlayer.tsx`） — 実装済みコードの分析
+- **曜日フォーマットの国際化:** 現在は英語略称（Sun/Mon...）で固定。将来的には`Intl.DateTimeFormat`でのロケール対応が必要だが、v1.6.2では日本向けに固定で問題なし
+- **色コントラストの具体的な検証:** CSS変数`var(--cf-primary)`が全テーマでWCAG AA基準（3:1）を満たすか、実際のテーマでの検証が必要
+- **モバイル環境での最適なグラフ高さ:** 現在は`height={200}`を推奨しているが、様々なデバイスでの検証が必要
 
-### 二次（MEDIUM信頼度）
-- [WCAG 2.3.1 - Three Flashes or Below Threshold](https://www.w3.org/WAI/WCAG21/Understanding/three-flashes-or-below.html) — 光感受性エピレプシーに関するガイドライン（URLは404だが一般的なWCAG知識に基づく記載）
+## Sources
 
-### 三次（LOW信頼度）
-- なし
+### Primary (HIGH confidence)
+- Recharts公式ドキュメント: https://recharts.org — ComposedChart, XAxis, YAxis, Bar, Line, Tooltip, ResponsiveContainer
+- Recharts Type Definitions (node_modules/recharts/types/) — v3.8.0のローカル型定義ファイル
+- 既存コードベース: src/components/stats/StatsCard.tsx — 現在の実装
+- WCAG 2.1 Guidelines: https://www.w3.org/WAI/WCAG21/quickref/ — アクセシビリティ基準
+
+### Secondary (MEDIUM confidence)
+- ISO 8601標準: https://www.iso.org/standard/70907.html — 週の始まりに関する国際標準
+- MDN Web Docs - Date.getDay(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getDay — 曜日インデックスの取得
+- MDN Web Docs - Intl.DateTimeFormat: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat — 国際化API
+
+### Tertiary (LOW confidence)
+- 日本のカレンダーにおける日曜始まりの割合 — 推定では80%以上だが、具体的な統計データの検証が必要
+- モバイル環境での最適なグラフ高さ — デバイスごとの検証が必要
 
 ---
-*研究完了日: 2026-03-26*
-*ロードマップ準備完了: はい*
+*Research completed: 2026-03-27*
+*Ready for roadmap: yes*

@@ -1,293 +1,305 @@
-# Architecture Research
+# Architecture Patterns
 
-**Domain:** BGMプレイヤーアニメーション刷新（点滅+パルスエフェクト）
-**Researched:** 2026-03-26
-**Confidence:** HIGH
+**Domain:** Statsカードデザイン改善
+**Researched:** 2026-03-27
 
-## Standard Architecture
-
-### System Overview
+## 推奨アーキテクチャ
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        BgmPlayer                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │                    AlbumArt                          │    │
-│  │  ┌──────────────────────────────────────────────┐   │    │
-│  │  │         アニメーションレイヤー構造            │   │    │
-│  │  │  1. 背景コンテナ（点滅エフェクト）            │   │    │
-│  │  │  2. パルスレイヤー（広がるglow）              │   │    │
-│  │  │  3. メインコンテンツ（Musicアイコン）          │   │    │
-│  │  │  4. 中心インジケーター（点滅）                 │   │    │
-│  │  └──────────────────────────────────────────────┘   │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-           ↓ (isPlaying state)
-┌─────────────────────────────────────────────────────────────┐
-│              CSSアニメーション定義（index.css）                │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ @keyframes   │  │ @keyframes   │  │  Class制御   │      │
-│  │   blink      │  │   pulse      │  │   条件付き   │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│                   StatsCard.tsx                     │
+│  ┌─────────────────────────────────────────────┐   │
+│  │         usePomodoro Hook                     │   │
+│  │  - sessions: Session[]                      │   │
+│  │  - loading: boolean                         │   │
+│  │  - fetchSessions()                          │   │
+│  └─────────────────────────────────────────────┘   │
+│                      ↓                             │
+│  ┌─────────────────────────────────────────────┐   │
+│  │     データ集計レイヤー                       │   │
+│  │  - getDayLabel(dateStr): string             │   │
+│  │  - weeklyData: WeeklyData[]                 │   │
+│  │  - todayStats                               │   │
+│  │  - monthlyStats                             │   │
+│  └─────────────────────────────────────────────┘   │
+│                      ↓                             │
+│  ┌─────────────────────────────────────────────┐   │
+│  │       Recharts ComposedChart                 │   │
+│  │  - XAxis (曜日ラベル)                        │   │
+│  │  - YAxis (left/right)                        │   │
+│  │  - Bar (セッション数)                        │   │
+│  │  - Line (累積時間)                           │   │
+│  │  - Tooltip                                   │   │
+│  └─────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
 ```
 
-### Component Responsibilities
+### コンポーネント境界
 
-| Component | Responsibility | Typical Implementation |
-|-----------|----------------|------------------------|
-| AlbumArt | 再生中のビジュアルフィードバック、isPlayingに応じたアニメーション制御 | 条件付きCSSクラス付与、style属性での動的色指定 |
-| BgmPlayer | useBgmフック経由で再生状態を管理、AlbumArtにpropsを渡す | State管理のみ、アニメーションロジックは含まない |
-| index.css | @keyframes定義、アニメーションクラスのグローバル定義 | Tailwind CSSベース、カスタムアニメーション追加 |
+| コンポーネント | 責任 | 通信先 |
+|----------------|------|---------|
+| `StatsCard.tsx` | 統計UIのレンダリング、タブ管理、データ集計 | `usePomodoro` hook、Recharts |
+| `usePomodoro` | セッションデータの取得・保存・同期 | tRPC API、localStorage |
+| `getDayLabel()` | 曜日ラベルの生成（日曜始まり対応） | `weeklyData` 集計ロジック |
+| `ComposedChart` | 週間統計のグラフ描画 | `weeklyData[]`、Recharts props |
 
-## Recommended Project Structure
+### データフロー
 
 ```
-src/
-├── components/
-│   └── bgm/
-│       ├── BgmPlayer.tsx       # AlbumArt呼び出し、isPlaying state管理
-│       └── AlbumArt.tsx        # 新CSSクラス適用、点滅+パルスエフェクト実装
-├── lib/
-│   └── animation.ts            # 既存アニメーション定義（Framer Motion）
-└── index.css                   # 新@keyframes定義（blink, pulse-bg）
+1. セッションデータ取得
+   usePomodoro → sessions: Session[]
+   ├─ ログイン済み: tRPC pomodoro.getSessions
+   └─ ゲストモード: localStorage.getPomodoroSessions()
+
+2. データ集計
+   completedSessions = sessions.filter(s => s.completedAt !== null)
+
+   weeklyData集計ループ:
+   for i = 6 to 0:
+     date = today - i days
+     daySessions = sessions.filter(同一日付)
+     dayMinutes = sum(daySessions.durationSecs / 60)
+     cumulativeTotal += dayMinutes
+     weeklyData.push({
+       date: getDayLabel(dateStr),  // ← 日曜始まり修正ポイント
+       sessions: daySessions.length,
+       cumulativeMinutes: cumulativeTotal
+     })
+
+3. グラフ描画
+   ComposedChart data={weeklyData}
+   ├─ XAxis dataKey="date" (曜日ラベル)
+   ├─ Bar yAxisId="left" dataKey="sessions"
+   └─ Line yAxisId="right" dataKey="cumulativeMinutes"
 ```
 
-### Structure Rationale
+## 改善パターン
 
-- **components/bgm/**: BGM関連UIコンポーネントを集約、AlbumArtはBgmPlayerからのみ使用
-- **lib/animation.ts**: Framer MotionのVariants定義、今回は使用せずCSSアニメーションで実装
-- **index.css**: グローバルな@keyframes定義、Tailwind CSSとの統合
+### パターン1: getDayLabel関数修正（日曜始まり対応）
 
-## Architectural Patterns
-
-### Pattern 1: 条件付きCSSクラスによるアニメーション制御
-
-**What:** `isPlaying` stateに基づいてCSSアニメーションクラスを条件付きで付与
-
-**When to use:** 状態に応じたアニメーションの有効/無効を切り替える場合
-
-**Trade-offs:**
-- ✓ シンプルで理解しやすい
-- ✓ CSS側にアニメーションロジックを集約できる
-- ✓ JavaScriptのパフォーマンス影響が最小限
-- ✗ 複雑なアニメーション制御には不向き
-
-**Example:**
+**現状:**
 ```typescript
-// AlbumArt.tsx
-<div className={`base-class ${isPlaying ? 'animate-blink' : ''}`}>
-  {/* コンテンツ */}
-</div>
-```
+function getDayLabel(dateStr: string): string {
+  const date = new Date(dateStr)
+  const today = new Date()
+  const isToday = date.toDateString() === today.toDateString()
+  if (isToday) return 'Today'
 
-### Pattern 2: 多層アニメーションレイヤー
-
-**What:** 単一のコンポーネント内に複数のアニメーション効果をレイヤー状に重ねる
-
-**When to use:** 複数の独立したアニメーション効果を組み合わせる場合
-
-**Trade-offs:**
-- ✓ 視覚効果の組み合わせが容易
-- ✓ 各レイヤーを独立して制御可能
-- ✗ DOM深度が増す可能性
-- ✗ アニメーション同期の考慮が必要
-
-**Example:**
-```typescript
-// レイヤー構造
-<div className="background-container"> {/* 点滅エフェクト */}
-  <div className="pulse-layer"> {/* パルスエフェクト */}
-    <div className="content-layer"> {/* メインコンテンツ */}
-      <Music className="icon" />
-    </div>
-  </div>
-</div>
-```
-
-### Pattern 3: Tailwind CSSのanimate-*
-
-**What:** Tailwind CSS v4の`tw-animate-css`を使用して標準アニメーションを適用
-
-**When to use:** シンプルな点滅・パルスエフェクトなど、標準的なアニメーションの場合
-
-**Trade-offs:**
-- ✓ 追加のCSS記述が不要
-- ✓ ビルド時の最適化が自動
-- ✗ カスタマイズには@keyframes定義が必要
-- ✗ 複雑なタイミング制御には制限あり
-
-**Example:**
-```typescript
-// Tailwind標準アニメーション
-<div className="animate-pulse"> {/* Tailwind標準 */}
-```
-
-## Data Flow
-
-### State Flow
-
-```
-useBgm Hook
-    ↓ (isPlaying: boolean)
-BgmPlayer Component
-    ↓ (prop: isPlaying)
-AlbumArt Component
-    ↓ (conditional class)
-DOM Element (className="animate-blink animate-pulse")
-    ↓ (browser renders)
-CSS Animation (@keyframes)
-```
-
-### Animation Flow
-
-```
-isPlaying === true
-    ↓
-AlbumArt applies classes:
-  - "album-art-blink" (opacity: 0.7 ↔ 1.0)
-  - "album-art-pulse" (scale: 1.0 ↔ 1.1, glow spread)
-    ↓
-CSS @keyframes execute:
-  - blink: 2s ease-in-out infinite
-  - pulse-bg: 2s ease-out infinite
-    ↓
-Visual Output:
-  - 背景が明滅
-  - グローが広がる
-  - 中心インジケーターが点滅
-```
-
-### Key Data Flows
-
-1. **再生状態伝達:** `useBgm()` → `BgmPlayer` → `AlbumArt` （props経由）
-2. **アニメーション適用:** `AlbumArt` → DOM `className` → CSS `@keyframes`
-3. **動的スタイル:** `currentTrack.color` → inline `style` → `background`, `boxShadow`
-
-## Scaling Considerations
-
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 現在（1アニメーション） | CSS @keyframesで十分、パフォーマンス問題なし |
-| 複数アニメーション（5+） | アニメーション設定を別ファイルに抽出、テーマ化 |
-| カスタマイズ要件増加 | CSS Variablesを使用してアニメーション速度を動的制御 |
-
-### Scaling Priorities
-
-1. **First bottleneck:** アニメーション速度のハードコーディング → CSS Variablesで解決
-2. **Second bottleneck:** 複数の@keyframes定義の散乱 → 専用CSSファイルへの分離
-
-## Anti-Patterns
-
-### Anti-Pattern 1: JavaScript側でのアニメーション制御
-
-**What people do:** `requestAnimationFrame`や`setInterval`で直接DOMを操作
-
-**Why it's wrong:** パフォーマンス劣化、メインスレッドブロック、コード複雑化
-
-**Do this instead:** CSSアニメーションを使用（GPUアクセラレーションが自動適用）
-
-### Anti-Pattern 2: 単一クラスに複数の@keyframesを混在
-
-**What people do:** 1つのクラスで回転・点滅・パルスを全て制御しようとする
-
-**Why it's wrong:** アニメーションの個別制御が不可能、保守性低下
-
-**Do this instead:** 責務を分離（blinkクラス、pulseクラス、pausedクラス）
-
-### Anti-Pattern 3: !importantでのCSS上書き乱用
-
-**What people do:** アニメーション競合を!importantで解決
-
-**Why it's wrong:** 保守不可能、スタイル優先順序の混乱
-
-**Do this instead:** クラスの設計を見直し、セレクタの特異度を適切に管理
-
-## Integration Points
-
-### External Services
-
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| なし | — | アニメーションは完全にクライアントサイドで完結 |
-
-### Internal Boundaries
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| BgmPlayer ↔ AlbumArt | Props（isPlaying, color） | 一方向データフロー、Eventなし |
-| AlbumArt ↔ CSS | className条件付き付与 | 直接的なDOM操作なし |
-| index.css ↔ Tailwind | @layer baseでの統合 | 既存の@keyframesパターンに従う |
-
-## Implementation Guide
-
-### 変更範囲
-
-**削除:**
-- `album-art-spinning` クラス（回転アニメーション）
-- `album-art-paused` クラス（アニメーション一時停止、現在は未使用）
-
-**追加:**
-1. **@keyframes定義（index.css）**
-   - `blink`: opacity 0.7 ↔ 1.0, scale 0.98 ↔ 1.0
-   - `pulse-bg`: box-shadowの広がり + scale微増
-
-2. **CSSクラス（index.css）**
-   - `.album-art-blink`: 点滅アニメーション適用
-   - `.album-art-pulse`: パルスエフェクト適用
-
-3. **AlbumArtコンポーネント（BgmPlayer.tsx内）**
-   - 既存の `album-art-spinning` を `album-art-blink album-art-pulse` に置換
-   - 背景コンテナにもアニメーションクラスを追加
-
-### ビルド順序
-
-1. **CSSの定義**（`src/index.css`）
-   - @keyframesを追加
-   - アニメーションクラスを定義
-
-2. **AlbumArtの修正**（`src/components/bgm/BgmPlayer.tsx`）
-   - クラス名を置換
-   - アニメーション適用対象を拡張
-
-3. **動作確認**
-   - 再生時: 点滅+パルスが有効
-   - 停止時: アニメーション無効
-   - ゲストモード: localStorageベースでも動作
-
-### 既存スタイルとの統合
-
-```css
-/* 既存のアニメーションパターンに従う */
-@keyframes rotate { ... } /* 既存 */
-
-/* 新規追加: 回転の隣に配置 */
-@keyframes blink {
-  0%, 100% { opacity: 0.7; transform: scale(0.98); }
-  50% { opacity: 1.0; transform: scale(1.0); }
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const dayIndex = (date.getDay() + 6) % 7  // 月曜始まり
+  return days[dayIndex]
 }
-
-@keyframes pulse-bg {
-  0% { box-shadow: 0 8px 24px var(--color); transform: scale(1); }
-  50% { box-shadow: 0 12px 40px var(--color); transform: scale(1.05); }
-  100% { box-shadow: 0 8px 24px var(--color); transform: scale(1); }
-}
-
-/* 既存クラスパターンに従う */
-.album-art-spinning { animation: rotate 8s linear infinite; } /* 既存 */
-
-/* 新規追加: spinningの隣に配置 */
-.album-art-blink { animation: blink 2s ease-in-out infinite; }
-.album-art-pulse { animation: pulse-bg 2s ease-out infinite; }
 ```
+
+**改善後:**
+```typescript
+function getDayLabel(dateStr: string): string {
+  const date = new Date(dateStr)
+  const today = new Date()
+  const isToday = date.toDateString() === today.toDateString()
+  if (isToday) return 'Today'
+
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const dayIndex = date.getDay()  // 日曜始まり (0=日曜, 6=土曜)
+  return days[dayIndex]
+}
+```
+
+**変更点:**
+- `days` 配列を日曜始まりに変更
+- `(date.getDay() + 6) % 7` 計算削除
+- `date.getDay()` を直接使用
+
+### パターン2: Recharts ComposedChart設定改善
+
+**現在の問題点:**
+- XAxisラベルが折り返される可能性
+- YAxisのスケールが自動調整で見づらい
+- Tooltipのフォーマットが整形されていない
+- グラフサイズが固定（height={200}）
+
+**改善後の設定:**
+```typescript
+<ComposedChart
+  data={weeklyData}
+  margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
+>
+  <XAxis
+    dataKey="date"
+    axisLine={false}
+    tickLine={false}
+    tick={{ fontSize: 12, fill: 'var(--cf-subtext)' }}
+    interval={0}  // 全ラベル表示
+  />
+  <YAxis
+    yAxisId="left"
+    axisLine={false}
+    tickLine={false}
+    tick={{ fontSize: 11, fill: 'var(--cf-subtext)' }}
+    width={30}
+  />
+  <YAxis
+    yAxisId="right"
+    orientation="right"
+    axisLine={false}
+    tickLine={false}
+    tick={{ fontSize: 11, fill: 'var(--cf-subtext)' }}
+    width={35}
+  />
+  <Tooltip
+    contentStyle={{
+      backgroundColor: 'var(--df-bg-elevated)',
+      border: '1px solid var(--df-border-subtle)',
+      borderRadius: '8px',
+    }}
+    labelStyle={{ color: 'var(--cf-text)' }}
+    itemStyle={{ color: 'var(--cf-subtext)' }}
+  />
+  <Bar
+    yAxisId="left"
+    dataKey="sessions"
+    fill="var(--cf-primary)"
+    radius={[4, 4, 0, 0]}  // 上部のみ角丸
+    name="セッション数"
+  />
+  <Line
+    yAxisId="right"
+    type="monotone"
+    dataKey="cumulativeMinutes"
+    stroke="var(--cf-primary)"
+    strokeWidth={2}
+    dot={{ fill: 'var(--cf-primary)', r: 3 }}
+    name="累積時間(分)"
+  />
+</ComposedChart>
+```
+
+**改善点:**
+1. **マージン調整**: `margin` propで上下左右の余白を最適化
+2. **軸の簡素化**: `axisLine={false}`, `tickLine={false}`で視覚ノイズ削減
+3. **フォントサイズ統一**: `tick` propで一貫性のあるサイズ設定
+4. **CSS変数対応**: `var(--cf-*)`でテーマ統一
+5. **Barの角丸**: `radius={[4, 4, 0, 0]}`でモダンなデザイン
+6. **Lineのドット**: `dot` propでデータポイントを明確化
+
+### パターン3: ResponsiveContainerの高さ最適化
+
+**現状:**
+```typescript
+<ResponsiveContainer width="100%" height={200}>
+```
+
+**改善後:**
+```typescript
+<div className="flex-1 min-h-[200px]">
+  <ResponsiveContainer width="100%" height="100%">
+```
+
+**理由:**
+- `flex-1` で親コンテナに合わせて伸縮
+- `min-h-[200px]` で最低限の高さを確保
+- `height="100%"` でResponsiveContainerに完全制御を委譲
+
+## アンチパターンを回避
+
+### アンチパターン1: 曜日配列のハードコード
+
+**問題:** ロケール対応が必要になった場合に修正が困難
+```typescript
+// 悪い例
+const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+```
+
+**回避:** 現在の要件では英語3文字略称で固定
+```typescript
+// 良い例（明示的なコメント付き）
+// English 3-letter abbreviations (en-US locale standard)
+const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+```
+
+### アンチパターン2: グラフ設定の分散
+
+**問題:** コンポーネント内外で設定が散らばる
+```typescript
+// 悪い例: グローバルCSSでRechartsのスタイルを上書き
+.recharts-tooltip { ... }
+```
+
+**回避:** ComposedChart内でpropsとして完結
+```typescript
+// 良い例: propsで明示的に制御
+<Tooltip contentStyle={{ ... }} />
+```
+
+### アンチパターン3: データ変換ロジックの分離
+
+**問題:** 集計ロジックがコンポーネント外にあると依存関係が不明確
+```typescript
+// 悪い例: 別ファイルでの集計
+const weeklyData = calculateWeeklyData(sessions)  // どこで定義？
+```
+
+**回避:** コンポーネント内で閉じたデータ変換
+```typescript
+// 良い例: コンポーネント内で完結
+const weeklyData: WeeklyData[] = []
+// ... 集計ロジック
+```
+
+## 構築順序
+
+### Phase 1: 曜日ラベル修正（先制）
+1. `getDayLabel`関数を修正（`days`配列の順序変更、計算ロジック簡素化）
+2. ローカルでグラフを確認（曜日が日曜始まりになっているか）
+
+**理由:** データ変更はUI変更よりも影響範囲が大きいため、最初に検証する
+
+### Phase 2: Recharts設定改善
+1. `ComposedChart` のpropsを追加（margin, axisLine, tickLine等）
+2. `XAxis`, `YAxis` のスタイル調整
+3. `Bar`, `Line` の見た目改善（radius, dot等）
+4. `Tooltip` のカスタムスタイル適用
+
+**理由:** データが正しい状態であれば、UI調整は安全に反復可能
+
+### Phase 3: レスポンシブ対応
+1. `ResponsiveContainer` の高さを `100%` に変更
+2. 親コンテナに `flex-1 min-h-[200px]` を追加
+3. モバイル/デスクトップでグラフサイズを確認
+
+**理由:** 最後にレスポンシブ挙動を調整することで、他の変更に影響されない
+
+## スケーラビリティ考慮事項
+
+| 懸念点 | 現行 | 今後の拡張 |
+|--------|------|------------|
+| ロケール対応 | 英語固定 | `Intl.DateTimeFormat` でロケール対応可能 |
+| グラフ種類追加 | ComposedChartのみ | `BarChart`, `LineChart` など条件分岐で追加可能 |
+| データ期間 | 直近7日固定 | 選択可能な期間（30日、90日）に拡張可能 |
+| テーマ対応 | CSS変数参照 | ダークモード追加時に即対応可能 |
+
+## 統合ポイント
+
+### 既存コードとの統合
+- **データフロー:** 変更なし（`usePomodoro` → `sessions` → `weeklyData`）
+- **コンポーネント構造:** 変更なし（`StatsCard.tsx`単一ファイル）
+- **状態管理:** 変更なし（ローカルstate `activeTab` のみ）
+- **API通信:** 変更なし（tRPC `pomodoro.getSessions` を継続使用）
+
+### 新規ファイルの必要性
+- なし（既存 `StatsCard.tsx` 内で完結）
+
+### 修正箇所の明示
+| ファイル | 箇所 | 変更内容 |
+|---------|------|---------|
+| `src/components/stats/StatsCard.tsx` | `getDayLabel`関数（92-102行目） | 日曜始まりに変更 |
+| `src/components/stats/StatsCard.tsx` | `ComposedChart` props（186-193行目） | グラフ設定追加 |
+| `src/components/stats/StatsCard.tsx` | `ResponsiveContainer`（185行目） | 高さを `100%` に変更 |
+| `src/components/stats/StatsCard.tsx` | 親div（184行目） | `flex-1 min-h-[200px]` 追加 |
 
 ## Sources
 
-- 既存コードベース（src/index.css, src/components/bgm/BgmPlayer.tsx）
-- Tailwind CSS v4公式ドキュメント（animate-*ユーティリティ）
-- CSS Animation仕様（@keyframes, animationプロパティ）
-- Framer Motion使用実績（src/lib/animation.ts）— 今回は未使用だが参考として
-
----
-*Architecture research for: BGMプレイヤーアニメーション刷新*
-*Researched: 2026-03-26*
+- Recharts公式ドキュメント: https://recharts.org/en-US/api/ComposedChart
+- JavaScript Dateオブジェクト: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getDay
+- 既存コードベース: `src/components/stats/StatsCard.tsx`
+- プロジェクトコンテキスト: `.planning/PROJECT.md` (v1.6.2 Statsカードデザイン改善)

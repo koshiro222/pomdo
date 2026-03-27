@@ -1,441 +1,351 @@
-# Domain Pitfalls
+# Statsカードグラフ改善の落とし穴
 
-**Domain:** BGMプレイヤーアニメーション刷新（点滅+パルスエフェクト）
-**Researched:** 2026-03-26
+**ドメイン:** 統計グラフ改善（既存アプリへの改良）
+**調査日:** 2026-03-27
+**全体の信頼度:** MEDIUM
+
+## Executive Summary
+
+Statsカードのグラフ改善における主要な落とし穴は、**レスポンシブデザインの破綻**、**アクセシビリティの不足**、**パフォーマンスの劣化**、**国際化対応の不備**の4つに分類される。既存実装（Recharts ComposedChart）の改良では、これらの問題が修正中に新たに発生する可能性が高い。
+
+既存のResponsiveContainerを使用した実装は良い基盤だが、モバイルブレイクポイントでのレイアウト崩れ、色コントラスト不足、アニメーションの制御不在、データ追加時の再レンダリング負荷など、複数の改善領域が存在する。
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites or major issues.
+修正時に重大な問題を引き起こす落とし穴。
 
-### Pitfall 1: 光感受性エピレプシー違反のアニメーション
+### Pitfall 1: レスポンシブコンテナの親要素サイズ不足
 
-**何が問題か:**
-点滅アニメーションがWCAG 2.3.1基準（1秒間に3回以上の点滅禁止）を超えると、光感受性エピレプシーを持つユーザーに発作を誘発する可能性がある。これは法的・倫理的な重大問題につながる。
-
-**なぜ起こる:**
-- CSS animation-durationを短く設定しすぎる（0.3秒未満など）
-- opacityを0↔1の完全なオン/オフで繰り返す
-- 複数の要素が同時に異なるタイミングで点滅する
-
-**結果:**
-- ユーザーの健康被害（発作、めまい、頭痛）
-- WCAG違反による法的リスク
-- アクセシビリティ不備としての批判
-
-**予防策:**
-```css
-/* 安全な点滅アニメーション */
-@keyframes safe-pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6; /* 完全には消さない */
-    transform: scale(1.05);
-  }
-}
-
-/* 1秒間に3回以下に制限（0.33秒以上）*/
-.album-art-pulse {
-  animation: safe-pulse 2s ease-in-out infinite;
-}
-
-/* prefers-reduced-motion対応 */
-@media (prefers-reduced-motion: reduce) {
-  .album-art-pulse {
-    animation: none !important; /* ユーザー設定を最優先 */
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-```
-
-**実装ガイドライン:**
-- animation-durationは最低0.5秒以上（推奨2秒以上）
-- opacityの最小値は0.4以上（完全には消さない）
-- 同時に点滅する要素は1つまで
-- 赤色の点滅は避ける（特に危険）
-
-**検出方法:**
-- Chrome DevToolsでアニメーション速度を確認
-- 1秒間に何回点滅しているか数える
-- Lighthouseアクセシビリティ監査でチェック
-
----
-
-### Pitfall 2: パルスエフェクトによるパフォーマンス劣化
-
-**何が問題か:**
-パルスエフェクト（box-shadowやborder-radiusの拡大）でreflowを引き起こすと、モバイル端末でフレームレートが低下し、UXが悪化する。
+**何が問題になる:**
+グラフがモバイルで潰れたり、はみ出たりする。
 
 **なぜ起こる:**
-- width, height, margin, paddingなどレイアウトに影響するプロパティをアニメーションする
-- box-shadowの拡大でペイント処理が重くなる
-- 複数の要素で同時にパルスを実行する
+- ResponsiveContainerは親要素の寸法に依存する
+- 親の`flex-1`や`min-h-0`が正しく設定されていないと、高さが0になる
+- 現在のコードでは`flex-1 flex flex-col min-h-0`で正しく回避されているが、修正時に削除しやすい
 
 **結果:**
-- フレームレート低下（60fpsから30fps以下へ）
-- バッテリー消費増加
-- モバイル端末での動作遅延
-- ユーザー離脱
+- モバイルでグラフが表示されない
+- 横スクロールが発生する
+- レイアウト崩れで他のコンテンツに重なる
 
-**予防策:**
-```css
-/* 悪い例: width/heightでパルス（reflow発生）*/
-.album-art-pulse-bad {
-  animation: pulse-bad 2s infinite; /* width/height変更でreflow */
-}
-
-@keyframes pulse-bad {
-  0%, 100% {
-    width: 96px;
-    height: 96px;
-  }
-  50% {
-    width: 104px;
-    height: 104px;
-  }
-}
-
-/* 良い例: transformでパルス（GPU加速）*/
-.album-art-pulse-good {
-  animation: pulse-good 2s infinite;
-  will-change: transform, opacity; /* ヒントを与える */
-}
-
-@keyframes pulse-good {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.8;
-  }
-}
-
-/* box-shadowの代わりに擬似要素でglow効果（軽量化）*/
-.album-art-glow::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: inherit;
-  background: inherit;
-  opacity: 0.3;
-  filter: blur(8px);
-  z-index: -1;
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
-@keyframes glow-pulse {
-  0%, 100% {
-    opacity: 0.2;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(1.1);
-  }
-}
-```
-
-**実装ガイドライン:**
-- transform（scale, translate, rotate）のみを使用
-- opacityはGPU加速されるので安全
-- box-shadowはfilter: blur()と擬似要素で代用
-- will-changeプロパティでブラウザにヒントを与える
-- Chrome DevTools > Performance > Rendering > Paint flashingで確認
-
----
-
-### Pitfall 3: Framer MotionのuseReducedMotion未使用
-
-**何が問題か:**
-Framer Motionのアニメーションで`useReducedMotion`フックを使用しないと、OS設定で「動作を減らす」を有効にしていてもアニメーションが無効化されない。
-
-**なぜ起こる:**
-- CSSのprefers-reduced-motionのみ実装し、Framer Motionを考慮しない
-- motionコンポーネントのtransitionを動的に制御しない
-- AnimatePresenceのexitアニメーションが常に実行される
-
-**結果:**
-- アクセシビリティ設定を無視した挙動
-- 前庭障害を持つユーザーの不快感
-- WCAG 2.3.3違反（アニメーションの制御）
-
-**予防策:**
+**予防:**
 ```tsx
-import { useReducedMotion } from 'framer-motion'
-import { motion, AnimatePresence } from 'framer-motion'
-
-function AlbumArt({ isPlaying, color }: AlbumArtProps) {
-  const shouldReduceMotion = useReducedMotion()
-
-  const pulseVariants = {
-    playing: {
-      opacity: [1, 0.6, 1],
-      scale: [1, 1.05, 1],
-      transition: {
-        duration: shouldReduceMotion ? 0 : 2, /* reduced motion時は無効化 */
-        repeat: Infinity,
-        ease: 'easeInOut'
-      }
-    },
-    paused: {
-      opacity: 1,
-      scale: 1
-    }
-  }
-
-  return (
-    <motion.div
-      className="album-art"
-      variants={pulseVariants}
-      animate={isPlaying ? 'playing' : 'paused'}
-      style={{
-        background: `linear-gradient(135deg, ${color}40, ${color}20)`,
-      }}
-    >
-      <Music className="w-8 h-8 text-white" />
-    </motion.div>
-  )
-}
-
-/* BGMリスト展開時のアニメーションも対応 */
-<AnimatePresence>
-  {isExpanded && (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      transition={{
-        duration: shouldReduceMotion ? 0 : 0.2, /* reduced motion時は即時切り替え */
-        ease: 'easeOut'
-      }}
-    >
-      {/* トラックリスト */}
-    </motion.div>
-  )}
-</AnimatePresence>
+// 正しいパターン（維持必須）
+<div className="flex-1 flex flex-col min-h-0">
+  <div className="flex-1 min-h-0">
+    <ResponsiveContainer width="100%" height={200}>
+      <ComposedChart data={weeklyData}>
+        {/* ... */}
+      </ComposedChart>
+    </ResponsiveContainer>
+  </div>
+</div>
 ```
 
-**実装ガイドライン:**
-- すべてのmotionコンポーネントのtransitionにshouldReduceMotionを反映
-- duration: 0でアニメーションを即時完了させる
-- AnimatePresenceのexitも制御
-- テスト時はDevToolsでprefers-reduced-motionをエミュレート
+- `flex-1` + `min-h-0`の組み合わせを維持
+- グラフの高さを固定値（200など）で指定
+- 決して`height="100%"`を使用しない（親の高さが不定の場合）
+
+**検出:**
+- モバイル（375px幅）でグラフが正しく表示されるか
+- Chrome DevToolsでResponsiveContainerの寸法を確認
 
 ---
+
+### Pitfall 2: アニメーションとprefers-reduced-motionの競合
+
+**何が問題になる:**
+光感受性のあるユーザーにアニメーションが強制され、めまいや不快感を引き起こす。
+
+**なぜ起こる:**
+- RechartsのLineやBarはデフォルトでアニメーション有効
+- 現在のコードに`isAnimationActive={false}`の設定がない
+- v1.6.1でBGMプレイヤーにアニメーション制御を追加したが、グラフには未適用
+
+**結果:**
+- アニメーション回避設定のユーザーにグラフ描画アニメーションが表示される
+- 特に複合グラフ（Bar + Line）で2重のアニメーションが発生
+- アクセシビリティ標準（WCAG 2.1, Success Criterion 2.3.3）違反
+
+**予防:**
+```tsx
+// 検出と制御
+const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+
+<ComposedChart data={weeklyData}>
+  <Bar
+    yAxisId="left"
+    dataKey="sessions"
+    fill="#22c55e"
+    name="セッション数"
+    isAnimationActive={!prefersReducedMotion}
+  />
+  <Line
+    yAxisId="right"
+    type="monotone"
+    dataKey="cumulativeMinutes"
+    stroke="#22c55e"
+    strokeWidth={2}
+    name="累積時間(分)"
+    isAnimationActive={!prefersReducedMotion}
+  />
+</ComposedChart>
+```
+
+- グローバルな`prefers-reduced-motion`フックを実装
+- 全てのRechartsコンポーネントで`isAnimationActive`を制御
+- デフォルトでアニメーション無効を検討
+
+**検出:**
+- Chrome DevToolsでprefers-reduced-motionをエミュレート
+- グラフ描画時にアニメーションが無効化されているか確認
+
+---
+
+### Pitfall 3: 色コントラスト不足による視認性低下
+
+**何が問題になる:**
+背景色とグリーン（#22c55e）のコントラストが不足し、データが読めない。
+
+**なぜ起こる:**
+- 現在の実装では`fill="#22c55e"`と`stroke="#22c55e"`の固定色を使用
+- カスタムテーマやダークモードで背景色が変わる場合にコントラスト比が低下
+- グラフの背景色と前景色の組み合わせを検証していない
+
+**結果:**
+- 薄い背景色でバーとラインが見えない
+- WCAG AA基準（3:1）を満たさない
+- 視覚障害のあるユーザーがデータを解釈できない
+
+**予防:**
+```tsx
+// テーマ対応の色を使用
+const chartColor = 'var(--cf-primary)' // CSS変数経由でテーマ色を取得
+
+<Bar fill={chartColor} />
+<Line stroke={chartColor} />
+
+// または明度調整
+const getAccessibleColor = (baseColor: string) => {
+  // 背景色に応じて明るさを調整
+  return adjustBrightness(baseColor, backgroundBrightness)
+}
+```
+
+- CSS変数経由で色を取得（テーマ対応）
+- 複数の背景色パターンでコントラストを検証
+- WebAIM Contrast Checkerなどのツールで確認
+
+**検出:**
+- 複数のテーマ/背景色でグラフを表示
+- コントラスト比が3:1以上であることを確認
 
 ## Moderate Pitfalls
 
-### Pitfall 1: CSS特異性の競合によるアニメーション無効化
+機能制限やUX低下を引き起こす落とし穴。
 
-**何が問題か:**
-Tailwind CSSのクラスとカスタムCSSの特異性が競合すると、アニメーションが期待通りに動作しない。
+### Pitfall 4: 日付フォーマットの国際化非対応
 
-**なぜ起こる:**
-- index.cssのアニメーション定義がTailwindユーティリティより優先度が低い
-- !importantの乱用で保守性が低下
-- @layerの順序が不適切
-
-**結果:**
-- アニメーションが適用されない
-- デバッグが困難
-- スタイルの予期せぬ上書き
-
-**予防策:**
-```css
-/* index.cssでの適切な定義順序 */
-@import "tailwindcss";
-@import "tw-animate-css";
-
-@layer base {
-  /* グローバルスタイル */
-}
-
-@layer components {
-  /* アニメーション定義はcomponentsレイヤーで */
-  @keyframes album-pulse {
-    0%, 100% {
-      opacity: 1;
-      transform: scale(1);
-      box-shadow: 0 0 20px var(--pulse-color, rgba(34, 197, 94, 0.3));
-    }
-    50% {
-      opacity: 0.7;
-      transform: scale(1.05);
-      box-shadow: 0 0 30px var(--pulse-color, rgba(34, 197, 94, 0.5));
-    }
-  }
-
-  .album-art-pulse {
-    animation: album-pulse 2s ease-in-out infinite;
-  }
-
-  /* prefers-reduced-motion対応はutilitiesレイヤーより後で */
-  @media (prefers-reduced-motion: reduce) {
-    .album-art-pulse {
-      animation: none !important; /* ユーザー設定を最優先 */
-    }
-  }
-}
-
-/* コンポーネントではカスタムプロパティで色を渡す */
-<div
-  className="album-art-pulse"
-  style={{ '--pulse-color': 'rgba(34, 197, 94, 0.4)' } as React.CSSProperties}
->
-```
-
-**実装ガイドライン:**
-- アニメーション定義は@layer componentsで
-- Tailwindユーティリティ（@layer utilities）より前に定義
-- カスタムプロパティ（CSS変数）で動的な値を渡す
-- !importantはprefers-reduced-motionなどユーザー設定の優先時のみ使用
-
----
-
-### Pitfall 2: 既存のalbum-art-spinningクラスの不完全削除
-
-**何が問題か:**
-回転アニメーションから点滅+パルスへの移行時、古いクラスやキーフレームが残っていると、意図しない動作が発生する。
+**何が問題になる:**
+英語圏ユーザーに "Today" や "Mon" がハードコードされ、ロケールに合わせて変更されない。
 
 **なぜ起こる:**
-- index.cssから@keyframes rotateを削除するのを忘れる
-- アルバムアート要素にalbum-art-spinningクラスが残っている
-- アニメーションの競合でtransformプロパティが上書きされる
+- 現在のコードで`getDayLabel()`関数が英語の曜日名を返す
+- `toLocaleDateString()`や`Intl.DateTimeFormat`を使用していない
+- グローバルなロケール設定がない
 
 **結果:**
-- 点滅と回転が同時に発生する
-- transformプロパティの競合でアニメーションが壊れる
-- 不要なCSSコードの肥大化
+- 日本語ユーザーに英語曜日が表示される
+- ヨーロッパ形式（DD/MM/YYYY）のユーザーに混乱を引き起こす
+- RTL言語（アラビア語など）でレイアウト崩れ
 
-**予防策:**
+**予防:**
 ```tsx
-/* BgmPlayer.tsx - 古いクラスを完全に削除 */
-function AlbumArt({ isPlaying, color }: AlbumArtProps) {
-  return (
-    <div className="relative w-24 h-24 flex-shrink-0">
-      {/* album-art-spinningクラスを削除し、新しいクラスに置き換え */}
-      <motion.div
-        className={`w-full h-full rounded-2xl flex items-center justify-center ${
-          isPlaying ? 'album-art-pulse' : ''
-        }`}
-        animate={isPlaying ? {
-          opacity: [1, 0.7, 1],
-          scale: [1, 1.05, 1],
-        } : {}}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: 'easeInOut'
-        }}
-        style={{
-          background: `linear-gradient(135deg, ${color}40, ${color}20)`,
-        }}
-      >
-        <Music className="w-8 h-8 text-white" />
-      </motion.div>
-    </div>
-  )
+// ロケール対応の曜日ラベル
+function getDayLabel(dateStr: string, locale: string = 'ja'): string {
+  const date = new Date(dateStr)
+  const today = new Date()
+  const isToday = date.toDateString() === today.toDateString()
+
+  if (isToday) {
+    return locale === 'ja' ? '今日' : 'Today'
+  }
+
+  return date.toLocaleDateString(locale, { weekday: 'short' })
 }
 ```
 
-**実装ガイドライン:**
-- グレップ検索で`album-art-spinning`を全削除
-- `@keyframes rotate`もindex.cssから削除
-- アルバムアート内の全要素でtransformプロパティを確認
-- レビューチェックリストに「古いアニメーションの削除確認」を追加
+- ユーザーのロケール設定を取得
+- `Intl.DateTimeFormat`でフォーマット
+- RTLレイアウトを考慮（必要に応じてCSS `direction: rtl`）
+
+**検出:**
+- ブラウザ言語設定を変更して表示確認
+- 日本語、英語、その他言語で曜日フォーマットを検証
 
 ---
+
+### Pitfall 5: データ追加時の不要な再レンダリング
+
+**何が問題になる:**
+新しいセッションが追加されるたびに、週次データが再計算され、グラフ全体が再レンダリングされる。
+
+**なぜ起こる:**
+- 週次データ（`weeklyData`）がコンポーネントのレンダリングごとに再計算
+- `sessions`が変更されるたびに全データを再集計
+- `useMemo`でデータ計算をメモ化していない
+
+**結果:**
+- セッション追加時のレンダリングが遅延する
+- デバイスのパフォーマンスによってはカクつきが発生
+- 将来的にデータが増えた場合に顕著化
+
+**予防:**
+```tsx
+// データ計算をメモ化
+const weeklyData = useMemo(() => {
+  const data: WeeklyData[] = []
+  let cumulativeTotal = 0
+
+  for (let i = 6; i >= 0; i--) {
+    // ... 計算ロジック
+  }
+
+  return data
+}, [sessions]) // sessionsが変更された時のみ再計算
+```
+
+- `useMemo`でデータ集計をメモ化
+- 複雑な計算を分離し、依存配列を最適化
+- 大量データの場合はデータのウィンドウイングを検討
+
+**検出:**
+- React DevTools Profilerでレンダリング回数を確認
+- セッション追加時のレンダリング時間を計測
 
 ## Minor Pitfalls
 
-### Pitfall 1: ダークモードでのパルスエフェクトの視認性低下
+軽微な問題やエッジケース。
 
-**何が問題か:**
-ダークモードでbox-shadowやglow効果が暗い背景に溶け込み、アニメーションが見えづらくなる。
+### Pitfall 6: ツールチップのアクセシビリティ不足
 
-**予防策:**
-```css
-/* ダークモードで色調整 */
-.dark .album-art-pulse {
-  --pulse-color: rgba(34, 197, 94, 0.6); /* 明るさを上げる */
+**何が問題になる:**
+スクリーンリーダーがツールチップの内容を読み上げない。
+
+**なぜ起こる:**
+- RechartsのデフォルトTooltipにARIA属性がない
+- カスタムTooltipでアクセシビリティ対応が不足
+
+**結果:**
+- 視覚障害者がグラフのデータポイントを正確に把握できない
+- キーボード操作でツールチップが表示されない
+
+**予防:**
+```tsx
+const CustomTooltip = ({ active, payload }: TooltipProps) => {
+  if (!active || !payload?.length) return null
+
+  return (
+    <div
+      className="custom-tooltip"
+      role="tooltip"
+      aria-label={`データ: ${payload[0].value}`}
+    >
+      {/* ツールチップ内容 */}
+    </div>
+  )
 }
 
-/* またはカラーミックスで動的に調整 */
-@keyframes album-pulse {
-  0%, 100% {
-    box-shadow: 0 0 20px color-mix(in srgb, var(--pulse-color) 40%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 30px color-mix(in srgb, var(--pulse-color) 60%, transparent);
-  }
-}
+<Tooltip content={<CustomTooltip />} />
 ```
+
+- カスタムTooltipで`role="tooltip"`を追加
+- `aria-label`でデータ内容を説明
+- キーボードフォーカスでツールチップが表示されるように
+
+**検出:**
+- スクリーンリーダーでグラフにアクセス
+- キーボードのみでデータポイントを操作
 
 ---
 
-### Pitfall 2: アニメーション初期化時のちらつき
+### Pitfall 7: 曜日順序のハードコーディング
 
-**何が問題か:**
-ページ読み込み時、アニメーションが適用される前のスタイルが一瞬表示され、ちらつきが発生する。
+**何が問題になる:**
+日曜始まりに変更する際、配列インデックスの計算ミスで曜日がずれる。
 
-**予防策:**
-```css
-/* 初期状態を設定 */
-.album-art {
-  opacity: 1;
-  transform: scale(1);
+**なぜ起こる:**
+- 現在のコード：`const dayIndex = (date.getDay() + 6) % 7`（月曜始まり）
+- 日曜始まりに変更時のインデックス計算が複雑
+- 曜日配列の順序変更漏れ
+
+**結果:**
+- 日曜始まりに変更後、曜日が1日ずれる
+- 週の境界が正しく表示されない
+- ユーザーがデータを誤解する
+
+**予防:**
+```tsx
+// 日曜始まりの実装
+function getDayLabel(dateStr: string, locale: string = 'ja'): string {
+  const date = new Date(dateStr)
+  const today = new Date()
+  const isToday = date.toDateString() === today.toDateString()
+
+  if (isToday) {
+    return locale === 'ja' ? '今日' : 'Today'
+  }
+
+  // 日曜始まり：getDay()は日曜=0〜土曜=6を返す
+  const days = locale === 'ja'
+    ? ['日', '月', '火', '水', '木', '金', '土']
+    : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+  return days[date.getDay()]
 }
-
-/* Framer Motionのinitial propで初期状態を制御 */
-<motion.div
-  initial={{ opacity: 1, scale: 1 }}
-  animate={isPlaying ? {
-    opacity: [1, 0.7, 1],
-    scale: [1, 1.05, 1],
-  } : { opacity: 1, scale: 1 }}
->
 ```
 
----
+- `getDay()`の戻り値を直接使用（日曜始まり）
+- 曜日配列の順序を日曜から開始
+- 複数のロケールでテスト
+
+**検出:**
+- 日曜日のデータを表示して曜日ラベルが"Sun"または"日"であることを確認
+- 週の境界（土曜→日曜）でデータが正しく表示されることを確認
 
 ## Phase-Specific Warnings
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| Phase 01: CSSアニメーション定義 | 光感受性エピレプシー違反 | animation-durationを0.5秒以上にし、opacity最小値を0.4以上に設定 |
-| Phase 02: BgmPlayerコンポーネント修正 | album-art-spinning残滓 | グレップ検索で完全削除し、レビューで確認 |
-| Phase 03: Framer Motion統合 | useReducedMotion未使用 | すべてのmotionコンポーネントでshouldReduceMotionをtransitionに反映 |
-| Phase 04: パフォーマンス最適化 | reflowによるフレームレート低下 | transform/opacityのみ使用し、width/height/box-shadowは避ける |
-| Phase 05: アクセシビリティ検証 | OS設定の無視 | DevToolsでprefers-reduced-motionをエミュレートしテスト |
-
----
-
-## Sources
-
-- [MDN - prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) - HIGH confidence（公式ドキュメント、2025年8月更新）
-- [web.dev - prefers-reduced-motion: Sometimes less movement is more](https://web.dev/prefers-reduced-motion/) - HIGH confidence（Google公式、2022年9月更新）
-- [Framer Motion Documentation](https://www.framer.com/motion/) - MEDIUM confidence（公式ドキュメント、useReducedMotionフックの存在を確認）
-- [WCAG 2.3.1 - Three Flashes or Below Threshold](https://www.w3.org/WAI/WCAG21/Understanding/three-flashes-or-below.html) - HIGH confidence（W3C公式、ただしURLが404のため一般的なWCAG知識に基づく記載）
-- 現行コードベースのindex.cssとBgmPlayer.tsxの分析 - HIGH confidence（実際のコード確認）
+| フェーズ | トピック | 想定される落とし穴 | 軽減策 |
+|---------|---------|-------------------|--------|
+| デザイン改善 | レスポンシブ対応 | モバイルでグラフが潰れる | Flexbox `min-h-0`パターン維持、複数ブレイクポイントでテスト |
+| デザイン改善 | 色のコントラスト | テーマ変更で見えなくなる | CSS変数経由で色取得、コントラスト比検証 |
+| アニメーション | reduced-motion | アニメーションが強制される | `isAnimationActive`プロパティで制御 |
+| パフォーマンス | データ計算 | セッション追加時に遅延 | `useMemo`でメモ化、Profilerで検証 |
+| 国際化 | 曜日フォーマット | 英語固定でロケール無視 | `Intl.DateTimeFormat`を使用、複数ロケールでテスト |
 
 ## Confidence Assessment
 
-| Area | Confidence | Notes |
-|------|------------|-------|
-| 光感受性エピレプシー | HIGH | MDNとweb.devの公式ドキュメントに基づき具体的な数値基準を提供 |
-| prefers-reduced-motion | HIGH | MDNで2025年8月に更新された最新情報を使用 |
-| パフォーマンス最適化 | MEDIUM | 一般的なCSSアニメーションのベストプラクティスに基づくが、Edge Runtime固有の制約は考慮が必要 |
-| Framer Motion統合 | MEDIUM | 公式ドキュメントでuseReducedMotionフックの存在を確認したが、具体的な実装例は一般的なパターンに基づく |
-| ダークモード対応 | LOW | 一般的なCSSダークモードの知識に基づく推奨 |
+| 領域 | 信頼度 | 理由 |
+|------|--------|------|
+| レスポンシブデザイン | HIGH | 既存コードと一般的なFlexboxパターンに基づく |
+| アクセシビリティ（アニメーション） | HIGH | WCAGガイドラインと既存のBGMプレイヤー実装に基づく |
+| アクセシビリティ（色コントラスト） | MEDIUM | 一般的なWCAG基準に基づくが、具体的なテーマ色での検証が必要 |
+| パフォーマンス | MEDIUM | 一般的なReact最適化パターンに基づくが、実際のデータ量での測定が必要 |
+| 国際化 | MEDIUM | 一般的なロケール対応パターンに基づくが、RTL言語での検証が必要 |
+| 曜日順序 | HIGH | JavaScript Date APIと既存コードに基づく |
 
-## Gaps to Address
+## Sources
 
-- WebSearchツールが結果を返さなかったため、光感受性エピレプシーに関する最新の2026年のガイドラインを確認できていない
-- WCAG 2.3.1の具体的な閾値（輝度と面積）については、追加の信頼できるソースが必要
-- Edge Runtime（Cloudflare Workers）環境でのFramer Motionの動作に関する具体的な制約について、さらなる調査が必要
-- パルスエフェクトのパフォーマンス影響について、実際のモバイル端末でのベンチマークデータが不足
+- [Recharts Documentation](https://recharts.org/) — 公式ドキュメント（HIGH confidence）
+- [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/) — アクセシビリティ基準（HIGH confidence）
+- [MDN Web Docs - Intl.DateTimeFormat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat) — 国際化API（HIGH confidence）
+- 既存コードベース: `src/components/stats/StatsCard.tsx` — 現在の実装（HIGH confidence）
+- PROJECT.md — プロジェクトコンテキストとv1.6.1のアニメーション実装（HIGH confidence）
+
+## Notes
+
+- 検索エンジンのレート制限により、WebSearchからの情報取得が制限された
+- 主に既存コードの分析と一般的なデータ可視化ベストプラクティスに基づいて作成
+- 実装フェーズでは実際のデバイスとブラウザでの検証が必要
+- 特に色コントラストと国際化はユーザーテストでの確認を推奨

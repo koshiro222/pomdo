@@ -1,5 +1,5 @@
 import { BarChart3, Clock, Target } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePomodoro } from '../../hooks/usePomodoro'
 import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
@@ -44,6 +44,21 @@ const getMonthlyStats = (sessions: Session[]): { totalMinutes: number; totalSess
 export default function StatsCard() {
   const { sessions, loading } = usePomodoro()
   const [activeTab, setActiveTab] = useState<TabType>('today')
+  const [containerWidth, setContainerWidth] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // グラフコンテナの幅を監視して動的高さを計算
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.clientWidth)
+      }
+    }
+
+    updateWidth()
+    window.addEventListener('resize', updateWidth)
+    return () => window.removeEventListener('resize', updateWidth)
+  }, [])
 
   const tabs = [
     { id: 'today' as const, label: 'Today' },
@@ -187,8 +202,8 @@ export default function StatsCard() {
       {activeTab === 'week' && (
         <div className="flex-1 flex flex-col min-h-0">
           <p className="text-xs text-cf-subtext mb-3">Last 7 Days</p>
-          <div className="flex-1 min-h-0">
-            <ResponsiveContainer width="100%" height={200}>
+          <div ref={containerRef} className="flex-1 min-h-0">
+            <ResponsiveContainer width="100%" height={Math.max(200, containerWidth * 0.4)}>
               <ComposedChart data={weeklyData}>
                 <XAxis dataKey="date" />
                 <YAxis yAxisId="left" />

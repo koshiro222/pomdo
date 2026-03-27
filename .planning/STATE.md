@@ -1,12 +1,12 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6.2
-milestone_name: Statsカードデザイン改善
-status: executing
-last_updated: "2026-03-27T05:34:05.000Z"
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-03-27T05:36:52.826Z"
 progress:
   total_phases: 22
-  completed_phases: 21
+  completed_phases: 22
   total_plans: 52
   completed_plans: 52
 ---

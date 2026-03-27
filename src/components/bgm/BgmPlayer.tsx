@@ -31,14 +31,6 @@ function AlbumArt({ isPlaying, color }: AlbumArtProps) {
           <Music className={`w-8 h-8 text-white ${isPlaying ? '' : 'album-art-paused'}`} />
         </div>
       </div>
-
-      {/* 再生インジケーター（中心の点） */}
-      <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white transition-all ${isPlaying ? 'scale-100' : 'scale-50'}`}
-        style={{
-          boxShadow: `0 0 12px ${color}`,
-        }}
-      />
     </div>
   )
 }

@@ -13,6 +13,7 @@
 - ✅ **v1.5 カードヘッダー統一** — Phase 16 (shipped 2026-03-24)
 - ✅ **v1.6 TodoカードUI/UX改善** — Phases 17-18 (shipped 2026-03-25)
 - ✅ **v1.6.1 BGMプレイヤーアニメーション刷新** — Phases 19-20 (shipped 2026-03-27)
+- 🔄 **v1.6.2 Statsカードデザイン改善** — Phases 21-22 (in progress)
 
 ## Progress Summary
 
@@ -26,6 +27,7 @@
 | 16 | v1.5 | 2/2 | Complete | 2026-03-24 |
 | 17-18 | v1.6 | 7/7 | Complete | 2026-03-25 |
 | 19-20 | v1.6.1 | 2/2 | Complete | 2026-03-27 |
+| 21-22 | v1.6.2 | 0/4 | Not started | - |
 
 **Completed:** 51/51 plans (v1.0-v1.6.1)
 
@@ -84,6 +86,44 @@
 <summary>✅ v1.6.1 BGMプレイヤーアニメーション刷新 (Phases 19-20) — SHIPPED 2026-03-27</summary>
 
 **Details:** `.planning/milestones/v1.6.1-ROADMAP.md`
+
+</details>
+
+<details>
+<summary>🔄 v1.6.2 Statsカードデザイン改善 (Phases 21-22) — IN PROGRESS</summary>
+
+### Phase 21: 曜日表示修正
+
+**Goal:** 曜日表示を日曜始まりに変更し、日本のカレンダー文化に合わせる
+
+**Depends on:** Nothing
+
+**Requirements:** STAT-01
+
+**Success Criteria** (what must be TRUE):
+1. グラフのX軸に日曜始まりで「日 月 火 水 木 金 土」と表示される
+2. 集計データが正しい曜日に対応している（日曜日のデータが日曜位置に表示）
+3. Today/Week/Monthタブ切り替え時も曜日順序が維持される
+
+**Plans:** TBD
+
+---
+
+### Phase 22: グラフUI改善
+
+**Goal:** グラフの視認性を向上させ、shadcn/uiデザインシステムに準拠したスタイルを適用
+
+**Depends on:** Phase 21
+
+**Requirements:** STAT-02, STAT-03, STAT-04
+
+**Success Criteria** (what must be TRUE):
+1. グラフサイズと余白が適切に調整され、ラベルが途切れず表示される
+2. 水平グリッドラインが表示され、データ値の読み取りが容易になっている
+3. 軸ラベルの色、サイズ、太さがshadcn/uiのmutedスタイルに準拠している
+4. モバイルとデスクトップ両方でグラフが適切に表示される
+
+**Plans:** TBD
 
 </details>
 

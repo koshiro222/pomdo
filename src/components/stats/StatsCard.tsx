@@ -88,7 +88,7 @@ export default function StatsCard() {
   // 月次統計を計算
   const monthlyStats = getMonthlyStats(sessions)
 
-  // 日付の表示形式（月曜始まり）
+  // 日付の表示形式（日曜始まり）
   function getDayLabel(dateStr: string): string {
     const date = new Date(dateStr)
     const today = new Date()
@@ -96,8 +96,8 @@ export default function StatsCard() {
 
     if (isToday) return 'Today'
 
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    const dayIndex = (date.getDay() + 6) % 7
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const dayIndex = date.getDay()
     return days[dayIndex]
   }
 

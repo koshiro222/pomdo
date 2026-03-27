@@ -204,10 +204,10 @@ export default function StatsCard() {
           <p className="text-xs text-cf-subtext mb-3">Last 7 Days</p>
           <div ref={containerRef} className="flex-1 min-h-0">
             <ResponsiveContainer width="100%" height={Math.max(200, containerWidth * 0.4)}>
-              <ComposedChart data={weeklyData}>
-                <XAxis dataKey="date" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
+              <ComposedChart data={weeklyData} accessibilityLayer={true}>
+                <XAxis dataKey="date" tickLine={false} axisLine={false} stroke="#9ca3af" />
+                <YAxis yAxisId="left" tickLine={false} axisLine={false} stroke="#9ca3af" />
+                <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} stroke="#9ca3af" />
                 <Tooltip />
                 <Bar yAxisId="left" dataKey="sessions" fill="#22c55e" name="セッション数" />
                 <Line yAxisId="right" type="monotone" dataKey="cumulativeMinutes" stroke="#22c55e" strokeWidth={2} name="累積時間(分)" />

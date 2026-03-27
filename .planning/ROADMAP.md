@@ -27,7 +27,7 @@
 | 16 | v1.5 | 2/2 | Complete | 2026-03-24 |
 | 17-18 | v1.6 | 7/7 | Complete | 2026-03-25 |
 | 19-20 | v1.6.1 | 2/2 | Complete | 2026-03-27 |
-| 21-22 | v1.6.2 | 0/4 | Not started | - |
+| 21-22 | v1.6.2 | 1/2 | In progress | - |
 
 **Completed:** 51/51 plans (v1.0-v1.6.1)
 
@@ -106,7 +106,7 @@
 3. Today/Week/Monthタブ切り替え時も曜日順序が維持される
 
 **Plans:**
-- [ ] 021-01-PLAN.md — getDayLabel()関数の日曜始まり修正とテスト更新
+- [x] 021-01-PLAN.md — getDayLabel()関数の日曜始まり修正とテスト更新
 
 ---
 
@@ -116,15 +116,16 @@
 
 **Depends on:** Phase 21
 
-**Requirements:** STAT-02, STAT-03, STAT-04
+**Requirements:** STAT-02, STAT-04
 
 **Success Criteria** (what must be TRUE):
 1. グラフサイズと余白が適切に調整され、ラベルが途切れず表示される
-2. 水平グリッドラインが表示され、データ値の読み取りが容易になっている
-3. 軸ラベルの色、サイズ、太さがshadcn/uiのmutedスタイルに準拠している
-4. モバイルとデスクトップ両方でグラフが適切に表示される
+2. 軸ラベルの色、サイズ、太さがshadcn/uiのmutedスタイルに準拠している
+3. モバイルとデスクトップ両方でグラフが適切に表示される
+4. キーボードナビゲーションとスクリーンリーダー対応が有効化されている
 
-**Plans:** TBD
+**Plans:**
+- [ ] 22-01-PLAN.md — グラフサイズと余白の調整、軸スタイルの改善（shadcn/ui準拠）
 
 </details>
 

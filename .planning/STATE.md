@@ -1,15 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6.2
-milestone_name: Statsカードデザイン改善
-status: in_progress
-stopped_at: None
-last_updated: "2026-03-27T00:00:00.000Z"
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-03-27T04:51:10.922Z"
 progress:
-  total_phases: 2
-  completed_phases: 0
-  total_plans: 4
-  completed_plans: 0
+  total_phases: 21
+  completed_phases: 21
+  total_plans: 51
+  completed_plans: 51
 ---
 
 # STATE: Pomdo
@@ -23,18 +22,12 @@ See: `.planning/PROJECT.md` (updated 2026-03-27)
 
 **Core Value:** ユーザーが集中して作業を完了できるようにする。タイマー、タスク、BGMがシームレスに連携する。
 
-**Current Focus:** Statsカードのグラフを見やすく改善し、曜日表示を日曜始まりにする
+**Current Focus:** Phase 21 — 曜日表示修正
 
 ## Current Position
 
-Phase: Phase 21 - 曜日表示修正
-Plan: TBD
-Status: Planning
-Last activity: 2026-03-27 — Roadmap created, ready for phase planning
-
-```
-[░░░░░░░░░░] 0% complete (0/4 requirements validated)
-```
+Phase: 21 (曜日表示修正) — EXECUTING
+Plan: 1 of 1
 
 ## Decisions
 
@@ -90,11 +83,13 @@ Last activity: 2026-03-27 — Roadmap created, ready for phase planning
 ### Todos
 
 **Phase 21: 曜日表示修正**
+
 - [ ] STAT-01: 曜日配列を日曜始まりに変更
 - [ ] getDayLabel()関数のロジック修正
 - [ ] 曜日表示の検証
 
 **Phase 22: グラフUI改善**
+
 - [ ] STAT-02: グラフサイズと余白の調整
 - [ ] STAT-03: 水平グリッドラインの追加
 - [ ] STAT-04: 軸スタイルの改善（shadcn/ui準拠）

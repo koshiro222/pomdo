@@ -148,8 +148,10 @@ describe('StatsCard - STAT-05 累積集中時間', () => {
     }
 
     // テストデータ構造が正しいことを確認
+    // 注: この曜日文字列はデータ構造検証用であり、実際のグラフ表示には影響しない
+    // グラフ表示の曜日順序は getDayLabel() 関数で日曜始まりに制御されている
     const testData: WeeklyDataWithCumulative = {
-      date: 'Mon',
+      date: 'Mon', // テストデータ用の任意の曜日
       sessions: 2,
       cumulativeMinutes: 75,
     }

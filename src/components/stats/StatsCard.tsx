@@ -88,7 +88,7 @@ export default function StatsCard() {
   // 月次統計を計算
   const monthlyStats = getMonthlyStats(sessions)
 
-  // 日付の表示形式（月曜始まり）
+  // 日付の表示形式（日曜始まり）
   function getDayLabel(dateStr: string): string {
     const date = new Date(dateStr)
     const today = new Date()
@@ -96,18 +96,24 @@ export default function StatsCard() {
 
     if (isToday) return 'Today'
 
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    const dayIndex = (date.getDay() + 6) % 7
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const dayIndex = date.getDay()
     return days[dayIndex]
   }
 
-  // 直近7日間のデータを計算（累積集中時間を含む）
+  // 今週（日曜始まり）のデータを計算（累積集中時間を含む）
   const weeklyData: WeeklyData[] = []
   let cumulativeTotal = 0
 
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date()
-    date.setDate(date.getDate() - i)
+  // 今日の日付から今週の日曜日（週の始まり）を計算
+  const currentDate = new Date()
+  const dayOfWeek = currentDate.getDay() // 0=日曜, 1=月曜, ..., 6=土曜
+  const daysFromSunday = dayOfWeek // 日曜日から何日経過したか
+
+  // 今週の日曜日を基準に7日分のデータを生成
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(currentDate)
+    date.setDate(currentDate.getDate() - daysFromSunday + i)
     const dateStr = date.toDateString()
 
     const daySessions = sessions.filter(

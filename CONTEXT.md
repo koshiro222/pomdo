@@ -29,7 +29,7 @@ _Avoid_: Queue, Up Next, Pending
 ### 集中と時間
 
 **Focus Session**:
-集中して作業する1回の計測付き時間区間（いわゆる「ポモドーロ」）。任意で1つの Task に紐付く。
+集中して作業する1回の計測付き時間区間（いわゆる「ポモドーロ」）。任意で1つの Task に紐付く。**Completed**（予定時間に到達して終わった）と **Interrupted**（ユーザーが自分で区切った。経過が極端に短いものは記録しない）を区別する。集中実績の集計（Focused Days・完了本数・Estimate 進捗）は Completed のみを数え、Interrupted は「合計集中時間」にのみ寄与する。
 _Avoid_: Pomodoro（技法名としてのみ使用）, Timer, Interval
 
 **Break**:
@@ -47,7 +47,7 @@ _Avoid_: Points, Effort
 ### 振り返り
 
 **Today's Done**:
-その日に完了した Task。当日中は達成感のために見え続け、日付が変わると Archive に移る。
+その日に完了した Task。当日中は達成感のために見え続け、翌日以降は Archive として扱われる（実際の移動はなく、完了日で判定される）。
 _Avoid_: Completed list, History
 
 **Archive**:

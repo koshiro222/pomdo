@@ -36,11 +36,6 @@ async function resolveTaskId(db: Parameters<typeof findTaskById>[0], userId: str
   return (await findTaskById(db, userId, taskId))?.id ?? null
 }
 
-function resolveServerNow(request: Request, e2eTestMode: string | undefined): Date {
-  const requestedNow = e2eTestMode === 'true' ? request.headers.get('x-e2e-now') : null
-  return requestedNow && !Number.isNaN(Date.parse(requestedNow)) ? new Date(requestedNow) : new Date()
-}
-
 async function assertStartProof(input: { id: string; startToken: string; taskId: string | null; startedAt: string; plannedSecs: number }, userId: string, secret: string) {
   const proof = await verifyFocusStartProof(secret, input.startToken)
   if (!proof || proof.userId !== userId || proof.sessionId !== input.id || proof.taskId !== input.taskId || proof.startedAt !== input.startedAt || proof.plannedSecs !== input.plannedSecs) {
@@ -66,8 +61,7 @@ async function saveFocusPayload(db: Parameters<typeof insertFocusSession>[0], us
 export const focusRouter = router({
   start: turnstileProcedure.input(startInput).mutation(async ({ ctx, input }) => {
     await assertTaskOwnership(ctx.db, ctx.user.id, input.taskId)
-    const serverNow = resolveServerNow(ctx.request, ctx.env.E2E_TEST_MODE)
-    const now = serverNow.toISOString()
+    const now = ctx.now.toISOString()
     return { now, plannedSecs: input.plannedSecs, startToken: await createFocusStartProof(ctx.env.BETTER_AUTH_SECRET, { userId: ctx.user.id, sessionId: input.sessionId, taskId: input.taskId, startedAt: now, plannedSecs: input.plannedSecs }) }
   }),
 
@@ -85,7 +79,7 @@ export const focusRouter = router({
       completedAt: input.completedAt,
       plannedSecs: input.plannedSecs,
     })
-    if (resolveServerNow(ctx.request, ctx.env.E2E_TEST_MODE).getTime() < Date.parse(proof.startedAt) + proof.plannedSecs * 1000) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Focus はまだ終了していません' })
+    if (ctx.now.getTime() < Date.parse(proof.startedAt) + proof.plannedSecs * 1000) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Focus はまだ終了していません' })
     validateFocusSessionPayload(payload)
     return saveFocusPayload(ctx.db, ctx.user.id, payload)
   }),
@@ -93,8 +87,7 @@ export const focusRouter = router({
   interrupt: turnstileProcedure.input(baseInput.extend({ stoppedAt: z.string().datetime() })).mutation(async ({ ctx, input }) => {
     const proof = await assertStartProof(input, ctx.user.id, ctx.env.BETTER_AUTH_SECRET)
     const taskId = await resolveTaskId(ctx.db, ctx.user.id, input.taskId)
-    const serverNow = resolveServerNow(ctx.request, ctx.env.E2E_TEST_MODE)
-    if (Date.parse(input.stoppedAt) > serverNow.getTime() + 5_000) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: '未来の時刻では Focus を停止できません' })
+    if (Date.parse(input.stoppedAt) > ctx.now.getTime() + 5_000) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: '未来の時刻では Focus を停止できません' })
     if (Date.parse(input.stoppedAt) < Date.parse(proof.startedAt)) throw new TRPCError({ code: 'BAD_REQUEST', message: '停止時刻が開始時刻より前です' })
     const payload = buildInterruptedFocusSessionPayload({
       id: input.id,

@@ -4,12 +4,13 @@ import { queryClient, trpc } from '../lib/trpc'
 
 let anonymousSignInInFlight: Promise<unknown> | null = null
 let activeSessionUserId: string | null = null
+let bootstrappedSessionUserId: string | null = null
 
 export function useAppSession() {
   const auth = useAuth()
   const { loading, signInAnonymous, user } = auth
   const bootstrap = trpc.bootstrap.initialize.useMutation()
-  const [bootstrappedUserId, setBootstrappedUserId] = useState<string | null>(null)
+  const [bootstrappedUserId, setBootstrappedUserId] = useState<string | null>(() => bootstrappedSessionUserId)
   const [bootstrapFailedUserId, setBootstrapFailedUserId] = useState<string | null>(null)
   const [anonymousAuthError, setAnonymousAuthError] = useState(false)
   const anonymousRequestInFlight = useRef(false)
@@ -21,6 +22,7 @@ export function useAppSession() {
     if (activeSessionUserId !== currentUserId) {
       queryClient.clear()
       activeSessionUserId = currentUserId
+      bootstrappedSessionUserId = null
     }
   }, [auth.user?.id])
 
@@ -36,14 +38,24 @@ export function useAppSession() {
   }, [anonymousAuthError, loading, signInAnonymous, user])
 
   useEffect(() => {
-    if (!auth.user || bootstrappedUserId === auth.user.id || bootstrapFailedUserId === auth.user.id || requestedUserId.current === auth.user.id) return
+    if (!auth.user || bootstrapFailedUserId === auth.user.id || requestedUserId.current === auth.user.id) return
+    if (bootstrappedSessionUserId === auth.user.id) return
     requestedUserId.current = auth.user.id
     const userId = auth.user.id
     bootstrap.mutate({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }, {
-      onSuccess: () => { setBootstrapFailedUserId(null); setBootstrappedUserId(userId) },
-      onError: () => { requestedUserId.current = null; setBootstrapFailedUserId(userId) },
+      onSuccess: () => {
+        if (activeSessionUserId !== userId) return
+        bootstrappedSessionUserId = userId
+        setBootstrapFailedUserId(null)
+        setBootstrappedUserId(userId)
+      },
+      onError: () => {
+        if (activeSessionUserId !== userId) return
+        requestedUserId.current = null
+        setBootstrapFailedUserId(userId)
+      },
     })
-  }, [auth.user, bootstrap, bootstrapFailedUserId, bootstrappedUserId])
+  }, [auth.user, bootstrap, bootstrapFailedUserId])
 
   const retryBootstrap = useCallback(() => {
     if (!auth.user) return

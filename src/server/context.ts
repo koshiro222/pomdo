@@ -31,7 +31,13 @@ export type AppContext = {
   db: Database
   env: AppEnvironment
   request: Request
+  now: Date
   user: SessionUser | null
+}
+
+export function resolveRequestNow(request: Request, e2eTestMode: string | undefined): Date {
+  const requestedNow = e2eTestMode === 'true' ? request.headers.get('x-e2e-now') : null
+  return requestedNow && !Number.isNaN(Date.parse(requestedNow)) ? new Date(requestedNow) : new Date()
 }
 
 export async function createContext(request: Request, env: AppEnvironment): Promise<AppContext> {
@@ -39,9 +45,10 @@ export async function createContext(request: Request, env: AppEnvironment): Prom
   const auth = createAuthInstance(env)
   const session = await auth.api.getSession({ headers: request.headers })
   const user = session?.user ? mapSessionUser(session.user) : null
+  const now = resolveRequestNow(request, env.E2E_TEST_MODE)
 
-  if (user) await updateLastSeenIfDue(db, user.id, new Date())
-  return { db, env, request, user }
+  if (user) await updateLastSeenIfDue(db, user.id, now)
+  return { db, env, request, now, user }
 }
 
 function mapSessionUser(value: Record<string, unknown>): SessionUser {

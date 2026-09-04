@@ -53,7 +53,7 @@ export function AppPage() {
   const [justFocusChoice, setJustFocusChoice] = useState(false)
   const [breakSuggestion, setBreakSuggestion] = useState<'shortBreak' | 'longBreak' | null>(null)
   const [detailsTask, setDetailsTask] = useState<TaskView | null>(null)
-  const [toast, setToast] = useState<string | null>(() => readAccountLinkNotice())
+  const [toast, setToast] = useState<string | null>(() => readAccountLinkNotice({ preserve: true }))
   const [tabReturnPrompt, setTabReturnPrompt] = useState<FocusRuntimeSnapshot | null>(null)
   const [nextTaskSuggestion, setNextTaskSuggestion] = useState<TaskView | null>(null)
   const completedRuntimeId = useRef<string | null>(null)

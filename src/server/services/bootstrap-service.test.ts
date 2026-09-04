@@ -26,7 +26,10 @@ describe('匿名ユーザーの bootstrap', () => {
     await db.insert(users).values({ id: userId, name: 'Anonymous', email: `${userId}@example.com`, isAnonymous: true })
     const now = new Date('2026-09-04T00:00:00.000Z')
 
-    await initializeBootstrap(db, userId, 'Asia/Tokyo', now)
+    await Promise.all([
+      initializeBootstrap(db, userId, 'Asia/Tokyo', now),
+      initializeBootstrap(db, userId, 'Asia/Tokyo', now),
+    ])
     await initializeBootstrap(db, userId, 'Asia/Tokyo', now)
 
     await expect(db.select({ title: tasks.title }).from(tasks).where(eq(tasks.userId, userId))).resolves.toEqual([{ title: SAMPLE_TASK_TITLE }])

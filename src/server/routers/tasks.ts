@@ -20,15 +20,15 @@ import {
 const writeInput = z.object({ turnstileToken: z.string().optional() })
 const taskIdInput = z.object({ id: z.string().uuid(), turnstileToken: z.string().optional() })
 
-function getToday(timezone: string): string {
-  return formatTaskCalendarDate(new Date(), timezone)
+function getToday(timezone: string, now: Date): string {
+  return formatTaskCalendarDate(now, timezone)
 }
 
 export const tasksRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
     const allTasks = await listTasks(ctx.db, ctx.user.id)
     const currentTask = await findCurrentTask(ctx.db, ctx.user.id)
-    const today = getToday(ctx.user.timezone)
+    const today = getToday(ctx.user.timezone, ctx.now)
     const buckets = deriveTaskBuckets(allTasks, today, ctx.user.timezone, currentTask?.id ?? null)
     return { today, currentTask, ...buckets }
   }),
@@ -40,7 +40,7 @@ export const tasksRouter = router({
     bucket: z.enum(['onDeck', 'backlog']).default('onDeck'),
   })).mutation(async ({ ctx, input }) => {
     const existing = await listTasks(ctx.db, ctx.user.id)
-    const today = getToday(ctx.user.timezone)
+    const today = getToday(ctx.user.timezone, ctx.now)
     const onDeck = existing.filter((task) => task.plannedFor === today && task.completedAt === null).sort((left, right) => (left.deckOrder ?? '').localeCompare(right.deckOrder ?? ''))
     const deckOrder = input.bucket === 'onDeck'
       ? buildDeckOrder(onDeck.at(-1)?.deckOrder ?? null, null)
@@ -87,7 +87,7 @@ export const tasksRouter = router({
   moveToNow: turnstileProcedure.input(taskIdInput).mutation(async ({ ctx, input }) => {
     const task = await findTaskById(ctx.db, ctx.user.id, input.id)
     if (!task || task.completedAt) throw new TRPCError({ code: 'NOT_FOUND', message: 'タスクが見つかりません' })
-    const today = getToday(ctx.user.timezone)
+    const today = getToday(ctx.user.timezone, ctx.now)
     const updated = await persistTaskToNow(ctx.db, ctx.user.id, input.id, promoteTaskToNow(task, today, ctx.user.timezone))
     if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'タスクが見つかりません' })
     return updated
@@ -98,7 +98,7 @@ export const tasksRouter = router({
     nextId: z.string().uuid().nullable(),
   })).mutation(async ({ ctx, input }) => {
     const target = await findTaskById(ctx.db, ctx.user.id, input.id)
-    const today = getToday(ctx.user.timezone)
+    const today = getToday(ctx.user.timezone, ctx.now)
     if (!target || target.completedAt || target.plannedFor !== today) throw new TRPCError({ code: 'BAD_REQUEST', message: 'On Deck のタスクだけ並べ替えできます' })
     const [previous, next] = await Promise.all([
       input.previousId ? findTaskById(ctx.db, ctx.user.id, input.previousId) : Promise.resolve(null),

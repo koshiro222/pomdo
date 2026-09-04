@@ -11,7 +11,7 @@ export const reviewRouter = router({
       listTasks(ctx.db, ctx.user.id),
       listDailyFocusSummaries(ctx.db, ctx.user.id),
     ])
-    const today = formatTaskCalendarDate(new Date(), ctx.user.timezone)
+    const today = formatTaskCalendarDate(ctx.now, ctx.user.timezone)
     const sqlSummaryByDate = new Map(dailySummaries.map((summary) => [summary.date, summary]))
     const todaySummary = sqlSummaryByDate.get(today) ?? summarizeToday(sessions, today, ctx.user.timezone)
     const days = summarizeRecentSevenDays(sessions, today, ctx.user.timezone).map((day) => sqlSummaryByDate.get(day.date) ?? day)

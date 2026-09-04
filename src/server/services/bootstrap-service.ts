@@ -1,7 +1,7 @@
-import { and, eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { assertIanaTimeZone } from '../../core/domain/timezone'
 import type { Database } from '../db/client'
-import { analyticsEvents, tasks, users } from '../db/schema'
+import { users } from '../db/schema'
 import { findCurrentTask, listTasks, sweepOverdueTasksForUser } from '../repositories/task-repository'
 
 export const SAMPLE_TASK_TITLE = 'Pomdo を5分だけ触ってみる'
@@ -23,29 +23,27 @@ export async function initializeBootstrap(db: Database, userId: string, timezone
   const today = formatDateInTimeZone(now, user.timezone)
 
   await sweepOverdueTasksForUser(db, userId, today)
-  await db.transaction(async (transaction) => {
-    await transaction.select({ id: users.id }).from(users).where(eq(users.id, userId)).for('update')
-    const alreadyOpened = await transaction.select({ id: analyticsEvents.id }).from(analyticsEvents).where(and(
-      eq(analyticsEvents.userId, userId),
-      eq(analyticsEvents.event, 'app_opened'),
-    )).limit(1)
-    if (alreadyOpened.length > 0) return
-
-    const existingTasks = await transaction.select({ id: tasks.id }).from(tasks).where(eq(tasks.userId, userId)).limit(1)
-    if (existingTasks.length === 0) {
-      const sampleRows = await transaction.insert(tasks).values({
-        userId,
-        title: SAMPLE_TASK_TITLE,
-        note: SAMPLE_TASK_NOTE,
-        plannedFor: today,
-        deckOrder: 'a0',
-      }).returning()
-      const sampleTask = sampleRows[0]
-      if (sampleTask) await transaction.update(users).set({ currentTaskId: sampleTask.id }).where(eq(users.id, userId))
-    }
-
-    await transaction.insert(analyticsEvents).values({ userId, event: 'app_opened' }).onConflictDoNothing()
-  })
+  await db.execute(sql`
+    WITH opened AS (
+      INSERT INTO analytics_events (user_id, event)
+      VALUES (${userId}, 'app_opened')
+      ON CONFLICT (user_id, event) DO NOTHING
+      RETURNING user_id
+    ), sample_task AS (
+      INSERT INTO tasks (user_id, title, note, planned_for, deck_order)
+      SELECT opened.user_id, ${SAMPLE_TASK_TITLE}, ${SAMPLE_TASK_NOTE}, ${today}, 'a0'
+      FROM opened
+      WHERE NOT EXISTS (SELECT 1 FROM tasks WHERE user_id = ${userId})
+      RETURNING id
+    ), set_current_task AS (
+      UPDATE users
+      SET current_task_id = sample_task.id
+      FROM sample_task
+      WHERE users.id = ${userId}
+      RETURNING users.id
+    )
+    SELECT 1 FROM set_current_task
+  `)
   return {
     today,
     resetLongBreakCount: true,

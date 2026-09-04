@@ -1,0 +1,21 @@
+name: Purge anonymous users
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Purge inactive anonymous users
+        env:
+          POMDO_URL: ${{ secrets.PRODUCTION_URL }}
+          ADMIN_CRON_SECRET: ${{ secrets.ADMIN_CRON_SECRET }}
+        run: |
+          base_url="${POMDO_URL:-https://pomdo.pages.dev}"
+          curl --fail-with-body --silent --show-error \
+            --request POST "${base_url%/}/api/admin/purge-anonymous" \
+            --header "Authorization: Bearer ${ADMIN_CRON_SECRET}"

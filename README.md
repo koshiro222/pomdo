@@ -1,73 +1,40 @@
-# React + TypeScript + Vite
+# Pomdo v1
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Pomdo は、残り時間を円盤で外在化し、今やることを 1 件に絞る ADHD 向けの集中ツールです。
 
-Currently, two official plugins are available:
+## 開発
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm ci
+cp .dev.vars.example .dev.vars
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+`.dev.vars` の `DATABASE_URL`、`BETTER_AUTH_SECRET`、Google OAuth の値をローカル環境に合わせて設定します。例えば `BETTER_AUTH_URL=http://localhost:5173` とすると、`/app` の初回表示で匿名ユーザーと `Pomdo を5分だけ触ってみる` が 1 件だけ作成されます。
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## v1 の範囲
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- `/` は LP、`/app` は単一カラムの Focus 画面です。
+- 認証は匿名ユーザーと Google OAuth のみです。Task と Focus Session は匿名状態でも DB に保存されます。
+- Focus は 15 / 25 / 45 分、Short Break は 5 分、Long Break は 15 分です。実行中の操作は「ストップ」だけです。
+- 60 秒未満の中断は破棄し、60 秒以上は Interrupted として残します。例えば 59 秒で止めた記録は Review に現れません。
+- BGM、R2、メール/パスワード、管理者 UI、PWA は v1 に含めません。
+
+## 品質確認
+
+```sh
+npm run lint
+npm run typecheck
+npm test -- --run
+npm run test:coverage
+npm run build
+npm run test:e2e -- --project=chromium
 ```
+
+DB スキーマを変更したときは `npm run db:generate` の後、PGlite 結合テストと `npm run build` を実行します。`tests/e2e/` は `/api/test/auth` と固定時計を使うため、E2E 用の Neon branch と `E2E_TEST_MODE=true` が必要です。
+
+## 運用
+
+本番は Cloudflare Pages + Neon PostgreSQL です。`TURNSTILE_SECRET_KEY`、`BETTER_AUTH_SECRET`、`ADMIN_CRON_SECRET` は Pages secret に置き、クライアントへ渡しません。匿名ユーザーの 90 日 purge は `POST /api/admin/purge-anonymous` を Bearer secret 付きで日次実行します。
+
+利用規約・プライバシーポリシーは法務レビュー完了をローンチ条件とします。詳細な設計と受け入れ条件は [Issue #148 実装計画](design-docs-for-ai/issue148-adhd-focused-pomodoro-todo-v1-rebuild-implementation-plan.md) を参照してください。

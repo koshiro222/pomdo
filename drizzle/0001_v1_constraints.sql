@@ -1,0 +1,4 @@
+ALTER TABLE "focus_sessions" ADD CONSTRAINT "focus_sessions_duration_range_check" CHECK (("focus_sessions"."completed_at" is not null and "focus_sessions"."duration_secs" = "focus_sessions"."planned_secs") or ("focus_sessions"."completed_at" is null and "focus_sessions"."duration_secs" between 60 and "focus_sessions"."planned_secs"));--> statement-breakpoint
+ALTER TABLE "focus_sessions" ADD CONSTRAINT "focus_sessions_planned_preset_check" CHECK ("focus_sessions"."planned_secs" in (900, 1500, 2700));--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_estimate_range_check" CHECK ("tasks"."estimate" is null or "tasks"."estimate" between 1 and 8);--> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_sound_volume_range_check" CHECK ("users"."sound_volume" between 0 and 1);

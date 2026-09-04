@@ -22,8 +22,60 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Vitest
+        run: npm test -- --run
+
+      - name: Coverage
+        run: npm run test:coverage
+
       - name: Build
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: npm run build
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare E2E environment
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: http://localhost:5173
+          FRONTEND_URL: http://localhost:5173
+          ADMIN_CRON_SECRET: ${{ secrets.ADMIN_CRON_SECRET }}
+          E2E_TEST_MODE: 'true'
+        run: |
+          {
+            printf 'DATABASE_URL=%s\n' "$DATABASE_URL"
+            printf 'GOOGLE_CLIENT_ID=%s\n' "$GOOGLE_CLIENT_ID"
+            printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET"
+            printf 'BETTER_AUTH_SECRET=%s\n' "$BETTER_AUTH_SECRET"
+            printf 'BETTER_AUTH_URL=%s\n' "$BETTER_AUTH_URL"
+            printf 'FRONTEND_URL=%s\n' "$FRONTEND_URL"
+            printf 'ADMIN_CRON_SECRET=%s\n' "$ADMIN_CRON_SECRET"
+            printf 'TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA\n'
+            printf 'E2E_TEST_MODE=%s\n' "$E2E_TEST_MODE"
+          } > .dev.vars
+
+      - name: Chromium E2E
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: http://localhost:5173
+          FRONTEND_URL: http://localhost:5173
+          E2E_TEST_MODE: 'true'
+        run: npm run test:e2e -- --project=chromium
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

@@ -1,52 +1,20 @@
-import { motion } from 'framer-motion'
-import { RotateCcw, SkipForward } from 'lucide-react'
-import { tapAnimation, hoverAnimation } from '@/lib/animation'
+import { messages } from '../../messages'
 
-interface TimerControlsProps {
+export function TimerControls({ isActive, mode, preset, onPresetChange, onStart, onStop, onSkip }: {
   isActive: boolean
+  mode: 'focus' | 'shortBreak' | 'longBreak'
+  preset: number
+  onPresetChange: (seconds: number) => void
   onStart: () => void
-  onPause: () => void
-  onReset: () => void
+  onStop: () => void
   onSkip: () => void
-}
-
-export function TimerControls({
-  isActive,
-  onStart,
-  onPause,
-  onReset,
-  onSkip,
-}: TimerControlsProps) {
-  return (
-    <div className="flex items-center gap-6 mt-12">
-      <motion.button
-        {...hoverAnimation}
-        {...tapAnimation}
-        onClick={onReset}
-        className="size-14 rounded-full glass flex items-center justify-center text-cf-subtext hover:text-cf-text transition-colors"
-        aria-label="リセット"
-      >
-        <RotateCcw className="text-3xl" />
-      </motion.button>
-
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={isActive ? onPause : onStart}
-        className="h-16 px-10 rounded-full bg-cf-primary text-white font-bold text-xl hover:bg-cf-primary-hover transition-colors shadow-lg shadow-cf-primary/20"
-      >
-        {isActive ? 'PAUSE' : 'START'}
-      </motion.button>
-
-      <motion.button
-        {...hoverAnimation}
-        {...tapAnimation}
-        onClick={onSkip}
-        className="size-14 rounded-full glass flex items-center justify-center text-cf-subtext hover:text-cf-text transition-colors"
-        aria-label="スキップ"
-      >
-        <SkipForward className="text-3xl" />
-      </motion.button>
-    </div>
-  )
+}) {
+  return isActive
+    ? <button className="btn btn-danger" type="button" onClick={mode === 'focus' ? onStop : onSkip}>{mode === 'focus' ? messages.app.stop : messages.app.skip}</button>
+    : <div className="timer-actions">
+        <div className="presets" role="group" aria-label="集中時間">
+          {[15, 25, 45].map((minutes) => <button key={minutes} type="button" aria-pressed={preset === minutes * 60} onClick={() => onPresetChange(minutes * 60)}>{minutes}</button>)}
+        </div>
+        <button className="btn btn-primary btn-lg" type="button" onClick={onStart}>{messages.app.start}</button>
+      </div>
 }

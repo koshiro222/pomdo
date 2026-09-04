@@ -19,19 +19,20 @@ test('LPから匿名で始めて、TaskとFocusの一連の流れを操作でき
   await page.getByRole('button', { name: '15' }).click()
   await page.getByRole('button', { name: '▶ はじめる' }).click()
   await expect(page.getByRole('button', { name: 'ストップ' })).toBeVisible()
-  await page.clock.fastForward('00:15:01')
+  await page.clock.runFor('00:15:01')
   await expect(page.getByText('ひと区切り。少し休みますか？')).toBeVisible()
   await page.getByRole('button', { name: 'もう1本' }).click()
 
   await setServerNowFromBrowserClock(page)
   await page.getByRole('button', { name: '▶ はじめる' }).click()
-  await page.clock.fastForward('00:00:30')
+  await page.clock.runFor('00:00:30')
   await page.getByRole('button', { name: 'ストップ' }).click()
   await expect(page.getByRole('button', { name: '▶ はじめる' })).toBeVisible()
 
   await setServerNowFromBrowserClock(page)
   await page.getByRole('button', { name: '▶ はじめる' }).click()
-  await page.clock.fastForward('00:01:00')
+  // 停止時刻がちょうど60秒境界になると、ブラウザのイベント処理順で59秒扱いになり得るため1秒余裕を持たせる。
+  await page.clock.runFor('00:01:01')
   await page.getByRole('button', { name: 'ストップ' }).click()
   await page.getByRole('link', { name: /振り返りを見る/ }).click()
   await expect(page.getByText('合計集中時間')).toBeVisible()
@@ -46,7 +47,7 @@ test('BacklogからNowへ昇格し、Nowが空ならJust Focusを選べる', asy
   await page.getByLabel('タスクを追加').last().fill('いつか読む記事')
   await page.getByRole('button', { name: '追加' }).last().click()
   await expect(page.getByText('いつか読む記事')).toBeVisible()
-  await page.getByRole('button', { name: 'いつか読む記事' }).click()
+  await page.getByRole('button', { name: /^いつか読む記事 \d+ 本$/ }).click()
   await expect(page.getByRole('heading', { name: 'いつか読む記事' })).toBeVisible()
 
   await page.getByRole('button', { name: '完了' }).first().click()

@@ -8,9 +8,9 @@ import { accounts, focusSessions, sessions, tasks, users } from '../../../src/se
 import { linkAnonymousAccountData } from '../../../src/server/services/account-link-service'
 import { recordAnalyticsEvent } from '../../../src/server/repositories/analytics-event-repository'
 
-export const testAuthApp = new Hono<{ Bindings: AuthBindings & { DATABASE_URL: string } }>()
+export const testAuthApp = new Hono<{ Bindings: AuthBindings & { DATABASE_URL: string } }>().basePath('/api/test')
 
-testAuthApp.post('/', async (context) => {
+testAuthApp.post('/auth', async (context) => {
   if (context.env.E2E_TEST_MODE !== 'true') return context.json({ error: 'Not found' }, 404)
   const payload: { identity?: string; seedExistingData?: boolean } = await context.req.json<{ identity?: string; seedExistingData?: boolean }>().catch(() => ({ identity: undefined }))
   if (!payload.identity || typeof payload.identity !== 'string') return context.json({ error: 'identity is required' }, 400)

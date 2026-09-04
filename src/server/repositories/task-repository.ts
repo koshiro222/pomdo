@@ -1,6 +1,28 @@
-import { and, asc, desc, eq, isNotNull, isNull, lt, ne } from 'drizzle-orm'
+import { and, asc, desc, eq, isNotNull, isNull, lt, ne, sql } from 'drizzle-orm'
 import type { Database } from '../db/client'
 import { tasks, users } from '../db/schema'
+
+type TaskRow = typeof tasks.$inferSelect
+type BatchDatabase = {
+  batch: (queries: readonly unknown[]) => Promise<unknown>
+}
+
+function getBatch(database: Database): BatchDatabase['batch'] | null {
+  const candidate = database as unknown as Partial<BatchDatabase>
+  return typeof candidate.batch === 'function' ? candidate.batch.bind(database) : null
+}
+
+async function runBatch<T>(
+  database: Database,
+  queries: readonly unknown[],
+  fallback: () => Promise<T[]>,
+): Promise<T[]> {
+  const batch = getBatch(database)
+  if (!batch) return fallback()
+  const results = await batch(queries)
+  if (!Array.isArray(results) || !Array.isArray(results[0])) return []
+  return results[0] as T[]
+}
 
 export async function listTasks(db: Database, userId: string) {
   return db.select().from(tasks)
@@ -38,34 +60,46 @@ export async function updateDeckOrders(
   userId: string,
   updates: readonly { id: string; deckOrder: string }[],
 ) {
-  await db.transaction(async (transaction) => {
-    for (const update of updates) {
-      await transaction.update(tasks)
-        .set({ deckOrder: update.deckOrder, updatedAt: new Date() })
-        .where(and(eq(tasks.id, update.id), eq(tasks.userId, userId)))
-    }
+  if (updates.length === 0) return
+  const queries = updates.map((update) => db.update(tasks)
+      .set({ deckOrder: update.deckOrder, updatedAt: new Date() })
+      .where(and(eq(tasks.id, update.id), eq(tasks.userId, userId))))
+  await runBatch(db, queries, async () => {
+    for (const query of queries) await query
+    return []
   })
 }
 
 export async function deleteTask(db: Database, userId: string, taskId: string) {
-  return db.transaction(async (transaction) => {
-    const rows = await transaction.delete(tasks)
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
-      .returning()
-    if (rows.length > 0) await transaction.update(users).set({ currentTaskId: null, updatedAt: new Date() }).where(and(eq(users.id, userId), eq(users.currentTaskId, taskId)))
-    return rows[0] ?? null
+  const deleteQuery = db.delete(tasks)
+    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+    .returning()
+  const clearCurrentTaskQuery = db.update(users)
+    .set({ currentTaskId: null, updatedAt: new Date() })
+    .where(and(eq(users.id, userId), eq(users.currentTaskId, taskId)))
+  const rows = await runBatch<TaskRow>(db, [deleteQuery, clearCurrentTaskQuery], async () => {
+    const deletedRows = await deleteQuery
+    if (deletedRows.length > 0) await clearCurrentTaskQuery
+    return deletedRows
   })
+  return rows[0] ?? null
 }
 
 export async function completeTask(db: Database, userId: string, taskId: string) {
-  return db.transaction(async (transaction) => {
-    const rows = await transaction.update(tasks)
-      .set({ completedAt: new Date(), deckOrder: null, updatedAt: new Date() })
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
-      .returning()
-    if (rows.length > 0) await transaction.update(users).set({ currentTaskId: null, updatedAt: new Date() }).where(and(eq(users.id, userId), eq(users.currentTaskId, taskId)))
-    return rows[0] ?? null
+  const now = new Date()
+  const completeQuery = db.update(tasks)
+    .set({ completedAt: now, deckOrder: null, updatedAt: now })
+    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+    .returning()
+  const clearCurrentTaskQuery = db.update(users)
+    .set({ currentTaskId: null, updatedAt: now })
+    .where(and(eq(users.id, userId), eq(users.currentTaskId, taskId)))
+  const rows = await runBatch<TaskRow>(db, [completeQuery, clearCurrentTaskQuery], async () => {
+    const updatedRows = await completeQuery
+    if (updatedRows.length > 0) await clearCurrentTaskQuery
+    return updatedRows
   })
+  return rows[0] ?? null
 }
 
 export async function moveTaskToNow(
@@ -74,14 +108,22 @@ export async function moveTaskToNow(
   taskId: string,
   input: Partial<typeof tasks.$inferInsert>,
 ) {
-  return db.transaction(async (transaction) => {
-    const rows = await transaction.update(tasks)
-      .set({ ...input, updatedAt: new Date() })
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId), isNull(tasks.completedAt)))
-      .returning()
-    if (rows.length > 0) await transaction.update(users).set({ currentTaskId: taskId, updatedAt: new Date() }).where(eq(users.id, userId))
-    return rows[0] ?? null
+  const moveQuery = db.update(tasks)
+    .set({ ...input, updatedAt: new Date() })
+    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId), isNull(tasks.completedAt)))
+    .returning()
+  const setCurrentTaskQuery = db.update(users)
+    .set({ currentTaskId: taskId, updatedAt: new Date() })
+    .where(and(
+      eq(users.id, userId),
+      sql`exists (select 1 from tasks where tasks.id = ${taskId} and tasks.user_id = ${userId} and tasks.completed_at is null)`,
+    ))
+  const rows = await runBatch<TaskRow>(db, [moveQuery, setCurrentTaskQuery], async () => {
+    const updatedRows = await moveQuery
+    if (updatedRows.length > 0) await setCurrentTaskQuery
+    return updatedRows
   })
+  return rows[0] ?? null
 }
 
 export async function clearCurrentTask(db: Database, userId: string, taskId: string) {

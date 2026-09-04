@@ -5,9 +5,9 @@ import { createDb } from '../../../src/server/db/client'
 import { users } from '../../../src/server/db/schema'
 import type { AppEnvironment } from '../../../src/server/context'
 
-const app = new Hono<{ Bindings: AppEnvironment }>()
+export const adminPurgeApp = new Hono<{ Bindings: AppEnvironment }>().basePath('/api/admin')
 
-app.post('/', async (context) => {
+adminPurgeApp.post('/purge-anonymous', async (context) => {
   const authorization = context.req.header('Authorization')
   if (!context.env.ADMIN_CRON_SECRET || authorization !== `Bearer ${context.env.ADMIN_CRON_SECRET}`) {
     return context.json({ error: 'Unauthorized' }, 401)
@@ -20,4 +20,4 @@ app.post('/', async (context) => {
   return context.json({ deleted: deleted.length })
 })
 
-export const onRequest = handle(app)
+export const onRequest = handle(adminPurgeApp)

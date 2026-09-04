@@ -10,7 +10,9 @@ try {
     const [key, ...valueParts] = line.split("=");
     const value = valueParts.join("=");
     if (key && value) {
-      process.env[key] = value;
+      if (!process.env[key]) {
+        process.env[key] = value;
+      }
     }
   });
 } catch {

@@ -13,11 +13,11 @@ function formatNotice(result: string | null): string | null {
   return null
 }
 
-export function readAccountLinkNotice(): string | null {
+export function readAccountLinkNotice(options: { preserve?: boolean } = {}): string | null {
   if (typeof window === 'undefined') return null
   const localResult = window.localStorage.getItem(NOTICE_KEY)
   if (localResult) {
-    window.localStorage.removeItem(NOTICE_KEY)
+    if (!options.preserve) window.localStorage.removeItem(NOTICE_KEY)
     return formatNotice(localResult)
   }
   const cookie = document.cookie.split('; ').find((part) => part.startsWith(`${NOTICE_KEY}=`))
@@ -28,7 +28,7 @@ export function readAccountLinkNotice(): string | null {
   } catch {
     result = ''
   }
-  document.cookie = `${NOTICE_KEY}=; Max-Age=0; Path=/; SameSite=Lax`
+  if (!options.preserve) document.cookie = `${NOTICE_KEY}=; Max-Age=0; Path=/; SameSite=Lax`
   return formatNotice(result)
 }
 

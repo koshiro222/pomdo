@@ -15,12 +15,13 @@ test('ReviewとSettingsから記録を確認し、アカウントを削除して
   await setServerNowFromBrowserClock(page)
   await page.getByRole('button', { name: '15' }).click()
   await page.getByRole('button', { name: '▶ はじめる' }).click()
-  await page.clock.fastForward('00:15:01')
+  await page.clock.runFor('00:15:01')
   await expect(page.getByText('ひと区切り。少し休みますか？')).toBeVisible()
   await page.getByRole('button', { name: 'もう1本' }).click()
 
   await page.getByRole('link', { name: /振り返りを見る/ }).click()
-  await expect(page.locator('svg')).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/review$/)
+  await expect(page.getByRole('img', { name: '直近7日の集中時間' })).toBeVisible()
   await expect(page.getByText('直近7日')).toBeVisible()
   await expect(page.getByText(/累計 \d+日/)).toBeVisible()
 

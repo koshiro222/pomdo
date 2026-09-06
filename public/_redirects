@@ -1,5 +1,5 @@
-/app /index.html 200
-/app/* /index.html 200
+/app /index.html 200!
+/app/* /index.html 200!
 /about /index.html 200
 /legal /index.html 200
 /legal/* /index.html 200

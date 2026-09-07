@@ -32,5 +32,5 @@ test('ReviewとSettingsから記録を確認し、アカウントを削除して
   page.once('dialog', (dialog) => void dialog.accept())
   await page.getByRole('button', { name: 'アカウントを削除' }).click()
   await expect(page).toHaveURL(/\/$/)
-  await expect(page.getByRole('link', { name: '今すぐ使ってみる' })).toBeVisible()
+  await expect(page.getByRole('link', { name: '使ってみる' })).toBeVisible()
 })

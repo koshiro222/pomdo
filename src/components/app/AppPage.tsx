@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Turnstile } from '@marsidev/react-turnstile'
 import { Link } from 'react-router'
 import { useAppSession } from '../../hooks/useAppSession'
+import { useTurnstileToken } from '../../hooks/useTurnstileToken'
 import { flushFocusSessionOutbox, peekFocusSession, queueFocusSession, type FocusOutboxPayload } from '../../lib/focus-outbox'
 import { requestNotificationPermissionOnce, notifyFocusCompleted } from '../../lib/notifications'
 import { playFocusChime } from '../../lib/sound'
@@ -18,9 +19,6 @@ import { TimerControls } from '../timer/TimerControls'
 import { TimerDisc } from '../timer/TimerDisc'
 import { Toast } from '../ui/Toast'
 import type { TaskView } from '../tasks/TaskRow'
-
-const DEV_TURNSTILE_TOKEN = 'e2e-turnstile-token'
-const DEV_TURNSTILE_SITE_KEY = '1x00000000000000000000AA'
 
 type FocusRuntimeSnapshot = {
   startedAt: number
@@ -48,7 +46,7 @@ export function AppPage() {
   const interruptFocus = trpc.focus.interrupt.useMutation()
   const completeTask = trpc.tasks.complete.useMutation()
   const moveTaskToNow = trpc.tasks.moveToNow.useMutation()
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const { ref: turnstileRef, siteKey: turnstileSiteKey, resolveTurnstileToken, onSuccess: onTurnstileSuccess, onExpire: onTurnstileExpire, onError: onTurnstileError } = useTurnstileToken()
   const [now, setNow] = useState(() => Date.now())
   const [justFocusChoice, setJustFocusChoice] = useState(false)
   const [breakSuggestion, setBreakSuggestion] = useState<'shortBreak' | 'longBreak' | null>(null)
@@ -84,13 +82,16 @@ export function AppPage() {
         }
       : null
   )
-  const effectiveTurnstileToken = turnstileToken ?? (import.meta.env.DEV ? DEV_TURNSTILE_TOKEN : null)
-  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || (import.meta.env.DEV ? DEV_TURNSTILE_SITE_KEY : null)
   const currentTask = tasksQuery.data?.currentTask ?? null
   const taskList = tasksQuery.data
   const completedFocusCounts = new Map<string, number>()
   for (const session of sessionsQuery.data ?? []) if (session.completedAt && session.taskId) completedFocusCounts.set(session.taskId, (completedFocusCounts.get(session.taskId) ?? 0) + 1)
   const refresh = useCallback(() => { void utils.tasks.list.invalidate(); void utils.review.summary.invalidate(); void sessionsQuery.refetch() }, [sessionsQuery, utils.review.summary, utils.tasks.list])
+  const resolveProtectedActionToken = useCallback(async () => {
+    const token = await resolveTurnstileToken()
+    if (!token) setToast('確認が完了していないため操作できません。ページを再読み込みして、もう一度お試しください。')
+    return token
+  }, [resolveTurnstileToken])
   const timerCompletionPending = isActive && runtime.mode === 'focus' && remainingSecs === 0 && !recoverySnapshot
 
   useEffect(() => initializeFocusRuntimeStorageSync(), [])
@@ -133,11 +134,13 @@ export function AppPage() {
   useEffect(() => {
     if (!user) return
     void flushFocusSessionOutbox(user.id, async (payload) => {
-      const input = { ...payload, turnstileToken: effectiveTurnstileToken ?? undefined }
+      const turnstileToken = await resolveProtectedActionToken()
+      if (!turnstileToken) throw new Error('Turnstile確認に失敗しました')
+      const input = { ...payload, turnstileToken }
       if (payload.kind === 'completed') await completeFocus.mutateAsync({ id: input.id, taskId: input.taskId, startedAt: input.startedAt, startToken: input.startToken, completedAt: input.completedAt ?? undefined, endsAt: input.completedAt ?? input.startedAt, plannedSecs: input.plannedSecs, turnstileToken: input.turnstileToken })
       else await interruptFocus.mutateAsync({ id: input.id, taskId: input.taskId, startedAt: input.startedAt, startToken: input.startToken, stoppedAt: input.stoppedAt ?? new Date().toISOString(), plannedSecs: input.plannedSecs, turnstileToken: input.turnstileToken })
     })
-  }, [completeFocus, effectiveTurnstileToken, interruptFocus, user])
+  }, [completeFocus, interruptFocus, resolveProtectedActionToken, user])
   useEffect(() => {
     if (!user || !taskList || toast) return
     const snapshot = readAccountLinkSnapshot()
@@ -152,7 +155,7 @@ export function AppPage() {
     const preserved = snapshot.taskIds.some((id) => taskIds.has(id)) || snapshot.focusSessionIds.some((id) => focusSessionIds.has(id))
     if (!preserved) setToast('匿名データを確認できませんでした。Google側に既存データがある場合は引き継がれません。')
   }, [sessionsQuery.data, taskList, toast, user])
-  const completeRuntimeSession = useCallback((snapshot: FocusRuntimeSnapshot) => {
+  const completeRuntimeSession = useCallback(async (snapshot: FocusRuntimeSnapshot) => {
     const payload: FocusOutboxPayload = {
       id: snapshot.sessionId,
       ownerUserId: snapshot.ownerUserId,
@@ -164,6 +167,11 @@ export function AppPage() {
       plannedSecs: snapshot.plannedSecs,
       kind: 'completed',
     }
+    const turnstileToken = await resolveProtectedActionToken()
+    if (!turnstileToken) {
+      queueFocusSession(payload)
+      return
+    }
     completeFocus.mutate({
       id: payload.id,
       taskId: payload.taskId,
@@ -172,7 +180,7 @@ export function AppPage() {
       endsAt: payload.completedAt ?? payload.startedAt,
       completedAt: payload.completedAt ?? undefined,
       plannedSecs: payload.plannedSecs,
-      turnstileToken: effectiveTurnstileToken ?? undefined,
+      turnstileToken,
     }, {
       onError: () => queueFocusSession(payload),
       onSettled: () => {
@@ -186,7 +194,7 @@ export function AppPage() {
     })
     notifyFocusCompleted()
     playFocusChime(user?.soundVolume ?? 0.7, user?.soundMuted ?? false)
-  }, [completeFocus, effectiveTurnstileToken, refresh, user])
+  }, [completeFocus, resolveProtectedActionToken, refresh, user])
   useEffect(() => {
     if (!isActive || runtime.mode !== 'focus' || runtime.ownerUserId !== user?.id || remainingSecs > 0 || tabReturnNeedsConfirmation || !runtime.startedAt || !runtime.endsAt || !runtime.startToken) return
     const sessionId = createRuntimeSessionKey(runtime)
@@ -194,7 +202,7 @@ export function AppPage() {
     completedRuntimeId.current = sessionId
     if (!runtime.sessionId) return
     if (!runtime.ownerUserId) return
-    completeRuntimeSession({ startedAt: runtime.startedAt, endsAt: runtime.endsAt, sessionId: runtime.sessionId, ownerUserId: runtime.ownerUserId, taskId: runtime.taskId, startToken: runtime.startToken, plannedSecs: runtime.plannedSecs, mode: 'focus', longBreakCount: runtime.longBreakCount })
+    void completeRuntimeSession({ startedAt: runtime.startedAt, endsAt: runtime.endsAt, sessionId: runtime.sessionId, ownerUserId: runtime.ownerUserId, taskId: runtime.taskId, startToken: runtime.startToken, plannedSecs: runtime.plannedSecs, mode: 'focus', longBreakCount: runtime.longBreakCount })
   }, [completeRuntimeSession, isActive, now, remainingSecs, runtime, tabReturnNeedsConfirmation, user?.id])
 
   if (loading || !ready || !user || !taskList) return <><AppHeader /><main className="page-shell loading-state">{anonymousAuthError ? <><p>匿名アカウントを作成できませんでした。</p><button className="btn" type="button" onClick={retryAnonymousSignIn}>もう一度試す</button></> : bootstrapError ? <><p>Pomdo の準備に失敗しました。</p><button className="btn" type="button" onClick={retryBootstrap}>もう一度試す</button></> : <p>あなたの Pomdo を準備しています。</p>}</main></>
@@ -207,16 +215,20 @@ export function AppPage() {
     }
     await requestNotificationPermissionOnce()
     const sessionId = crypto.randomUUID()
-    const response = await startFocus.mutateAsync({ sessionId, taskId, plannedSecs: runtime.plannedSecs, turnstileToken: effectiveTurnstileToken ?? undefined })
+    const turnstileToken = await resolveProtectedActionToken()
+    if (!turnstileToken) return
+    const response = await startFocus.mutateAsync({ sessionId, taskId, plannedSecs: runtime.plannedSecs, turnstileToken })
     const startedAt = Date.parse(response.now)
     useFocusRuntime.getState().startSession({ startedAt, endsAt: startedAt + runtime.plannedSecs * 1000, sessionId, ownerUserId: user.id, taskId, startToken: response.startToken, plannedSecs: runtime.plannedSecs, mode: 'focus' })
     completedRuntimeId.current = null
     setJustFocusChoice(false)
   }
-  const stop = () => {
+  const stop = async () => {
     if (!runtime.startedAt || !runtime.sessionId || !runtime.startToken) return
+    const turnstileToken = await resolveProtectedActionToken()
+    if (!turnstileToken) return
     const payload: FocusOutboxPayload = { id: runtime.sessionId, ownerUserId: user?.id ?? '', startToken: runtime.startToken, taskId: runtime.taskId, startedAt: new Date(runtime.startedAt).toISOString(), completedAt: null, stoppedAt: new Date().toISOString(), durationSecs: Math.max(0, Math.floor((Date.now() - runtime.startedAt) / 1000)), plannedSecs: runtime.plannedSecs, kind: 'interrupted' }
-    interruptFocus.mutate({ id: payload.id, taskId: payload.taskId, startedAt: payload.startedAt, startToken: payload.startToken, stoppedAt: new Date().toISOString(), plannedSecs: payload.plannedSecs, turnstileToken: effectiveTurnstileToken ?? undefined }, { onError: () => { if (payload.durationSecs >= 60) queueFocusSession(payload) }, onSettled: () => { useFocusRuntime.getState().clearSession(); refresh() } })
+    interruptFocus.mutate({ id: payload.id, taskId: payload.taskId, startedAt: payload.startedAt, startToken: payload.startToken, stoppedAt: new Date().toISOString(), plannedSecs: payload.plannedSecs, turnstileToken }, { onError: () => { if (payload.durationSecs >= 60) queueFocusSession(payload) }, onSettled: () => { useFocusRuntime.getState().clearSession(); refresh() } })
   }
   const startBreak = () => { if (!breakSuggestion) return; const seconds = breakSuggestion === 'longBreak' ? 15 * 60 : 5 * 60; if (breakSuggestion === 'longBreak') useFocusRuntime.getState().resetLongBreakCount(); useFocusRuntime.getState().startBreak(breakSuggestion, seconds, user.id); setBreakSuggestion(null) }
   const skipBreak = () => { useFocusRuntime.getState().clearSession(); useFocusRuntime.setState({ plannedSecs: 25 * 60 }) }
@@ -224,20 +236,24 @@ export function AppPage() {
   const completeRecoveredFocus = () => {
     if (!recoverySnapshot) return
     completedRuntimeId.current = createRuntimeSessionKey(recoverySnapshot)
-    completeRuntimeSession(recoverySnapshot)
+    void completeRuntimeSession(recoverySnapshot)
   }
-  const completeNowTask = () => {
+  const completeNowTask = async () => {
     if (!currentTask) return
-    completeTask.mutate({ id: currentTask.id, turnstileToken: effectiveTurnstileToken ?? undefined }, {
+    const turnstileToken = await resolveProtectedActionToken()
+    if (!turnstileToken) return
+    completeTask.mutate({ id: currentTask.id, turnstileToken }, {
       onSuccess: () => {
         setNextTaskSuggestion(taskList.onDeck[0] ?? null)
         refresh()
       },
     })
   }
-  const promoteSuggestedTask = () => {
+  const promoteSuggestedTask = async () => {
     if (!nextTaskSuggestion) return
-    moveTaskToNow.mutate({ id: nextTaskSuggestion.id, turnstileToken: effectiveTurnstileToken ?? undefined }, {
+    const turnstileToken = await resolveProtectedActionToken()
+    if (!turnstileToken) return
+    moveTaskToNow.mutate({ id: nextTaskSuggestion.id, turnstileToken }, {
       onSuccess: () => {
         setNextTaskSuggestion(null)
         refresh()
@@ -245,12 +261,12 @@ export function AppPage() {
     })
   }
   return <div className="app-shell"><AppHeader /><main className="app-wrap">
-    {turnstileSiteKey ? <Turnstile siteKey={turnstileSiteKey} options={{ appearance: 'interaction-only' }} onSuccess={setTurnstileToken} onExpire={() => setTurnstileToken(null)} onError={() => setTurnstileToken(null)} /> : null}
+    {turnstileSiteKey ? <Turnstile ref={turnstileRef} siteKey={turnstileSiteKey} options={{ appearance: 'interaction-only' }} onSuccess={onTurnstileSuccess} onExpire={onTurnstileExpire} onError={onTurnstileError} /> : null}
     <NowCard task={currentTask} completedFocusCount={currentTask ? completedFocusCounts.get(currentTask.id) ?? 0 : 0} onComplete={completeNowTask} onEdit={() => setDetailsTask(currentTask)} onJustFocus={() => setJustFocusChoice(true)} />
     {nextTaskSuggestion ? <div className="break-suggestion task-suggestion" role="status"><p>次は「{nextTaskSuggestion.title}」にしますか？</p><button className="btn btn-primary" type="button" onClick={promoteSuggestedTask}>Nowにする</button><button className="btn" type="button" onClick={() => setNextTaskSuggestion(null)}>あとで</button></div> : null}
     <section className="timer-block" aria-label="Focus timer"><TimerDisc remainingSecs={isActive ? remainingSecs : runtime.plannedSecs} plannedSecs={runtime.plannedSecs} mode={runtime.mode} />{recoverySnapshot ? <div className="break-suggestion" role="alert"><p>終了から時間が経っています。この Focus を記録しますか？</p><button className="btn btn-primary" type="button" onClick={completeRecoveredFocus}>記録する</button><button className="btn" type="button" onClick={discardRecoveredFocus}>破棄する</button></div> : timerCompletionPending ? <p className="muted" role="status">完了を記録しています。</p> : <TimerControls isActive={isActive} mode={runtime.mode} preset={runtime.plannedSecs} onPresetChange={(seconds) => { if (!isActive) useFocusRuntime.setState({ plannedSecs: seconds }) }} onStart={() => void start()} onStop={stop} onSkip={skipBreak} />}{!isActive && justFocusChoice ? <div className="inline-choice"><button className="btn" type="button" onClick={() => { const next = taskList.onDeck[0]; if (next) void start(next.id) }}>On Deckから1つ選ぶ</button><button className="btn" type="button" onClick={() => void start(null)}>このまま集中する</button></div> : null}{breakSuggestion ? <div className="break-suggestion"><p>{breakSuggestion === 'longBreak' ? '3本できました。長めに休みますか？' : 'ひと区切り。少し休みますか？'}</p><button className="btn btn-primary" type="button" onClick={startBreak}>{breakSuggestion === 'longBreak' ? '長めに休む（15分）' : '休憩する（5分）'}</button><button className="btn" type="button" onClick={() => setBreakSuggestion(null)}>もう1本</button></div> : null}</section>
-    <TaskList currentTask={currentTask} onDeck={taskList.onDeck} backlog={taskList.backlog} done={taskList.todaysDone} turnstileToken={effectiveTurnstileToken} onRefresh={refresh} onMoveToNow={(task: TaskView) => moveTaskToNow.mutate({ id: task.id, turnstileToken: effectiveTurnstileToken ?? undefined }, { onSuccess: refresh })} />
-    <TaskDetailsSheet key={detailsTask?.id ?? 'closed'} task={detailsTask} turnstileToken={effectiveTurnstileToken} onClose={() => setDetailsTask(null)} onSaved={refresh} onDeleted={() => { if (detailsTask?.id === currentTask?.id) setNextTaskSuggestion(taskList.onDeck[0] ?? null); setDetailsTask(null); refresh() }} />
+    <TaskList currentTask={currentTask} onDeck={taskList.onDeck} backlog={taskList.backlog} done={taskList.todaysDone} resolveTurnstileToken={resolveProtectedActionToken} onRefresh={refresh} onMoveToNow={(task: TaskView) => { void (async () => { const turnstileToken = await resolveProtectedActionToken(); if (turnstileToken) moveTaskToNow.mutate({ id: task.id, turnstileToken }, { onSuccess: refresh }) })() }} />
+    <TaskDetailsSheet key={detailsTask?.id ?? 'closed'} task={detailsTask} resolveTurnstileToken={resolveProtectedActionToken} onClose={() => setDetailsTask(null)} onSaved={refresh} onDeleted={() => { if (detailsTask?.id === currentTask?.id) setNextTaskSuggestion(taskList.onDeck[0] ?? null); setDetailsTask(null); refresh() }} onDecomposed={() => { if (detailsTask?.id === currentTask?.id) setNextTaskSuggestion(null); setDetailsTask(null); refresh() }} />
     <Link className="review-link" to="/app/review">{messages.app.review} →</Link>
     <Toast message={toast} onClose={() => setToast(null)} />
   </main></div>

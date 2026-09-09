@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"vite\" \"wrangler pages dev --proxy 5173 --port 8788\"",
-    "dev:e2e": "npm run dev",
+    "dev:e2e": "node scripts/start-e2e-server.mjs",
     "dev:vite": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

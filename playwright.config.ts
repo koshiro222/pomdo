@@ -32,7 +32,7 @@ export default defineConfig({
   ],
   webServer: process.env.BASE_URL ? undefined : {
     command: 'npm run dev:e2e',
-    url: 'http://localhost:5173',
+    url: 'http://localhost:8788/api/health',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
     env: {

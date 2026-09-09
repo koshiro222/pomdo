@@ -1,5 +1,6 @@
 import { FcGoogle } from 'react-icons/fc'
 import { useState } from 'react'
+import type { TurnstileTokenResolver } from '../../hooks/useTurnstileToken'
 import { messages } from '../../messages'
 import { useAuth } from '../../hooks/useAuth'
 import { flushFocusSessionOutbox, peekFocusSession } from '../../lib/focus-outbox'
@@ -7,7 +8,7 @@ import { saveAccountLinkSnapshot } from '../../lib/account-link-notice'
 import { trpc } from '../../lib/trpc'
 import { useFocusRuntime } from '../../core/store/focus-runtime'
 
-export function GoogleLoginButton({ turnstileToken }: { turnstileToken: string | null }) {
+export function GoogleLoginButton({ resolveTurnstileToken }: { resolveTurnstileToken: TurnstileTokenResolver }) {
   const { login, user } = useAuth()
   const completeFocus = trpc.focus.complete.useMutation()
   const interruptFocus = trpc.focus.interrupt.useMutation()
@@ -26,6 +27,11 @@ export function GoogleLoginButton({ turnstileToken }: { turnstileToken: string |
     if (!pending) return true
     if (!user || pending.ownerUserId !== user.id) {
       setError('送信待ちの Focus が別のアカウントのものです。先に現在のアカウントで送信してください。')
+      return false
+    }
+    const turnstileToken = await resolveTurnstileToken()
+    if (!turnstileToken) {
+      setError('確認が完了していないため、ログイン前の送信ができません。ページを再読み込みして、もう一度お試しください。')
       return false
     }
     const flushed = await flushFocusSessionOutbox(user.id, async (payload) => {

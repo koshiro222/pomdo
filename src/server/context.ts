@@ -5,9 +5,11 @@ import { createDb } from './db/client'
 import { findUserById, markTurnstileVerified, updateLastSeenIfDue } from './repositories/user-repository'
 import { verifyTurnstileToken } from './integrations/turnstile'
 import { createAuthInstance, type AuthBindings } from './auth'
+import type { TaskDecompositionAi } from './services/task-decomposition-service'
 
 export type AppEnvironment = AuthBindings & {
   DATABASE_URL: string
+  AI?: TaskDecompositionAi
   TURNSTILE_SECRET_KEY?: string
   E2E_TEST_MODE?: string
   ADMIN_CRON_SECRET?: string

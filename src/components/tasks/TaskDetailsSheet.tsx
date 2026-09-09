@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import type { TurnstileTokenResolver } from '../../hooks/useTurnstileToken'
 import { trpc } from '../../lib/trpc'
 import { messages } from '../../messages'
+import { TaskDecompositionPreview } from './TaskDecompositionPreview'
 import type { TaskView } from './TaskRow'
 
-export function TaskDetailsSheet({ task, turnstileToken, onClose, onDeleted, onSaved }: { task: TaskView | null; turnstileToken: string | null; onClose: () => void; onDeleted: () => void; onSaved?: () => void }) {
+export function TaskDetailsSheet({ task, resolveTurnstileToken, onClose, onDeleted, onSaved, onDecomposed }: { task: TaskView | null; resolveTurnstileToken: TurnstileTokenResolver; onClose: () => void; onDeleted: () => void; onSaved?: () => void; onDecomposed?: () => void }) {
   const [title, setTitle] = useState(task?.title ?? '')
   const [note, setNote] = useState(task?.note ?? '')
   const [estimate, setEstimate] = useState(task?.estimate?.toString() ?? '')
+  const [isDecomposing, setIsDecomposing] = useState(false)
+  const [isResolvingTurnstile, setIsResolvingTurnstile] = useState(false)
   const updateTask = trpc.tasks.update.useMutation()
   const deleteTask = trpc.tasks.delete.useMutation()
   const titleInput = useRef<HTMLInputElement>(null)
@@ -44,9 +48,31 @@ export function TaskDetailsSheet({ task, turnstileToken, onClose, onDeleted, onS
     }
   }, [taskId])
   if (!task) return null
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  if (isDecomposing) {
+    return <div className="sheet-scrim open" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose() }}>
+      <section ref={dialog} className="sheet open decomposition-sheet" role="dialog" aria-modal="true" aria-labelledby="task-sheet-title">
+        <div className="grabber" aria-hidden="true" />
+        <h2 id="task-sheet-title">{messages.decomposition.title}</h2>
+        <TaskDecompositionPreview taskId={task.id} resolveTurnstileToken={resolveTurnstileToken} onCancel={() => setIsDecomposing(false)} onDecomposed={() => { onDecomposed?.(); if (!onDecomposed) onClose() }} />
+      </section>
+    </div>
+  }
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    updateTask.mutate({ id: task.id, title: title.trim(), note: note || null, estimate: estimate ? Number(estimate) : null, turnstileToken: turnstileToken ?? undefined }, { onSuccess: () => { onSaved?.(); onClose() } })
+    setIsResolvingTurnstile(true)
+    try {
+      const turnstileToken = await resolveTurnstileToken()
+      if (!turnstileToken) return
+      updateTask.mutate({ id: task.id, title: title.trim(), note: note || null, estimate: estimate ? Number(estimate) : null, turnstileToken }, { onSuccess: () => { onSaved?.(); onClose() } })
+    } finally {
+      setIsResolvingTurnstile(false)
+    }
+  }
+  const deleteTaskFromSheet = async () => {
+    if (!window.confirm(messages.task.deleteConfirm)) return
+    const turnstileToken = await resolveTurnstileToken()
+    if (!turnstileToken) return
+    deleteTask.mutate({ id: task.id, turnstileToken }, { onSuccess: onDeleted })
   }
   return <div className="sheet-scrim open" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose() }}>
     <section ref={dialog} className="sheet open" role="dialog" aria-modal="true" aria-labelledby="task-sheet-title">
@@ -56,7 +82,7 @@ export function TaskDetailsSheet({ task, turnstileToken, onClose, onDeleted, onS
         <label className="field"><span>タイトル</span><input ref={titleInput} value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={240} /></label>
         <label className="field"><span>{messages.task.note}</span><textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={2000} /></label>
         <label className="field"><span>{messages.task.estimate}（1〜8）</span><input type="number" min="1" max="8" value={estimate} onChange={(event) => setEstimate(event.target.value)} placeholder={messages.task.noEstimate} /></label>
-        <div className="sheet-actions"><button className="btn btn-ghost" type="button" onClick={onClose}>キャンセル</button><button className="btn btn-primary" type="submit" disabled={updateTask.isPending}>保存</button><button className="btn btn-danger" type="button" onClick={() => { if (window.confirm(messages.task.deleteConfirm)) deleteTask.mutate({ id: task.id, turnstileToken: turnstileToken ?? undefined }, { onSuccess: onDeleted }) }}>{messages.task.delete}</button></div>
+        <div className="sheet-actions"><button className="btn btn-ghost" type="button" onClick={onClose}>キャンセル</button><button className="btn btn-primary" type="submit" disabled={updateTask.isPending || isResolvingTurnstile}>保存</button><button className="btn" type="button" onClick={() => setIsDecomposing(true)}>{messages.task.decompose}</button><button className="btn btn-danger" type="button" onClick={() => { void deleteTaskFromSheet() }} disabled={deleteTask.isPending}>{messages.task.delete}</button></div>
       </form>
     </section>
   </div>

@@ -10,7 +10,27 @@ cp .dev.vars.example .dev.vars
 npm run dev
 ```
 
-`.dev.vars` の `DATABASE_URL`、`BETTER_AUTH_SECRET`、Google OAuth の値をローカル環境に合わせて設定します。例えば `BETTER_AUTH_URL=http://localhost:5173` とすると、`/app` の初回表示で匿名ユーザーと `Pomdo を5分だけ触ってみる` が 1 件だけ作成されます。
+`.dev.vars` はローカル専用の設定ファイルです。`DATABASE_URL` はローカルE2E用の Neon branch を指定し、`BETTER_AUTH_URL` と `FRONTEND_URL` は Vite のURLに合わせて、例えば次のように設定します。
+
+```env
+BETTER_AUTH_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:5173
+E2E_TEST_MODE=true
+```
+
+Cloudflare Pages の Production / Preview で使う変数とSecretは、Pagesダッシュボードの環境別設定に登録します。`.dev.vars` の値は本番デプロイには使われません。
+
+ローカルE2Eまたは画面確認も、Wranglerが読む`.dev.vars`を使います。次のコマンドで `http://localhost:5173` を開きます。
+
+```sh
+npm run dev:e2e
+```
+
+E2Eテストは同じ起動設定を自動で使います。例えばChromiumだけを実行する場合は次のコマンドです。
+
+```sh
+npm run test:e2e -- --project=chromium
+```
 
 ## v1 の範囲
 
@@ -18,7 +38,7 @@ npm run dev
 - 認証は匿名ユーザーと Google OAuth のみです。Task と Focus Session は匿名状態でも DB に保存されます。
 - Focus は 15 / 25 / 45 分、Short Break は 5 分、Long Break は 15 分です。実行中の操作は「ストップ」だけです。
 - 60 秒未満の中断は破棄し、60 秒以上は Interrupted として残します。例えば 59 秒で止めた記録は Review に現れません。
-- BGM、R2、メール/パスワード、管理者 UI、PWA は v1 に含めません。
+- BGM、R2、メール/パスワード、管理者 UI、本格的なPWA（インストール対応など）は v1 に含めません。アプリ名とアイコンのmanifest登録のみ行います。
 
 ## 品質確認
 

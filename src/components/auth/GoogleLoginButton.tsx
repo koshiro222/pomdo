@@ -1,4 +1,4 @@
-import { LogIn } from 'lucide-react'
+import { FcGoogle } from 'react-icons/fc'
 import { useState } from 'react'
 import { messages } from '../../messages'
 import { useAuth } from '../../hooks/useAuth'
@@ -86,5 +86,5 @@ export function GoogleLoginButton({ turnstileToken }: { turnstileToken: string |
     }
   }
 
-  return <div className="account-login"><button className="btn btn-primary" type="button" onClick={() => void handleClick()} disabled={isPreparing}><LogIn size={16} /> {isPreparing ? '送信を確認中…' : messages.settings.google}</button>{error ? <p className="warning" role="alert">{error}</p> : null}</div>
+  return <div className="account-login"><button className="btn btn-primary" type="button" onClick={() => void handleClick()} disabled={isPreparing}><FcGoogle size={16} aria-hidden="true" /> {isPreparing ? '送信を確認中…' : messages.settings.google}</button>{error ? <p className="warning" role="alert">{error}</p> : null}</div>
 }

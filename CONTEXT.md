@@ -26,6 +26,16 @@ _Avoid_: Current Task, Active Task, Selected
 Today のうち Now スロットに入っていない Task の待ち行列。「次はこれ」の控え。
 _Avoid_: Queue, Up Next, Pending
 
+### AI分解
+
+**分解**:
+大きすぎる、または曖昧な Task を、ユーザーの明示的な操作によって AI が複数の実行可能な Task に分割すること。生成される Task は元の Task と親子関係を持たず、独立した Task として並ぶ。分解を確定すると元の Task は削除される。
+_Avoid_: Breakdown（Break と紛らわしいため避ける）, Split, Subtask（階層構造を連想させるため避ける）
+
+**分解案**:
+分解の実行によって AI が生成した、まだ確定していない Task の候補。ユーザーが確定前に編集・削除・並び替えできる一時的な状態で、確定すると通常の Task になる。
+_Avoid_: Proposal, Suggestion, Draft Task
+
 ### 集中と時間
 
 **Focus Session**:

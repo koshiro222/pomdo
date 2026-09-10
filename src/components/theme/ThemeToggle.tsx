@@ -6,7 +6,9 @@ export function ThemeToggle({ theme, onToggle }: { theme: Theme; onToggle: () =>
   const effectiveTheme = resolveEffectiveTheme(theme)
   const isDark = effectiveTheme === 'dark'
   const label = isDark ? messages.theme.switchToLight : messages.theme.switchToDark
-  const Icon = isDark ? Moon : Sun
-
-  return <span className="theme-toggle"><Icon size={16} aria-hidden="true" /><input type="checkbox" className="toggle toggle-primary" checked={isDark} onChange={onToggle} aria-label={label} /></span>
+  return <label className="theme-toggle btn btn-ghost btn-circle swap swap-rotate" title={label}>
+    <input type="checkbox" checked={isDark} onChange={onToggle} aria-label={label} />
+    <Sun className="swap-on" size={18} aria-hidden="true" />
+    <Moon className="swap-off" size={18} aria-hidden="true" />
+  </label>
 }

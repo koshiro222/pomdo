@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { applyTheme, initializeTheme, readStoredTheme, resolveEffectiveTheme, resolveNextTheme } from './theme'
+import { applyTheme, initializeTheme, readStoredTheme, resolveDaisyTheme, resolveEffectiveTheme, resolveNextTheme } from './theme'
 
 function mockMatchMedia(matches: boolean) {
   vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches }))
@@ -18,6 +18,11 @@ describe('theme', () => {
   it('明示テーマをそのまま実効テーマとして解決する', () => {
     expect(resolveEffectiveTheme('light')).toBe('light')
     expect(resolveEffectiveTheme('dark')).toBe('dark')
+  })
+
+  it('明示テーマをdaisyUIのcorporate/businessへ対応付ける', () => {
+    expect(resolveDaisyTheme('light')).toBe('corporate')
+    expect(resolveDaisyTheme('dark')).toBe('business')
   })
 
   it('system は OS の color scheme から実効テーマを解決する', () => {
@@ -40,7 +45,7 @@ describe('theme', () => {
 
   it('明示テーマと system を document と localStorage に適用する', () => {
     applyTheme('dark')
-    expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'business')
     expect(localStorage.getItem('pomdo-theme')).toBe('dark')
 
     applyTheme('system')
@@ -52,7 +57,7 @@ describe('theme', () => {
     localStorage.setItem('pomdo-theme', 'light')
 
     expect(initializeTheme()).toBe('light')
-    expect(document.documentElement).toHaveAttribute('data-theme', 'light')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'corporate')
     expect(readStoredTheme()).toBe('light')
   })
 })

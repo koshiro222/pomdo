@@ -2,6 +2,8 @@ export type Theme = 'system' | 'light' | 'dark'
 
 export type EffectiveTheme = Exclude<Theme, 'system'>
 
+export type DaisyTheme = 'corporate' | 'business'
+
 const THEME_STORAGE_KEY = 'pomdo-theme'
 const DARK_MODE_MEDIA_QUERY = '(prefers-color-scheme: dark)'
 
@@ -14,8 +16,12 @@ export function readStoredTheme(): Theme {
 export function applyTheme(theme: Theme): void {
   if (typeof document === 'undefined') return
   if (theme === 'system') document.documentElement.removeAttribute('data-theme')
-  else document.documentElement.dataset.theme = theme
+  else document.documentElement.dataset.theme = resolveDaisyTheme(theme)
   if (typeof window !== 'undefined') window.localStorage.setItem(THEME_STORAGE_KEY, theme)
+}
+
+export function resolveDaisyTheme(theme: EffectiveTheme): DaisyTheme {
+  return theme === 'dark' ? 'business' : 'corporate'
 }
 
 export function resolveEffectiveTheme(theme: Theme): EffectiveTheme {

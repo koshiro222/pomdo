@@ -73,7 +73,7 @@ describe('ReviewPage', () => {
     await user.click(screen.getByRole('checkbox', { name: 'ダークテーマに切り替え' }))
 
     await waitFor(() => expect(mocks.update.mutateAsync).toHaveBeenCalledWith({ theme: 'dark', turnstileToken: 'turnstile-token' }))
-    expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'business')
   })
 
   it('テーマ保存に失敗しても表示テーマを維持し Toast を表示する', async () => {
@@ -84,7 +84,7 @@ describe('ReviewPage', () => {
     await user.click(screen.getByRole('checkbox', { name: 'ダークテーマに切り替え' }))
 
     await waitFor(() => expect(screen.getByText('テーマを保存できませんでした。画面のテーマは維持しています。')).toBeVisible())
-    expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'business')
     expect(localStorage.getItem('pomdo-theme')).toBe('dark')
   })
 })

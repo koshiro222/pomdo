@@ -22,7 +22,8 @@ describe('ThemeToggle', () => {
     const toggle = screen.getByRole('checkbox', { name: label })
     if (checked) expect(toggle).toBeChecked()
     else expect(toggle).not.toBeChecked()
-    expect(toggle).toHaveClass('toggle')
+    expect(toggle.closest('label')).toHaveClass('swap')
+    expect(toggle.closest('label')).toHaveClass('swap-rotate')
   })
 
   it('system は OS の実効テーマに応じてラベルと checked を変える', () => {
@@ -48,6 +49,7 @@ describe('ThemeToggle', () => {
     await user.click(screen.getByRole('checkbox', { name: 'ダークテーマに切り替え' }))
 
     expect(onToggle).toHaveBeenCalledOnce()
-    expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    expect(container.querySelector('svg.swap-on')).toHaveAttribute('aria-hidden', 'true')
+    expect(container.querySelector('svg.swap-off')).toHaveAttribute('aria-hidden', 'true')
   })
 })

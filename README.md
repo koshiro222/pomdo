@@ -18,7 +18,9 @@ FRONTEND_URL=http://localhost:5173
 E2E_TEST_MODE=true
 ```
 
-Cloudflare Pages の Production / Preview で使う変数とSecretは、Pagesダッシュボードの環境別設定に登録します。`.dev.vars` の値は本番デプロイには使われません。
+Cloudflare Pages の Production / Preview で使う変数とSecretは、Pagesダッシュボードの環境別設定に登録します。`.dev.vars` のサーバー向け設定は本番デプロイには使われません。
+
+Previewへのデプロイ手順とTurnstileの設定は、[Previewデプロイ手順](docs/development/preview-deploy.md)を参照してください。
 
 ローカルE2Eまたは画面確認も、Wranglerが読む`.dev.vars`を使います。次のコマンドで `http://localhost:5173` を開きます。
 

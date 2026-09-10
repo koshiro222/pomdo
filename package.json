@@ -8,6 +8,7 @@
     "dev:e2e": "node scripts/start-e2e-server.mjs",
     "dev:vite": "vite",
     "build": "tsc -b && vite build",
+    "deploy:preview": "node scripts/deploy-preview.mjs",
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "preview": "vite preview",

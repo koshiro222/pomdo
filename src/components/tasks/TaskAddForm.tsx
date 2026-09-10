@@ -24,7 +24,7 @@ export function TaskAddForm({ bucket, resolveTurnstileToken, onCreated }: { buck
   return <form className="task-add" onSubmit={submit}>
     <Plus size={18} aria-hidden="true" />
     <label className="sr-only" htmlFor={`task-title-${bucket}`}>{messages.task.addPlaceholder}</label>
-    <input id={`task-title-${bucket}`} value={title} onChange={(event) => setTitle(event.target.value)} placeholder={messages.task.addPlaceholder} maxLength={240} />
+    <input className="input input-ghost" id={`task-title-${bucket}`} value={title} onChange={(event) => setTitle(event.target.value)} placeholder={messages.task.addPlaceholder} maxLength={240} />
     <button className="btn btn-sm min-h-[34px] px-[11px] py-[6px]" type="submit" disabled={createTask.isPending || isResolvingTurnstile}>{messages.task.add}</button>
   </form>
 }

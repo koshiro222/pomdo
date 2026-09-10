@@ -7,7 +7,9 @@ import { flushFocusSessionOutbox, peekFocusSession, queueFocusSession, type Focu
 import { requestNotificationPermissionOnce, notifyFocusCompleted } from '../../lib/notifications'
 import { playFocusChime } from '../../lib/sound'
 import { trpc } from '../../lib/trpc'
+import { resolveNextTheme } from '../../lib/theme'
 import { messages } from '../../messages'
+import { useThemePreference } from '../../hooks/useThemePreference'
 import { readAccountLinkNotice, readAccountLinkSnapshot } from '../../lib/account-link-notice'
 import { advanceFocusCycle, classifyTabReturn, type FocusMode } from '../../core/domain/focus-session'
 import { useFocusRuntime, calculateRuntimeRemainingSecs, initializeFocusRuntimeStorageSync } from '../../core/store/focus-runtime'
@@ -41,6 +43,7 @@ export function AppPage() {
   const utils = trpc.useUtils()
   const tasksQuery = trpc.tasks.list.useQuery(undefined, { enabled: Boolean(user && ready) })
   const sessionsQuery = trpc.focus.sessions.useQuery(undefined, { enabled: Boolean(user && ready) })
+  const settingsUpdate = trpc.settings.update.useMutation()
   const startFocus = trpc.focus.start.useMutation()
   const completeFocus = trpc.focus.complete.useMutation()
   const interruptFocus = trpc.focus.interrupt.useMutation()
@@ -58,6 +61,7 @@ export function AppPage() {
   const completedBreakRuntimeId = useRef<string | null>(null)
   const promptedRuntimeId = useRef<string | null>(null)
   const runtime = useFocusRuntime()
+  const { theme, toggleTheme, adoptServerTheme } = useThemePreference()
   const isActive = runtime.endsAt !== null
   const remainingSecs = calculateRuntimeRemainingSecs(runtime.endsAt, now)
   const tabReturnNeedsConfirmation = runtime.mode === 'focus'
@@ -92,6 +96,23 @@ export function AppPage() {
     if (!token) setToast('確認が完了していないため操作できません。ページを再読み込みして、もう一度お試しください。')
     return token
   }, [resolveTurnstileToken])
+  const persistTheme = useCallback(async (nextTheme: 'system' | 'light' | 'dark') => {
+    const turnstileToken = await resolveProtectedActionToken()
+    if (!turnstileToken) return
+    try {
+      await settingsUpdate.mutateAsync({ theme: nextTheme, turnstileToken })
+    } catch {
+      setToast('テーマを保存できませんでした。画面のテーマは維持しています。')
+    }
+  }, [resolveProtectedActionToken, settingsUpdate])
+  const toggleAndPersistTheme = useCallback(() => {
+    const nextTheme = resolveNextTheme(theme)
+    toggleTheme()
+    if (user && ready) void persistTheme(nextTheme)
+  }, [persistTheme, ready, theme, toggleTheme, user])
+  useEffect(() => {
+    if (user) adoptServerTheme(user.id, user.theme)
+  }, [adoptServerTheme, user])
   const timerCompletionPending = isActive && runtime.mode === 'focus' && remainingSecs === 0 && !recoverySnapshot
 
   useEffect(() => initializeFocusRuntimeStorageSync(), [])
@@ -205,7 +226,10 @@ export function AppPage() {
     void completeRuntimeSession({ startedAt: runtime.startedAt, endsAt: runtime.endsAt, sessionId: runtime.sessionId, ownerUserId: runtime.ownerUserId, taskId: runtime.taskId, startToken: runtime.startToken, plannedSecs: runtime.plannedSecs, mode: 'focus', longBreakCount: runtime.longBreakCount })
   }, [completeRuntimeSession, isActive, now, remainingSecs, runtime, tabReturnNeedsConfirmation, user?.id])
 
-  if (loading || !ready || !user || !taskList) return <><AppHeader /><main className="page-shell loading-state">{anonymousAuthError ? <><p>匿名アカウントを作成できませんでした。</p><button className="btn" type="button" onClick={retryAnonymousSignIn}>もう一度試す</button></> : bootstrapError ? <><p>Pomdo の準備に失敗しました。</p><button className="btn" type="button" onClick={retryBootstrap}>もう一度試す</button></> : <p>あなたの Pomdo を準備しています。</p>}</main></>
+  if (anonymousAuthError) return <div className="app-shell"><AppHeader theme={theme} onToggleTheme={toggleAndPersistTheme} /><main className="page-shell loading-state"><div className="alert alert-error" role="alert"><p>匿名アカウントを作成できませんでした。</p><button className="btn btn-outline" type="button" onClick={retryAnonymousSignIn}>{messages.app.retry}</button></div></main></div>
+  if (bootstrapError) return <div className="app-shell"><AppHeader theme={theme} onToggleTheme={toggleAndPersistTheme} /><main className="page-shell loading-state"><div className="alert alert-error" role="alert"><p>Pomdo の準備に失敗しました。</p><button className="btn btn-outline" type="button" onClick={retryBootstrap}>{messages.app.retry}</button></div></main></div>
+  if (tasksQuery.isError) return <div className="app-shell"><AppHeader theme={theme} onToggleTheme={toggleAndPersistTheme} />{turnstileSiteKey ? <Turnstile ref={turnstileRef} siteKey={turnstileSiteKey} options={{ appearance: 'interaction-only' }} onSuccess={onTurnstileSuccess} onExpire={onTurnstileExpire} onError={onTurnstileError} /> : null}<main className="page-shell loading-state"><div className="alert alert-error" role="alert"><p>{messages.app.tasksLoadError}</p><button className="btn btn-outline" type="button" disabled={tasksQuery.isFetching} onClick={() => { void tasksQuery.refetch() }}>{tasksQuery.isFetching ? <span className="loading loading-spinner loading-xs" aria-hidden="true" /> : null}{messages.app.retry}</button></div></main><Toast message={toast} onClose={() => setToast(null)} /></div>
+  if (loading || !ready || !user || !taskList) return <div className="app-shell"><AppHeader theme={theme} onToggleTheme={toggleAndPersistTheme} />{turnstileSiteKey ? <Turnstile ref={turnstileRef} siteKey={turnstileSiteKey} options={{ appearance: 'interaction-only' }} onSuccess={onTurnstileSuccess} onExpire={onTurnstileExpire} onError={onTurnstileError} /> : null}<main className="page-shell loading-state" role="status" aria-live="polite"><span className="loading loading-spinner loading-lg" aria-hidden="true" /><p>あなたの Pomdo を準備しています。</p></main><Toast message={toast} role="alert" onClose={() => setToast(null)} /></div>
   const start = async (taskId: string | null = currentTask?.id ?? null) => {
     if (!taskId && !justFocusChoice) { setJustFocusChoice(true); return }
     const pendingOutbox = peekFocusSession()
@@ -260,7 +284,7 @@ export function AppPage() {
       },
     })
   }
-  return <div className="app-shell"><AppHeader /><main className="app-wrap">
+  return <div className="app-shell"><AppHeader theme={theme} onToggleTheme={toggleAndPersistTheme} /><main className="app-wrap">
     {turnstileSiteKey ? <Turnstile ref={turnstileRef} siteKey={turnstileSiteKey} options={{ appearance: 'interaction-only' }} onSuccess={onTurnstileSuccess} onExpire={onTurnstileExpire} onError={onTurnstileError} /> : null}
     <NowCard task={currentTask} completedFocusCount={currentTask ? completedFocusCounts.get(currentTask.id) ?? 0 : 0} onComplete={completeNowTask} onEdit={() => setDetailsTask(currentTask)} onJustFocus={() => setJustFocusChoice(true)} />
     {nextTaskSuggestion ? <div className="break-suggestion task-suggestion" role="status"><p>次は「{nextTaskSuggestion.title}」にしますか？</p><button className="btn btn-primary" type="button" onClick={promoteSuggestedTask}>Nowにする</button><button className="btn" type="button" onClick={() => setNextTaskSuggestion(null)}>あとで</button></div> : null}

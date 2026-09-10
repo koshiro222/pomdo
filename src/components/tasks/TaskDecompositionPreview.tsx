@@ -41,7 +41,7 @@ function SortableDecompositionItem({
     <article
       ref={sortableEnabled ? sortable.setNodeRef : undefined}
       style={sortableEnabled ? { transform: CSS.Transform.toString(sortable.transform), transition: sortable.transition } : undefined}
-      className={`decomposition-item ${sortable.isDragging ? 'is-dragging' : ''}`}
+      className={`decomposition-item card card-border ${sortable.isDragging ? 'is-dragging' : ''}`}
     >
       <div className="decomposition-item-heading">
         <button
@@ -169,7 +169,7 @@ export function TaskDecompositionPreview({
 
   const isLoading = !hasPreview && !preview.isError && !turnstileError
   if (isLoading) {
-    return <div className="decomposition-state"><div className="decomposition-loading" role="status" aria-live="polite"><span className="loading loading-spinner" aria-hidden="true" />{messages.decomposition.loading}</div><div className="decomposition-actions"><button className="btn btn-ghost" type="button" onClick={onCancel}>{messages.decomposition.cancel}</button></div></div>
+    return <div className="decomposition-state"><div className="decomposition-loading text-accent" role="status" aria-live="polite"><span className="loading loading-spinner" aria-hidden="true" />{messages.decomposition.loading}</div><div className="decomposition-actions"><button className="btn btn-ghost" type="button" onClick={onCancel}>{messages.decomposition.cancel}</button></div></div>
   }
 
   if (preview.isError || turnstileError) {
@@ -177,7 +177,7 @@ export function TaskDecompositionPreview({
   }
 
   return <div className="decomposition-preview">
-    <p className="decomposition-description">{messages.decomposition.description}</p>
+    <p className="decomposition-description bg-accent/10 text-accent-content rounded-box p-3">{messages.decomposition.description}</p>
     {items.length === 0 ? <p className="decomposition-empty" role="status">{messages.decomposition.empty}</p> : <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
         <div className="decomposition-list">
@@ -188,7 +188,7 @@ export function TaskDecompositionPreview({
     {confirm.isError ? <div className="alert alert-error decomposition-confirm-error" role="alert">{messages.decomposition.confirmError}</div> : null}
     <div className="decomposition-actions">
       <button className="btn btn-ghost" type="button" onClick={onCancel} disabled={confirm.isPending}>{messages.decomposition.cancel}</button>
-      <button className="btn btn-primary" type="button" onClick={() => { void handleConfirm() }} disabled={!canConfirm || confirm.isPending || isResolvingTurnstile}>{confirm.isPending || isResolvingTurnstile ? messages.decomposition.confirming : messages.decomposition.confirm}</button>
+      <button className="btn btn-accent" type="button" onClick={() => { void handleConfirm() }} disabled={!canConfirm || confirm.isPending || isResolvingTurnstile}>{confirm.isPending || isResolvingTurnstile ? messages.decomposition.confirming : messages.decomposition.confirm}</button>
     </div>
   </div>
 }

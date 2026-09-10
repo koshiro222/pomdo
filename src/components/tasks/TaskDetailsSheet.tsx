@@ -140,7 +140,7 @@ export function TaskDetailsSheet({ task, resolveTurnstileToken, onClose, onDelet
           }}
         >
           {isDecomposing ? <>
-            <Dialog.Title>{messages.decomposition.title}</Dialog.Title>
+            <Dialog.Title className="text-accent">{messages.decomposition.title}</Dialog.Title>
             <Dialog.Description className="sr-only">分解案を確認して編集します</Dialog.Description>
             <div className="grabber" aria-hidden="true" onPointerDown={beginDrag} onPointerMove={continueDrag} onPointerUp={endDrag} onPointerCancel={endDrag} />
             <TaskDecompositionPreview taskId={displayedTask.id} resolveTurnstileToken={resolveTurnstileToken} onCancel={() => setIsDecomposing(false)} onDecomposed={() => { onDecomposed?.(); if (!onDecomposed) onClose() }} />
@@ -149,10 +149,10 @@ export function TaskDetailsSheet({ task, resolveTurnstileToken, onClose, onDelet
             <Dialog.Description className="sr-only">タスクのタイトル・メモ・見積もりを編集します</Dialog.Description>
             <div className="grabber" aria-hidden="true" onPointerDown={beginDrag} onPointerMove={continueDrag} onPointerUp={endDrag} onPointerCancel={endDrag} />
             <form onSubmit={(event) => { void submit(event) }}>
-              <label className="field"><span>タイトル</span><input ref={titleInput} value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={240} /></label>
-              <label className="field"><span>{messages.task.note}</span><textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={2000} /></label>
-              <label className="field"><span>{messages.task.estimate}（1〜8）</span><input type="number" min="1" max="8" value={estimate} onChange={(event) => setEstimate(event.target.value)} placeholder={messages.task.noEstimate} /></label>
-              <div className="sheet-actions"><Dialog.Close asChild><button className="btn btn-ghost" type="button">キャンセル</button></Dialog.Close><button className="btn btn-primary" type="submit" disabled={updateTask.isPending || isResolvingTurnstile}>保存</button><button className="btn" type="button" onClick={() => setIsDecomposing(true)}>{messages.task.decompose}</button><button className="btn btn-error" type="button" onClick={() => { void deleteTaskFromSheet() }} disabled={deleteTask.isPending}>{messages.task.delete}</button></div>
+              <label className="field"><span>タイトル</span><input className="input" ref={titleInput} value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={240} /></label>
+              <label className="field"><span>{messages.task.note}</span><textarea className="textarea" value={note} onChange={(event) => setNote(event.target.value)} maxLength={2000} /></label>
+              <label className="field"><span>{messages.task.estimate}（1〜8）</span><input className="input" type="number" min="1" max="8" value={estimate} onChange={(event) => setEstimate(event.target.value)} placeholder={messages.task.noEstimate} /></label>
+              <div className="sheet-actions"><Dialog.Close asChild><button className="btn btn-ghost" type="button">キャンセル</button></Dialog.Close><button className="btn btn-primary" type="submit" disabled={updateTask.isPending || isResolvingTurnstile}>保存</button><button className="btn btn-accent" type="button" onClick={() => setIsDecomposing(true)}>{messages.task.decompose}</button><button className="btn btn-error" type="button" onClick={() => { void deleteTaskFromSheet() }} disabled={deleteTask.isPending}>{messages.task.delete}</button></div>
             </form>
           </>}
         </Dialog.Content>

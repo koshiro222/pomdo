@@ -22,6 +22,12 @@ export const messages = {
     stop: 'ストップ',
     skip: 'スキップ',
     review: '振り返りを見る',
+    tasksLoadError: 'Taskを読み込めませんでした。',
+    retry: 'もう一度試す',
+  },
+  theme: {
+    switchToLight: 'ライトテーマに切り替え',
+    switchToDark: 'ダークテーマに切り替え',
   },
   task: {
     addPlaceholder: 'タスクを追加',

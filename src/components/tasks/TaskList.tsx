@@ -69,6 +69,6 @@ export function TaskList({ currentTask, onDeck, backlog, done, resolveTurnstileT
     </section>
     <section className="disclosure"><button className="disclosure-trigger" type="button" aria-expanded={backlogOpen} onClick={() => setBacklogOpen(!backlogOpen)}><span>{messages.app.backlog}</span><span>{backlog.length}</span><ChevronDown size={16} /></button>{backlogOpen ? <div className="group-list disclosure-body"><TaskAddForm bucket="backlog" resolveTurnstileToken={resolveTurnstileToken} onCreated={onRefresh} />{renderRows(backlog, true, false)}</div> : null}</section>
     <section className="disclosure"><button className="disclosure-trigger" type="button" aria-expanded={doneOpen} onClick={() => setDoneOpen(!doneOpen)}><span>{messages.app.done}</span><span>{done.length}</span><ChevronDown size={16} /></button>{doneOpen ? <div className="group-list disclosure-body">{renderRows(done, false, false)}</div> : null}</section>
-    <TaskDetailsSheet key={detailsTask?.id ?? 'closed'} task={detailsTask} resolveTurnstileToken={resolveTurnstileToken} onClose={() => setDetailsTask(null)} onSaved={onRefresh} onDeleted={() => { setDetailsTask(null); onRefresh() }} onDecomposed={() => { setDetailsTask(null); onRefresh() }} />
+    <TaskDetailsSheet task={detailsTask} resolveTurnstileToken={resolveTurnstileToken} onClose={() => setDetailsTask(null)} onSaved={onRefresh} onDeleted={() => { setDetailsTask(null); onRefresh() }} onDecomposed={() => { setDetailsTask(null); onRefresh() }} />
   </>
 }

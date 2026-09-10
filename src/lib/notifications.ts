@@ -5,7 +5,9 @@ export async function requestNotificationPermissionOnce(): Promise<NotificationP
   if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported'
   if (window.localStorage.getItem(PERMISSION_REQUESTED_KEY) === 'true') return Notification.permission
   window.localStorage.setItem(PERMISSION_REQUESTED_KEY, 'true')
-  return Notification.requestPermission()
+  // 権限ダイアログがブラウザによって未解決のままでも Focus 開始を妨げない。
+  void Notification.requestPermission().catch(() => undefined)
+  return Notification.permission
 }
 
 export function notifyFocusCompleted(): void {

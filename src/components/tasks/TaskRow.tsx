@@ -1,6 +1,8 @@
 import { Check, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { DropdownMenu } from 'radix-ui'
+import { messages } from '../../messages'
 
 export type TaskView = {
   id: string
@@ -32,8 +34,19 @@ export function TaskRow({ task, isNow = false, completedFocusCount = 0, onComple
     </button>
     {sortableEnabled ? <button className="drag-handle" type="button" aria-label={`${task.title}をドラッグして並べ替え`} {...sortable.attributes} {...sortable.listeners}>⠿</button> : null}
     {onMove ? <span className="reorder-buttons"><button type="button" aria-label={`${task.title}を上へ`} onClick={() => onMove('up')}><ChevronUp size={15} /></button><button type="button" aria-label={`${task.title}を下へ`} onClick={() => onMove('down')}><ChevronDown size={15} /></button></span> : null}
-    <button className="iconbtn small" type="button" aria-label={`${task.title}のメニュー`} onClick={onEdit}><MoreHorizontal size={18} /></button>
     {isNow ? <span className="now-badge">NOW</span> : null}
-    <button className="visually-hidden" type="button" onClick={onDelete}>削除</button>
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button className="iconbtn small" type="button" aria-label={`${task.title}のメニュー`}><MoreHorizontal size={18} /></button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content className="dropdown-menu-content" align="end" sideOffset={4}>
+          <DropdownMenu.Item className="dropdown-menu-item" onSelect={() => onEdit?.()}>{messages.task.edit}</DropdownMenu.Item>
+          {onMoveToNow ? <DropdownMenu.Item className="dropdown-menu-item" onSelect={() => onMoveToNow()}>{messages.task.moveToNow}</DropdownMenu.Item> : null}
+          <DropdownMenu.Separator className="dropdown-menu-separator" />
+          <DropdownMenu.Item className="dropdown-menu-item dropdown-menu-item-danger" onSelect={() => onDelete()}>{messages.task.delete}</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   </article>
 }

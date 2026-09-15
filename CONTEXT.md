@@ -67,3 +67,21 @@ _Avoid_: Trash, Deleted
 **Focused Days**:
 Focus Session を1回以上完了した日の累積カウント。減らない。途切れて0に戻る Streak の代わり。
 _Avoid_: Streak, Chain
+
+### 環境とリリース
+
+**Preview**:
+`develop` の変更を確認するための共有環境。手動確認用の固定URLを持ち、本番ユーザー・本番データとは分離されている。
+_Avoid_: Production, Personal preview
+
+**Staging DB**:
+Preview が使う Neon のデータベースbranch。Previewで作成したTaskやFocus Sessionは本番へ持ち込まれない。
+_Avoid_: Production DB, E2E DB
+
+**E2E environment**:
+GitHub ActionsとローカルE2Eが自動操作に使う、Previewとは別のNeon branchを持つ検証環境。テストが作成するユーザーやTaskはPreviewに表示されない。
+_Avoid_: Staging, Preview
+
+**Production**:
+`main` の変更を公開する環境。本番ユーザーの認証・Task・Focus Sessionを扱い、PreviewやE2E environmentから分離されている。
+_Avoid_: Live preview, Staging

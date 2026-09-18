@@ -88,8 +88,8 @@ const currentBranch = readGitValue(['branch', '--show-current'], '現在のブ�
 if (!currentBranch) {
   throw new Error('現在のブランチを特定できないため、Previewデプロイを中止しました。')
 }
-if (currentBranch === 'main' || currentBranch === 'master') {
-  throw new Error('main/masterブランチからのPreviewデプロイは禁止しています。作業ブランチで実行してください。')
+if (currentBranch === 'main' || currentBranch === 'master' || currentBranch === 'develop') {
+  throw new Error('main/master/developブランチからの手動Previewデプロイは禁止しています。feature branchで実行してください。')
 }
 
 const headCommit = readGitValue(['rev-parse', 'HEAD'], 'HEADコミット')

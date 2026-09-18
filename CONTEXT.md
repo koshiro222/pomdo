@@ -71,7 +71,7 @@ _Avoid_: Streak, Chain
 ### 環境とリリース
 
 **Preview**:
-`develop` の変更を確認するための共有環境。手動確認用の固定URLを持ち、本番ユーザー・本番データとは分離されている。
+`develop` の変更を確認するための共有環境。固定URLは `https://develop.pomdo.pages.dev` で、Neon staging branchと `E2E_TEST_MODE=false` を使う。本番ユーザー・本番データとは分離されている。
 _Avoid_: Production, Personal preview
 
 **Staging DB**:
@@ -79,7 +79,7 @@ Preview が使う Neon のデータベースbranch。Previewで作成したTask�
 _Avoid_: Production DB, E2E DB
 
 **E2E environment**:
-GitHub ActionsとローカルE2Eが自動操作に使う、Previewとは別のNeon branchを持つ検証環境。テストが作成するユーザーやTaskはPreviewに表示されない。
+ GitHub ActionsとローカルE2Eが自動操作に使う、Previewとは別のNeon E2E branchを持つ検証環境。`E2E_TEST_MODE=true` で動作し、テストが作成するユーザーやTaskはPreviewに表示されない。例えばGitHub Actionsの `E2E_DATABASE_URL` はこのbranchだけを指す。
 _Avoid_: Staging, Preview
 
 **Production**:

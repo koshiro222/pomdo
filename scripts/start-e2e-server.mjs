@@ -1,10 +1,45 @@
-import { access, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
+import { access, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import net from 'node:net'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { spawn } from 'node:child_process'
 
 const rootDirectory = resolve(dirname(new URL(import.meta.url).pathname), '..')
+
+async function loadEnvironmentValue(filePath, variableName) {
+  let environmentText
+  try {
+    environmentText = await readFile(filePath, 'utf8')
+  } catch (error) {
+    if (error?.code === 'ENOENT') return undefined
+    throw error
+  }
+
+  for (const line of environmentText.split(/\r?\n/)) {
+    const assignment = line.trim().match(
+      /^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/,
+    )
+    if (!assignment || assignment[1] !== variableName) continue
+    const rawValue = assignment[2].trim()
+    if (!rawValue) return undefined
+    const quote = rawValue[0]
+    if ((quote === '"' || quote === "'") && rawValue.at(-1) === quote) {
+      return rawValue.slice(1, -1).trim() || undefined
+    }
+    return rawValue
+  }
+
+  return undefined
+}
+
+const databaseUrl = await loadEnvironmentValue(join(rootDirectory, '.dev.vars'), 'DATABASE_URL')
+if (!databaseUrl) {
+  throw new Error(
+    'DATABASE_URL が未設定です。ローカルE2E専用Neon branchの接続先を .dev.vars に設定してください。' +
+      ' Preview/Production URLを代わりに使用しないでください。',
+  )
+}
+
 const temporaryDirectory = await mkdtemp(join(tmpdir(), 'pomdo-e2e-'))
 const childProcesses = []
 let isShuttingDown = false
@@ -55,7 +90,7 @@ function startProcess(command, args, options) {
   const child = spawn(process.execPath, [command, ...args], {
     ...options,
     stdio: 'inherit',
-    env: { ...process.env, E2E_TEST_MODE: 'true' },
+    env: { ...process.env, DATABASE_URL: databaseUrl, E2E_TEST_MODE: 'true' },
   })
   childProcesses.push(child)
   return child

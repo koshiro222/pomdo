@@ -1,27 +1,27 @@
 // @vitest-environment node
 
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { PGlite } from '@electric-sql/pglite'
 import { asc, eq } from 'drizzle-orm'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { createTestDb, type TestDb } from '../db/client'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import type { TestDb } from '../db/client'
 import { tasks, users } from '../db/schema'
 import { confirmTaskDecomposition } from '../services/task-decomposition-service'
 import { replaceTaskWithDecomposedTasks } from './task-repository'
+import { createPGliteTestDatabase, type PGliteTestDatabase } from '../../../tests/helpers/pglite-test-database'
 
 describe('Task decomposition repository', () => {
-  let client: PGlite
+  let testDatabase: PGliteTestDatabase
   let db: TestDb
 
-  beforeEach(async () => {
-    client = new PGlite()
-    await client.exec(readFileSync(resolve(process.cwd(), 'drizzle/0000_v1_initial.sql'), 'utf8'))
-    await client.exec(readFileSync(resolve(process.cwd(), 'drizzle/0001_v1_constraints.sql'), 'utf8'))
-    db = createTestDb(client)
+  beforeAll(async () => {
+    testDatabase = await createPGliteTestDatabase()
+    db = testDatabase.db
   })
 
-  afterEach(async () => { await client.close() })
+  beforeEach(async () => {
+    await testDatabase.truncateTables()
+  })
+
+  afterAll(async () => { await testDatabase.close() })
 
   async function createUser(userId = crypto.randomUUID()): Promise<string> {
     await db.insert(users).values({ id: userId, name: 'Test', email: `${userId}@example.com` })

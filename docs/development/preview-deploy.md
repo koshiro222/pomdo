@@ -1,110 +1,108 @@
 # Preview デプロイ手順
 
-対象は、作業ブランチを Cloudflare Pages の Preview に公開する開発者です。初回は「準備」「デプロイ後の確認」まで読み、以降は「トラブルシュート」を必要に応じて参照してください。
+Previewには、`develop`へのpushで更新される共有環境と、feature branchから手動で公開する一時環境があります。共有Previewは品質ゲートを通過したArtifactだけを公開し、手動コマンドはfeature branchに限定します。
 
-## Preview は `rtk npm run deploy:preview` で公開する
+## 共有Previewは `develop` へのpushで更新する
 
-`rebuild/v1` ブランチの固定 URL は次のとおりです。別のブランチでは、デプロイ時に表示されるURLを使います。
+- アプリ: <https://develop.pomdo.pages.dev/app>
+- ヘルスチェック: <https://develop.pomdo.pages.dev/api/health>
+- 正規ブランチ: `develop`
+- DB: Neon staging branch
+- Runtime: `E2E_TEST_MODE=false`
 
-- アプリ: <https://rebuild-v1.pomdo.pages.dev/app>
-- ヘルスチェック: <https://rebuild-v1.pomdo.pages.dev/api/health>
+GitHub Actionsは `develop` へのpushごとに、次の順で処理します。
 
-推奨コマンドは次の 1 つです。
+1. lint、typecheck、Vitest、coverage、Chromium E2Eを実行する
+2. 同じcommitのproduction buildを1回だけ実行し、`dist/` Artifactを保存する
+3. staging DBへmigrationを適用する
+4. `develop-candidate`へArtifactを公開し、`/api/health`と `/api/test/auth` 404を検証する
+5. 検証済みArtifactを `develop` aliasへ公開し、固定URLのhealth checkを実行する
 
-```sh
-rtk npm run deploy:preview
-```
+例えばE2Eが作成したTaskはNeon E2E branchに保存されるため、共有Previewには表示されません。Previewで作成したTaskはstaging branchに保存され、Productionには表示されません。
 
-この入口で、`.env.local` または `.dev.vars` から `VITE_TURNSTILE_SITE_KEY` を読み込み、production build と Cloudflare Pages への deploy を続けて実行します。Site key が見つからない場合は deploy せずに停止するため、手動で build や deploy に置き換えないでください。
+品質ゲート、migration、candidate検証のいずれかが失敗した場合、`develop` aliasは更新されません。stable aliasのhealth checkが失敗した場合は、前回成功時の `preview-last-good` bundleを同じ `develop` aliasへ再公開して復旧を試みます。Preview deploymentにはProduction向けの公式rollback APIを使いません。
 
-## 今回の障害の原因
+## feature branchを一時Previewへ公開する
 
-`VITE_TURNSTILE_SITE_KEY` を注入せずに手動で build し、その `dist` を Cloudflare Pages へ deploy したためです。
-
-Vite の `VITE_*` 変数は build 時にブラウザ用 bundle へ埋め込まれます。当時の build 設定では変数がなくても build 自体は成功したため、未設定のまま公開できてしまいました。その結果、Preview に Turnstile widget が正しく設定されず、サーバー側の書き込みゲートに弾かれて、タスク追加や保存時に次のメッセージが表示されました。現在は、Site key がない production build を停止する設定と `deploy:preview` を使います。
-
-> 確認が完了していないため操作できません。ページを再読み込みして、もう一度お試しください。
-
-`TURNSTILE_SECRET_KEY` はサーバーだけで使う秘密値です。`VITE_` を付けたり、ブラウザ bundle に入れたりしてはいけません。
-
-## 環境変数の置き場所
-
-`.env.local` と `.dev.vars` は用途が違います。両方を用意しても、片方の値が自動的にもう片方へ渡るわけではありません。
-
-- `.env.local`: Vite が読むファイルです。Preview 用の production build に必要な `VITE_TURNSTILE_SITE_KEY` を置きます。
-- `.dev.vars`: `wrangler pages dev` が読むローカル Functions 用のファイルです。`DATABASE_URL` や `TURNSTILE_SECRET_KEY` など、ローカル実行に必要な値を置きます。
-
-`.env.local` の例:
-
-```dotenv
-# Git 管理外。実際の値はチームの環境設定から取得する
-VITE_TURNSTILE_SITE_KEY=<Preview用のSite key>
-```
-
-手動の Vite build は `.dev.vars` を読みません。`deploy:preview` は例外として `.dev.vars` からこの公開キーだけを読み込み、buildの環境変数へ明示的に注入します。
-
-ローカル起動の全体手順は [README.md の開発手順](../../README.md#開発) にまとめています。
-
-## デプロイ前後の確認
-
-デプロイ前に、対象ブランチと差分を確認します。
+作業ツリーをコミット済みにし、`.env.local` または `.dev.vars` に公開用の `VITE_TURNSTILE_SITE_KEY` を設定してから実行します。
 
 ```sh
 rtk git status --short --branch
 rtk git diff --check
+rtk npm run deploy:preview
 ```
 
-Preview へ公開する変更は、コミット済みの状態を基本とします。手動で `rtk npm run build` だけを実行したり、既存の `dist` を `rtk npx wrangler pages deploy` で再利用したりしないでください。どちらも、Site key のない古い bundle を再公開する原因になります。
+`npm run deploy:preview` は現在のbranch名でbuildしてCloudflare Pagesへ公開します。`main`、`master`、`develop`からの実行は停止します。例えば `feature/task-copy` は許可されますが、`develop`から実行すると「共有PreviewはGitHub Actionsからのみ更新する」というエラーになります。
 
-デプロイ後は、まず API と画面を確認します。
+手動のVite buildや既存 `dist/` の再利用はしないでください。Site keyを埋め込んだbundleとFunctionsの組み合わせを意図せず取り違える可能性があります。
+
+## E2Eの環境を分ける
+
+`.dev.vars` はローカルE2E専用Neon branchを指定します。Preview staging branchやProduction DBは指定しません。
+
+```dotenv
+DATABASE_URL=<ローカルE2E専用Neon branchの接続文字列>
+BETTER_AUTH_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:5173
+E2E_TEST_MODE=true
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+```
 
 ```sh
-rtk curl -fsS https://rebuild-v1.pomdo.pages.dev/api/health
+rtk npm run dev:e2e
+rtk npm run test:e2e -- --project=chromium
 ```
 
-`{"status":"ok","db":"connected"}` が返ることを確認し、次の操作を Preview の画面で行います。
+GitHub Actionsも `E2E_DATABASE_URL` を `.dev.vars` の `DATABASE_URL` として使います。ローカルE2EとGitHub Actionsを同時に起動すると、同じE2E branchへ書き込むため実行を重ねないでください。
 
-- `/app` が表示され、初期データの読み込みに失敗していない
-- タスクを追加し、画面に表示された後でページを再読み込みしても残っている
-- タスクのタイトル・メモ・Estimate を変更して保存し、再読み込み後も変更が残っている
-- 初回の書き込み時に Turnstile の確認が完了し、上記の拒否メッセージが表示されない
-- ブラウザの Network で、追加・保存に対応する tRPC リクエストが成功している
+GitHubのEnvironmentは次のbranch policyと承認境界で設定します。これはWorkflowファイルだけでは設定できないRepository Settingsの項目です。
+
+- `e2e`: 信頼済みの `main` / `develop` と手動実行で許可するbranchだけ
+- `e2e-pr`: PR検証専用。required reviewerを設定し、fork PRへsecretを渡さない
+- `preview`: `develop`だけ
+- `production`: `main`だけ
+
+例えばfeature branch上でguardを削除したPreview Workflowを手動起動しても、`preview` Environmentのbranch policyでCloudflare tokenを取得できない状態にします。Environment secretの実値はこのリポジトリへ書きません。
+
+Environment secretは次の名前で登録します。`e2e` / `e2e-pr` は `E2E_DATABASE_URL`、`BETTER_AUTH_SECRET`、必要な `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`、`TURNSTILE_SECRET_KEY`、`TURNSTILE_SITE_KEY`、`SENTRY_DSN`、`preview` は `PREVIEW_DATABASE_URL`、`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`TURNSTILE_SITE_KEY`、`SENTRY_DSN`、`production` は `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`TURNSTILE_SITE_KEY`、`SENTRY_DSN`、`PRODUCTION_URL`、`ADMIN_CRON_SECRET` を使います。例えばProductionの匿名purgeを動かすには、`purge-anonymous.yml`が`PRODUCTION_URL`と`ADMIN_CRON_SECRET`を`production` Environmentから取得できる状態にします。
+
+`e2e-pr` のrequired reviewerはGitHubのプラン機能に依存します。現在のRepositoryではAPIからrequired reviewers protection ruleを作成できないため、PRへ `e2e-pr` secretを登録する前に、利用プランまたはOrganizationのEnvironment保護機能を確認してください。branch policy自体は設定済みです。
+
+## デプロイ後の確認
+
+まずAPIを確認します。
+
+```sh
+rtk curl -fsS https://develop.pomdo.pages.dev/api/health
+rtk curl -i -X POST https://develop.pomdo.pages.dev/api/test/auth
+```
+
+1つ目が `{"status":"ok","db":"connected"}` 相当を返し、2つ目が404であることを確認します。その後、次を画面で確認します。
+
+- `/app`が表示され、初期Taskが読み込まれる
+- Taskを追加してリロードしても残る
+- Focusを完了または中断し、Reviewに正しく表示される
+- light、dark、systemの設定がリロード後も保持される
+- desktop幅とmobile幅でNow、Task追加、Focus、Review、Settingsを操作できる
+- キーボードだけで主な操作とdialogの閉じる操作ができる
+- `prefers-reduced-motion`で過剰なアニメーションが停止または縮退する
+
+Preview runtimeでは `DATABASE_URL` をstaging branch、`E2E_TEST_MODE` を `false` に設定します。`BETTER_AUTH_SECRET`、Turnstile secret、OAuth設定もPreview専用にし、ProductionのDB・OAuth・trusted originを流用しません。
 
 ## トラブルシュート
 
-### 「確認が完了していないため操作できません」と表示される
+### `/api/health` がDB接続エラーになる
 
-まず `.env.local` のキー名が `VITE_TURNSTILE_SITE_KEY` と完全に一致しているか確認します。値を修正しただけでは公開済み bundle は変わらないため、必ず `rtk npm run deploy:preview` で build からやり直してください。ブラウザの再読み込みだけでは直りません。
+Cloudflare PagesのPreview runtimeで、staging branchの `DATABASE_URL` が設定されているか確認します。GitHub Actionsの `PREVIEW_DATABASE_URL` はmigration jobだけが使用し、E2Eの `E2E_DATABASE_URL` と混ぜません。
 
-### `Missing script: deploy:preview` と表示される
+### `develop`のdeployが実行されない
 
-このリポジトリにデプロイスクリプトがまだ登録されていません。手動の build/deploy コマンドで代替せず、`deploy:preview` の追加を担当者へ依頼してください。今回と同じく、環境変数の注入漏れを見逃す可能性があります。
+Workflowの品質ゲート、staging migration、candidate health checkのどこで失敗したかを確認します。例えばcandidateの `/api/test/auth` が404でない場合、stable aliasへ進まないのが正しい動作です。
 
-### ローカルでは動くが Preview だけ失敗する
+### `npm run deploy:preview`が拒否される
 
-ローカルの開発モードや E2E ではテスト用の Turnstile token が使われる場合があり、Preview の production build が正しい証拠にはなりません。Preview の bundle に Site key を注入してから再 deploy してください。
+`main`、`master`、`develop`では手動Previewを公開できません。共有Previewを更新する場合は、変更を `develop`へpushし、GitHub Actionsの結果を確認してください。
 
-### `/api/health` が `db` の接続エラーになる
+### 秘密値をコミットしてしまった
 
-Turnstile ではなく、Cloudflare Pages Preview 側の `DATABASE_URL` などの環境設定を確認します。環境変数の全体方針は [Issue #148 の環境変数・運用・ロールバック](../../design-docs-for-ai/issue148-adhd-focused-pomodoro-todo-v1-rebuild-implementation-plan.md#12-環境変数運用ロールバック)、匿名作成の制限は [Cloudflare Rate Limiting の運用メモ](../operations/cloudflare-rate-limit.md) を参照してください。
-
-## 秘密値をコミットしない
-
-`.env.local` と `.dev.vars` は Git 管理外です。次のような実値を、ソースコード・Markdown・Issue・コミットへ貼り付けないでください。
-
-```dotenv
-# これは Pages secret / GitHub secret にだけ設定する
-TURNSTILE_SECRET_KEY=<秘密値>
-BETTER_AUTH_SECRET=<秘密値>
-DATABASE_URL=<接続文字列>
-```
-
-`VITE_TURNSTILE_SITE_KEY` はブラウザへ埋め込む公開用 Site key ですが、環境ごとの差分を管理するため、リポジトリには値を書かず `<Preview用のSite key>` のようなプレースホルダーを使います。コミット前に次も実行し、意図しないファイルが含まれていないことを確認してください。
-
-```sh
-rtk git status --short
-```
-
-秘密値を誤って公開した場合は、Preview の再 deploy だけでは不十分です。直ちに該当する secret をローテーションし、管理者へ共有してください。
-
-最終更新: 2026-09-10
+Previewの再デプロイだけでは不十分です。該当secretを直ちに失効・ローテーションし、管理者へ共有してください。`DATABASE_URL`、`BETTER_AUTH_SECRET`、`TURNSTILE_SECRET_KEY`、`CLOUDFLARE_API_TOKEN`の実値はソースコード、Markdown、Issue、ログへ書きません。

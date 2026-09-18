@@ -19,11 +19,16 @@ try {
   // .dev.vars がなければ既存の環境変数を使う。
 }
 
+const databaseUrl = process.env.DATABASE_URL?.trim()
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL が未設定です。対象環境のデータベース接続先を設定してください。')
+}
+
 export default defineConfig({
   schema: "./src/server/db/schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL!,
+    url: databaseUrl,
   },
 });

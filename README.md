@@ -22,6 +22,14 @@ Cloudflare Pages の Production / Preview で使う変数とSecretは、Pagesダ
 
 Previewへのデプロイ手順とTurnstileの設定は、[Previewデプロイ手順](docs/development/preview-deploy.md)を参照してください。
 
+## 共有Preview
+
+`develop` へのpushは、lint、typecheck、Vitest、coverage、production build、Chromium E2Eを通過した同一commitのArtifactだけを共有Previewへ自動デプロイします。共有PreviewのURLは <https://develop.pomdo.pages.dev>、ヘルスチェックは <https://develop.pomdo.pages.dev/api/health> です。
+
+PreviewはNeon staging branch、GitHub ActionsとローカルE2Eは別のNeon E2E branchを使います。例えばE2Eで作成したTaskはPreviewに表示されません。ローカルE2Eの実行中にGitHub Actionsを同時起動すると共有E2E branchへ同時書き込みになるため、同時起動しないでください。
+
+`npm run deploy:preview` はfeature branchの一時Preview用です。`develop`からの手動実行は拒否され、共有PreviewはGitHub Actionsだけが更新します。
+
 ローカルE2Eまたは画面確認も、Wranglerが読む`.dev.vars`を使います。次のコマンドで `http://localhost:5173` を開きます。
 
 ```sh
@@ -33,6 +41,8 @@ E2Eテストは同じ起動設定を自動で使います。例えばChromiumだ
 ```sh
 npm run test:e2e -- --project=chromium
 ```
+
+Previewの確認では、まず `curl -fsS https://develop.pomdo.pages.dev/api/health` が `status=ok` と `db=connected` を返すこと、`POST https://develop.pomdo.pages.dev/api/test/auth` が404になることを確認してください。
 
 ## v1 の範囲
 
@@ -51,6 +61,7 @@ npm test -- --run
 npm run test:coverage
 npm run build
 npm run test:e2e -- --project=chromium
+npm run test:e2e:assert
 ```
 
 DB スキーマを変更したときは `npm run db:generate` の後、PGlite 結合テストと `npm run build` を実行します。`tests/e2e/` は `/api/test/auth` と固定時計を使うため、E2E 用の Neon branch と `E2E_TEST_MODE=true` が必要です。

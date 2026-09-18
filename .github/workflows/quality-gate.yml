@@ -6,6 +6,9 @@ on:
       checkout-ref:
         required: true
         type: string
+      checks-environment:
+        required: true
+        type: string
       build-environment:
         required: true
         type: string
@@ -23,8 +26,20 @@ jobs:
       group: pomdo-e2e-${{ github.repository }}
       cancel-in-progress: false
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'e2e-pr' || 'e2e' }}
+      name: ${{ inputs.checks-environment }}
     steps:
+      - name: Validate checks environment
+        env:
+          CHECKS_ENVIRONMENT: ${{ inputs.checks-environment }}
+        run: |
+          case "$CHECKS_ENVIRONMENT" in
+            e2e|e2e-pr) ;;
+            *)
+              echo "未許可のchecks environmentです: $CHECKS_ENVIRONMENT"
+              exit 1
+              ;;
+          esac
+
       - name: Checkout
         uses: actions/checkout@v4
         with:

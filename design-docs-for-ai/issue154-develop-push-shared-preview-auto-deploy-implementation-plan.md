@@ -152,13 +152,14 @@ fixtureに入れるSQLはアプリのmigrationそのものではなく、テス�
 `on.workflow_call`で次を受ける。
 
 - `checkout-ref`: string、必須。pushでは`github.sha`、PRではPR merge refの`github.sha`、manualでは選択されたrefの`github.sha`を渡す。
+- `checks-environment`: string、必須。PRは`e2e-pr`、信頼済みpush/manualまたはPreview/Production callerは`e2e`を渡す。`e2e` / `e2e-pr`以外は拒否する。
 - `build-environment`: string、必須。信頼済みpush/manualは`e2e`、PRは`e2e-pr`、Previewは`preview`、Productionは`production`。この4値以外は拒否する。
 
 返すoutputは次の1つとする。
 
 - `build-artifact-name`: build jobがuploadしたArtifact名。`pomdo-dist-${{ github.sha }}`のようにcommit SHAを含め、別runのArtifactを誤取得しない。
 
-`checks` jobのEnvironmentは呼び出し元のeventから決める。`github.event_name == 'pull_request'`なら`e2e-pr`、それ以外（信頼済みpush/manual）なら`e2e`とし、callerからchecks用Environment名を入力させない。`build` jobのEnvironmentは`inputs.build-environment`とする。build jobのstepで許可値を検証し、`e2e`、`e2e-pr`、`preview`、`production`以外は失敗させる。PR callerは`build-environment: e2e-pr`を渡し、信頼済みpush/manualは`e2e`を渡す。
+`checks` jobのEnvironmentはcallerが`checks-environment` inputで明示する。Reusable Workflow内の`github.event_name`は呼び出し元の`pull_request`ではなく`workflow_call`になるため、called workflow側でeventから推測しない。PR callerは`checks-environment: e2e-pr`、信頼済みpush/manualまたはPreview/Production callerは`checks-environment: e2e`を渡す。`build` jobのEnvironmentは`inputs.build-environment`とする。checks jobのstepで`e2e`、`e2e-pr`以外を拒否し、build jobのstepでも`e2e`、`e2e-pr`、`preview`、`production`以外を拒否する。PR callerは`build-environment: e2e-pr`を渡し、信頼済みpush/manualは`e2e`を渡す。
 
 Environment側にもdeployment branch policyを設定する。`e2e-pr`はPR検証とrequired reviewer、`e2e`は信頼済み`main`/`develop`とmanual許可branch、`preview`は`develop`、`production`は`main`だけを許可する。これにより、PRがcallerまたはReusable Workflowを改変して`e2e`・`preview`・`production`を指定しても、保護対象Environmentのsecretを取得できない。manualでfeature branchをE2E検証したい場合は、secretを使うGitHub ActionsではなくローカルE2Eを使う。
 

@@ -19,6 +19,7 @@ jobs:
     uses: ./.github/workflows/quality-gate.yml
     with:
       checkout-ref: ${{ github.sha }}
+      checks-environment: e2e
       build-environment: production
 
   deploy:

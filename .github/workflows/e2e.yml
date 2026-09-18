@@ -33,4 +33,5 @@ jobs:
     uses: ./.github/workflows/quality-gate.yml
     with:
       checkout-ref: ${{ github.sha }}
+      checks-environment: ${{ github.event_name == 'pull_request' && 'e2e-pr' || 'e2e' }}
       build-environment: ${{ github.event_name == 'pull_request' && 'e2e-pr' || 'e2e' }}

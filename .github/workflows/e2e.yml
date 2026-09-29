@@ -27,11 +27,90 @@ jobs:
             exit 1
           fi
 
-  quality:
-    name: Quality gate
+  quality-e2e-pr:
+    name: Quality gate / Checks (e2e-pr)
+    if: ${{ github.event_name == 'pull_request' }}
     needs: guard
-    uses: ./.github/workflows/quality-gate.yml
-    with:
-      checkout-ref: ${{ github.sha }}
-      checks-environment: ${{ github.event_name == 'pull_request' && 'e2e-pr' || 'e2e' }}
-      build-environment: ${{ github.event_name == 'pull_request' && 'e2e-pr' || 'e2e' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: pomdo-e2e-${{ github.repository }}
+      cancel-in-progress: false
+    environment: e2e-pr
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Run quality checks
+        uses: ./.github/actions/run-quality-checks
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+
+  build-e2e-pr:
+    name: Quality gate / Build (e2e-pr)
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: quality-e2e-pr
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: e2e-pr
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Build distribution
+        uses: ./.github/actions/build-dist
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+  quality-e2e:
+    name: Quality gate / Checks (e2e)
+    if: ${{ github.event_name != 'pull_request' }}
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: pomdo-e2e-${{ github.repository }}
+      cancel-in-progress: false
+    environment: e2e
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Run quality checks
+        uses: ./.github/actions/run-quality-checks
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+
+  build-e2e:
+    name: Quality gate / Build (e2e)
+    if: ${{ github.event_name != 'pull_request' }}
+    needs: quality-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: e2e
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Build distribution
+        uses: ./.github/actions/build-dist
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

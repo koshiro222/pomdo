@@ -4,6 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { TestDb } from '../../src/server/db/client'
 import { focusSessions, tasks, users } from '../../src/server/db/schema'
 import { listDailyFocusSummaries } from '../../src/server/repositories/focus-session-repository'
+import { deleteTasks } from '../../src/server/repositories/task-repository'
 import { recordAnalyticsEvent } from '../../src/server/repositories/analytics-event-repository'
 import { createPGliteTestDatabase, type PGliteTestDatabase } from '../helpers/pglite-test-database'
 
@@ -33,6 +34,19 @@ describe('v1 schema', () => {
     const [session] = await db.select().from(focusSessions).where(eq(focusSessions.userId, userId))
     expect(session?.taskId).toBeNull()
     expect(session?.durationSecs).toBe(1500)
+  })
+
+  it('一括repository削除でもFocus Sessionの行と時間を残してTask参照だけをNULLにする', async () => {
+    const userId = crypto.randomUUID()
+    const taskId = crypto.randomUUID()
+    await db.insert(users).values({ id: userId, name: 'Test', email: `${userId}@example.com`, isAnonymous: true })
+    await db.insert(tasks).values({ id: taskId, userId, title: '一括削除するTask', plannedFor: '2026-09-04' })
+    const sessionId = crypto.randomUUID()
+    await db.insert(focusSessions).values({ id: sessionId, userId, taskId, startedAt: new Date(), durationSecs: 1500, plannedSecs: 1500, completedAt: new Date() })
+
+    await expect(deleteTasks(db, userId, [taskId])).resolves.toEqual([{ id: taskId }])
+    const [session] = await db.select().from(focusSessions).where(eq(focusSessions.id, sessionId))
+    expect(session).toMatchObject({ id: sessionId, taskId: null, durationSecs: 1500 })
   })
 
   it('日次集計はユーザーの IANA timezone で日付を切り替える', async () => {

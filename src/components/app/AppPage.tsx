@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Turnstile } from '@marsidev/react-turnstile'
 import { Link } from 'react-router'
 import { useAppSession } from '../../hooks/useAppSession'
@@ -57,6 +57,7 @@ export function AppPage() {
   const [toast, setToast] = useState<string | null>(() => readAccountLinkNotice({ preserve: true }))
   const [tabReturnPrompt, setTabReturnPrompt] = useState<FocusRuntimeSnapshot | null>(null)
   const [nextTaskSuggestion, setNextTaskSuggestion] = useState<TaskView | null>(null)
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(() => new Set())
   const completedRuntimeId = useRef<string | null>(null)
   const completedBreakRuntimeId = useRef<string | null>(null)
   const promptedRuntimeId = useRef<string | null>(null)
@@ -88,9 +89,46 @@ export function AppPage() {
   )
   const currentTask = tasksQuery.data?.currentTask ?? null
   const taskList = tasksQuery.data
+  const selectableTaskIds = useMemo(() => new Set([
+    ...(currentTask && !currentTask.completedAt ? [currentTask.id] : []),
+    ...(taskList?.onDeck ?? []).map((task) => task.id),
+    ...(taskList?.backlog ?? []).map((task) => task.id),
+  ]), [currentTask, taskList])
   const completedFocusCounts = new Map<string, number>()
   for (const session of sessionsQuery.data ?? []) if (session.completedAt && session.taskId) completedFocusCounts.set(session.taskId, (completedFocusCounts.get(session.taskId) ?? 0) + 1)
   const refresh = useCallback(() => { void utils.tasks.list.invalidate(); void utils.review.summary.invalidate(); void sessionsQuery.refetch() }, [sessionsQuery, utils.review.summary, utils.tasks.list])
+  const changeTaskSelection = useCallback((taskId: string, selected: boolean) => {
+    if (selected && !selectableTaskIds.has(taskId)) return
+    setSelectedTaskIds((current) => {
+      const next = new Set(current)
+      if (selected) next.add(taskId)
+      else next.delete(taskId)
+      return next
+    })
+  }, [selectableTaskIds])
+  const removeSelectedTaskIds = useCallback((taskIds: string[]) => {
+    setSelectedTaskIds((current) => {
+      const next = new Set(current)
+      for (const taskId of taskIds) next.delete(taskId)
+      return next.size === current.size ? current : next
+    })
+    setNextTaskSuggestion((suggestion) => suggestion && taskIds.includes(suggestion.id) ? null : suggestion)
+  }, [])
+  const handleBulkDeleteSuccess = useCallback((deletedIds: string[]) => {
+    removeSelectedTaskIds(deletedIds)
+    const deletedIdSet = new Set(deletedIds)
+    if (currentTask && deletedIdSet.has(currentTask.id)) {
+      setNextTaskSuggestion(taskList?.onDeck.find((task) => !deletedIdSet.has(task.id)) ?? null)
+    } else if (nextTaskSuggestion && deletedIdSet.has(nextTaskSuggestion.id)) {
+      setNextTaskSuggestion(null)
+    }
+  }, [currentTask, nextTaskSuggestion, removeSelectedTaskIds, taskList])
+  useEffect(() => {
+    setSelectedTaskIds((current) => {
+      const next = new Set([...current].filter((taskId) => selectableTaskIds.has(taskId)))
+      return next.size === current.size ? current : next
+    })
+  }, [selectableTaskIds])
   const resolveProtectedActionToken = useCallback(async () => {
     const token = await resolveTurnstileToken()
     if (!token) setToast('確認が完了していないため操作できません。ページを再読み込みして、もう一度お試しください。')
@@ -268,6 +306,7 @@ export function AppPage() {
     if (!turnstileToken) return
     completeTask.mutate({ id: currentTask.id, turnstileToken }, {
       onSuccess: () => {
+        removeSelectedTaskIds([currentTask.id])
         setNextTaskSuggestion(taskList.onDeck[0] ?? null)
         refresh()
       },
@@ -286,7 +325,7 @@ export function AppPage() {
   }
   return <div className="app-shell"><AppHeader theme={theme} onToggleTheme={toggleAndPersistTheme} /><main className="app-wrap">
     {turnstileSiteKey ? <Turnstile ref={turnstileRef} siteKey={turnstileSiteKey} options={{ appearance: 'interaction-only' }} onSuccess={onTurnstileSuccess} onExpire={onTurnstileExpire} onError={onTurnstileError} /> : null}
-    <NowCard task={currentTask} completedFocusCount={currentTask ? completedFocusCounts.get(currentTask.id) ?? 0 : 0} onComplete={completeNowTask} onEdit={() => setDetailsTask(currentTask)} onJustFocus={() => setJustFocusChoice(true)} />
+    <NowCard task={currentTask} isSelected={currentTask ? selectedTaskIds.has(currentTask.id) : false} onSelect={currentTask ? (selected) => changeTaskSelection(currentTask.id, selected) : undefined} completedFocusCount={currentTask ? completedFocusCounts.get(currentTask.id) ?? 0 : 0} onComplete={completeNowTask} onEdit={() => setDetailsTask(currentTask)} onJustFocus={() => setJustFocusChoice(true)} />
     {nextTaskSuggestion ? <div className="break-suggestion task-suggestion" role="status"><p>次は「{nextTaskSuggestion.title}」にしますか？</p><button className="btn btn-primary" type="button" onClick={promoteSuggestedTask}>Nowにする</button><button className="btn" type="button" onClick={() => setNextTaskSuggestion(null)}>あとで</button></div> : null}
     <section className="timer-block" aria-label="Focus timer">
       <TimerDisc remainingSecs={isActive ? remainingSecs : runtime.plannedSecs} plannedSecs={runtime.plannedSecs} mode={runtime.mode} />
@@ -294,8 +333,8 @@ export function AppPage() {
       {!isActive && justFocusChoice ? <div className="inline-choice"><button className="btn" type="button" onClick={() => { const next = taskList.onDeck[0]; if (next) void start(next.id) }}>Nextから1つ選ぶ</button><button className="btn" type="button" onClick={() => void start(null)}>このまま集中する</button></div> : null}
       {breakSuggestion ? <div className="break-suggestion"><p>{breakSuggestion === 'longBreak' ? '3本できました。長めに休みますか？' : 'ひと区切り。少し休みますか？'}</p><button className="btn btn-primary" type="button" onClick={startBreak}>{breakSuggestion === 'longBreak' ? '長めに休む（15分）' : '休憩する（5分）'}</button><button className="btn" type="button" onClick={() => setBreakSuggestion(null)}>もう1本</button></div> : null}
     </section>
-    <TaskList currentTask={currentTask} onDeck={taskList.onDeck} backlog={taskList.backlog} done={taskList.todaysDone} resolveTurnstileToken={resolveProtectedActionToken} onRefresh={refresh} onMoveToNow={(task: TaskView) => { void (async () => { const turnstileToken = await resolveProtectedActionToken(); if (turnstileToken) moveTaskToNow.mutate({ id: task.id, turnstileToken }, { onSuccess: refresh }) })() }} />
-    <TaskDetailsSheet task={detailsTask} resolveTurnstileToken={resolveProtectedActionToken} onClose={() => setDetailsTask(null)} onSaved={refresh} onDeleted={() => { if (detailsTask?.id === currentTask?.id) setNextTaskSuggestion(taskList.onDeck[0] ?? null); setDetailsTask(null); refresh() }} onDecomposed={() => { if (detailsTask?.id === currentTask?.id) setNextTaskSuggestion(null); setDetailsTask(null); refresh() }} />
+    <TaskList currentTask={currentTask} onDeck={taskList.onDeck} backlog={taskList.backlog} done={taskList.todaysDone} selectedTaskIds={selectedTaskIds} onSelectionChange={changeTaskSelection} onSelectionRemove={removeSelectedTaskIds} onBulkDeleteSuccess={handleBulkDeleteSuccess} activeFocusTaskId={isActive && runtime.mode === 'focus' ? runtime.taskId : null} resolveTurnstileToken={resolveProtectedActionToken} onRefresh={refresh} onMoveToNow={(task: TaskView) => { void (async () => { const turnstileToken = await resolveProtectedActionToken(); if (turnstileToken) moveTaskToNow.mutate({ id: task.id, turnstileToken }, { onSuccess: refresh }) })() }} />
+    <TaskDetailsSheet task={detailsTask} resolveTurnstileToken={resolveProtectedActionToken} onClose={() => setDetailsTask(null)} onSaved={refresh} onDeleted={() => { if (detailsTask) removeSelectedTaskIds([detailsTask.id]); if (detailsTask?.id === currentTask?.id) setNextTaskSuggestion(taskList.onDeck[0] ?? null); setDetailsTask(null); refresh() }} onDecomposed={() => { if (detailsTask) removeSelectedTaskIds([detailsTask.id]); if (detailsTask?.id === currentTask?.id) setNextTaskSuggestion(null); setDetailsTask(null); refresh() }} />
     <Link className="review-link" to="/app/review">{messages.app.review} →</Link>
     <Toast message={toast} onClose={() => setToast(null)} />
   </main></div>

@@ -3,6 +3,8 @@ import { openAppAsAnonymous } from './helpers/auth'
 
 test('NowのTaskをpreviewで編集してから分解を確定し、リロード後も結果を保持する', async ({ page }) => {
   await openAppAsAnonymous(page)
+  await page.getByLabel('タスクを追加').fill('通常のTask')
+  await page.getByRole('button', { name: '追加' }).click()
   await page.getByRole('button', { name: '編集' }).click()
   await page.getByRole('button', { name: 'AIで分解する' }).click()
 
@@ -30,4 +32,12 @@ test('NowのTaskをpreviewで編集してから分解を確定し、リロード
   await expect(page.getByText('最小の実行単位に着手する').first()).toBeVisible()
   await expect(page.getByText('編集した最初のTask')).toBeVisible()
   await expect(page.locator('.now-card h1', { hasText: 'Pomdo を5分だけ触ってみる' })).not.toBeVisible()
+
+  await page.getByRole('checkbox', { name: '編集した最初のTaskを削除対象に選択' }).check()
+  await page.getByRole('button', { name: '選択した1件のタスクを削除' }).click()
+  await page.getByRole('button', { name: '1件を削除する' }).click()
+  await expect(page.getByRole('heading', { name: '今は、決めなくて大丈夫。' })).toBeVisible()
+  await expect(page.getByText('編集した最初のTask')).not.toBeVisible()
+  await expect(page.getByText('通常のTask')).toBeVisible()
+  await expect(page.locator('.task-title', { hasText: '最小の実行単位に着手する' })).toBeVisible()
 })

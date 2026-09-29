@@ -1,10 +1,13 @@
-import { and, asc, desc, eq, isNotNull, isNull, lt, ne, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNotNull, isNull, lt, ne, sql } from 'drizzle-orm'
 import type { Database, TestDb } from '../db/client'
 import { tasks, users } from '../db/schema'
 
 type TaskRow = typeof tasks.$inferSelect
 type BatchDatabase = {
   batch: (queries: readonly unknown[]) => Promise<unknown>
+}
+type TaskIdReturningDelete = {
+  returning: (selection: { id: typeof tasks.id }) => PromiseLike<Array<{ id: string }>>
 }
 
 function getBatch(database: Database): BatchDatabase['batch'] | null {
@@ -83,6 +86,13 @@ export async function deleteTask(db: Database, userId: string, taskId: string) {
     return deletedRows
   })
   return rows[0] ?? null
+}
+
+export async function deleteTasks(db: Database, userId: string, taskIds: string[]) {
+  if (taskIds.length === 0) return []
+  const deleteQuery = db.delete(tasks)
+    .where(and(eq(tasks.userId, userId), inArray(tasks.id, taskIds))) as unknown as TaskIdReturningDelete
+  return deleteQuery.returning({ id: tasks.id })
 }
 
 type TaskReplacementPlan = {

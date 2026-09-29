@@ -1,6 +1,27 @@
 import { expect, test } from '@playwright/test'
 import { openAppAsAnonymous, signInAsTestIdentity } from './helpers/auth'
 
+test('匿名サインインが遅れてもAppの初期データを待てる', async ({ page }) => {
+  let finishDelayedSignIn!: () => void
+  let delayedSignInWasRequested = false
+  const delayedSignInFinished = new Promise<void>((resolve) => { finishDelayedSignIn = resolve })
+  await page.route('**/api/auth/sign-in/anonymous', async (route) => {
+    delayedSignInWasRequested = true
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 6_000))
+      await route.continue()
+    } finally {
+      finishDelayedSignIn()
+    }
+  })
+  try {
+    await openAppAsAnonymous(page)
+  } finally {
+    if (delayedSignInWasRequested) await delayedSignInFinished
+  }
+  expect(delayedSignInWasRequested).toBe(true)
+})
+
 test('匿名データを既存データのないテストGoogle identityへ引き継げる', async ({ page }) => {
   await openAppAsAnonymous(page)
   const result = await signInAsTestIdentity(page, `empty-${crypto.randomUUID()}`)

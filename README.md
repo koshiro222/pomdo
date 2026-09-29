@@ -22,6 +22,8 @@ Cloudflare Pages の Production / Preview で使う変数とSecretは、Pagesダ
 
 Previewへのデプロイ手順とTurnstileの設定は、[Previewデプロイ手順](docs/development/preview-deploy.md)を参照してください。
 
+developから作業ブランチを作成し、PRでdevelopへマージしてからmainへリリースする開発手順は、[Gitの開発フロー](docs/development/git-flow.md)を参照してください。
+
 ## 共有Preview
 
 `develop` へのpushは、lint、typecheck、Vitest、coverage、production build、Chromium E2Eを通過した同一commitのArtifactだけを共有Previewへ自動デプロイします。共有PreviewのURLは <https://develop.pomdo.pages.dev>、ヘルスチェックは <https://develop.pomdo.pages.dev/api/health> です。

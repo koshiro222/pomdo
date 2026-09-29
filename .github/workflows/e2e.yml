@@ -27,28 +27,6 @@ jobs:
             exit 1
           fi
 
-  environment-secrets-probe:
-    name: Probe e2e-pr secrets
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
-    environment:
-      name: e2e-pr
-      deployment: false
-    steps:
-      - name: Validate secret availability without logging values
-        env:
-          E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
-          TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
-        run: |
-          set -eu
-          test -n "$E2E_DATABASE_URL"
-          test -n "$BETTER_AUTH_SECRET"
-          test -n "$TURNSTILE_SECRET_KEY"
-          test -n "$TURNSTILE_SITE_KEY"
-          echo 'e2e-pr environment secrets are available'
-
   quality:
     name: Quality gate
     needs: guard

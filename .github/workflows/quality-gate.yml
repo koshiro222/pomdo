@@ -15,159 +15,141 @@ on:
     outputs:
       build-artifact-name:
         description: 同一commitのbuild Artifact名
-        value: ${{ jobs.build.outputs.build_artifact_name }}
+        value: ${{ jobs['build-e2e'].outputs.build_artifact_name || jobs['build-e2e-pr'].outputs.build_artifact_name || jobs['build-preview'].outputs.build_artifact_name || jobs['build-production'].outputs.build_artifact_name }}
 
 jobs:
-  checks:
+  checks-e2e:
     name: Checks
+    if: ${{ inputs.checks-environment == 'e2e' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
       group: pomdo-e2e-${{ github.repository }}
       cancel-in-progress: false
-    environment:
-      name: ${{ inputs.checks-environment }}
+    environment: e2e
     steps:
-      - name: Validate checks environment
-        env:
-          CHECKS_ENVIRONMENT: ${{ inputs.checks-environment }}
-        run: |
-          case "$CHECKS_ENVIRONMENT" in
-            e2e|e2e-pr) ;;
-            *)
-              echo "未許可のchecks environmentです: $CHECKS_ENVIRONMENT"
-              exit 1
-              ;;
-          esac
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.checkout-ref }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Run quality checks
+        uses: ./.github/actions/run-quality-checks
         with:
-          node-version: '20'
-          cache: npm
+          database-url: ${{ secrets.E2E_DATABASE_URL }}
+          google-client-id: ${{ secrets.GOOGLE_CLIENT_ID }}
+          google-client-secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          better-auth-secret: ${{ secrets.BETTER_AUTH_SECRET }}
+          turnstile-secret-key: ${{ secrets.TURNSTILE_SECRET_KEY }}
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Prepare E2E environment
-        env:
-          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
-        run: |
-          set -eu
-          test -n "$DATABASE_URL"
-          test -n "$BETTER_AUTH_SECRET"
-          {
-            printf 'DATABASE_URL=%s\n' "$DATABASE_URL"
-            printf 'GOOGLE_CLIENT_ID=%s\n' "$GOOGLE_CLIENT_ID"
-            printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET"
-            printf 'BETTER_AUTH_SECRET=%s\n' "$BETTER_AUTH_SECRET"
-            printf 'BETTER_AUTH_URL=http://localhost:5173\n'
-            printf 'FRONTEND_URL=http://localhost:5173\n'
-            printf 'TURNSTILE_SECRET_KEY=%s\n' "$TURNSTILE_SECRET_KEY"
-            printf 'E2E_TEST_MODE=true\n'
-            printf 'SENTRY_DSN=\n'
-          } > .dev.vars
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Vitest
-        run: npm test -- --run
-
-      - name: Coverage
-        run: npm run test:coverage
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Run Chromium E2E
-        run: npm run test:e2e -- --project=chromium
-
-      - name: Assert Playwright report
-        run: npm run test:e2e:assert
-
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
+  checks-e2e-pr:
+    name: Checks
+    if: ${{ inputs.checks-environment == 'e2e-pr' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: pomdo-e2e-${{ github.repository }}
+      cancel-in-progress: false
+    environment: e2e-pr
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          name: playwright-report-${{ github.sha }}
-          path: playwright-report/
-          if-no-files-found: warn
-          retention-days: 30
+          ref: ${{ inputs.checkout-ref }}
 
-      - name: Upload Playwright results
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Run quality checks
+        uses: ./.github/actions/run-quality-checks
         with:
-          name: playwright-results-${{ github.sha }}
-          path: test-results/
-          if-no-files-found: warn
-          retention-days: 30
+          database-url: ${{ secrets.E2E_DATABASE_URL }}
+          google-client-id: ${{ secrets.GOOGLE_CLIENT_ID }}
+          google-client-secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          better-auth-secret: ${{ secrets.BETTER_AUTH_SECRET }}
+          turnstile-secret-key: ${{ secrets.TURNSTILE_SECRET_KEY }}
 
-  build:
-    name: Build
-    needs: checks
+  build-e2e:
+    name: Build (e2e)
+    if: ${{ always() && inputs.build-environment == 'e2e' && (needs['checks-e2e'].result == 'success' || needs['checks-e2e-pr'].result == 'success') }}
+    needs: [checks-e2e, checks-e2e-pr]
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment:
-      name: ${{ inputs.build-environment }}
+    environment: e2e
     outputs:
-      build_artifact_name: ${{ steps.build-metadata.outputs.build_artifact_name }}
+      build_artifact_name: ${{ steps.build.outputs.artifact_name }}
     steps:
-      - name: Validate build environment
-        env:
-          BUILD_ENVIRONMENT: ${{ inputs.build-environment }}
-        run: |
-          case "$BUILD_ENVIRONMENT" in
-            e2e|e2e-pr|preview|production) ;;
-            *)
-              echo "未許可のbuild environmentです: $BUILD_ENVIRONMENT"
-              exit 1
-              ;;
-          esac
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.checkout-ref }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Build distribution
+        id: build
+        uses: ./.github/actions/build-dist
         with:
-          node-version: '20'
-          cache: npm
+          turnstile-site-key: ${{ secrets.TURNSTILE_SITE_KEY }}
+          sentry-dsn: ${{ secrets.SENTRY_DSN }}
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        env:
-          VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
-          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: npm run build
-
-      - name: Set build metadata
-        id: build-metadata
-        env:
-          BUILD_ARTIFACT_NAME: pomdo-dist-${{ github.sha }}
-        run: printf 'build_artifact_name=%s\n' "$BUILD_ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
-
-      - name: Upload build Artifact
-        uses: actions/upload-artifact@v4
+  build-e2e-pr:
+    name: Build (e2e-pr)
+    if: ${{ always() && inputs.build-environment == 'e2e-pr' && (needs['checks-e2e'].result == 'success' || needs['checks-e2e-pr'].result == 'success') }}
+    needs: [checks-e2e, checks-e2e-pr]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: e2e-pr
+    outputs:
+      build_artifact_name: ${{ steps.build.outputs.artifact_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          name: pomdo-dist-${{ github.sha }}
-          path: dist/
-          if-no-files-found: error
-          retention-days: 30
+          ref: ${{ inputs.checkout-ref }}
+
+      - name: Build distribution
+        id: build
+        uses: ./.github/actions/build-dist
+        with:
+          turnstile-site-key: ${{ secrets.TURNSTILE_SITE_KEY }}
+          sentry-dsn: ${{ secrets.SENTRY_DSN }}
+
+  build-preview:
+    name: Build (preview)
+    if: ${{ always() && inputs.build-environment == 'preview' && (needs['checks-e2e'].result == 'success' || needs['checks-e2e-pr'].result == 'success') }}
+    needs: [checks-e2e, checks-e2e-pr]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: preview
+    outputs:
+      build_artifact_name: ${{ steps.build.outputs.artifact_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.checkout-ref }}
+
+      - name: Build distribution
+        id: build
+        uses: ./.github/actions/build-dist
+        with:
+          turnstile-site-key: ${{ secrets.TURNSTILE_SITE_KEY }}
+          sentry-dsn: ${{ secrets.SENTRY_DSN }}
+
+  build-production:
+    name: Build (production)
+    if: ${{ always() && inputs.build-environment == 'production' && (needs['checks-e2e'].result == 'success' || needs['checks-e2e-pr'].result == 'success') }}
+    needs: [checks-e2e, checks-e2e-pr]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    outputs:
+      build_artifact_name: ${{ steps.build.outputs.artifact_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.checkout-ref }}
+
+      - name: Build distribution
+        id: build
+        uses: ./.github/actions/build-dist
+        with:
+          turnstile-site-key: ${{ secrets.TURNSTILE_SITE_KEY }}
+          sentry-dsn: ${{ secrets.SENTRY_DSN }}

@@ -1,0 +1,104 @@
+name: Run quality checks
+description: E2E用環境を準備して品質ゲートを実行する
+
+inputs:
+  database-url:
+    description: E2E用データベース接続文字列
+    required: true
+  google-client-id:
+    description: E2E用Google Client ID
+    required: false
+    default: ''
+  google-client-secret:
+    description: E2E用Google Client Secret
+    required: false
+    default: ''
+  better-auth-secret:
+    description: Better Authの署名Secret
+    required: true
+  turnstile-secret-key:
+    description: Turnstile Secret Key
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: npm
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
+
+    - name: Prepare E2E environment
+      shell: bash
+      env:
+        DATABASE_URL: ${{ inputs.database-url }}
+        GOOGLE_CLIENT_ID: ${{ inputs.google-client-id }}
+        GOOGLE_CLIENT_SECRET: ${{ inputs.google-client-secret }}
+        BETTER_AUTH_SECRET: ${{ inputs.better-auth-secret }}
+        TURNSTILE_SECRET_KEY: ${{ inputs.turnstile-secret-key }}
+      run: |
+        set -eu
+        test -n "$DATABASE_URL"
+        test -n "$BETTER_AUTH_SECRET"
+        {
+          printf 'DATABASE_URL=%s\n' "$DATABASE_URL"
+          printf 'GOOGLE_CLIENT_ID=%s\n' "$GOOGLE_CLIENT_ID"
+          printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET"
+          printf 'BETTER_AUTH_SECRET=%s\n' "$BETTER_AUTH_SECRET"
+          printf 'BETTER_AUTH_URL=http://localhost:5173\n'
+          printf 'FRONTEND_URL=http://localhost:5173\n'
+          printf 'TURNSTILE_SECRET_KEY=%s\n' "$TURNSTILE_SECRET_KEY"
+          printf 'E2E_TEST_MODE=true\n'
+          printf 'SENTRY_DSN=\n'
+        } > .dev.vars
+
+    - name: Lint
+      shell: bash
+      run: npm run lint
+
+    - name: Typecheck
+      shell: bash
+      run: npm run typecheck
+
+    - name: Vitest
+      shell: bash
+      run: npm test -- --run
+
+    - name: Coverage
+      shell: bash
+      run: npm run test:coverage
+
+    - name: Install Playwright Browsers
+      shell: bash
+      run: npx playwright install --with-deps chromium
+
+    - name: Run Chromium E2E
+      shell: bash
+      run: npm run test:e2e -- --project=chromium
+
+    - name: Assert Playwright report
+      shell: bash
+      run: npm run test:e2e:assert
+
+    - name: Upload Playwright report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report-${{ github.sha }}
+        path: playwright-report/
+        if-no-files-found: warn
+        retention-days: 30
+
+    - name: Upload Playwright results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-results-${{ github.sha }}
+        path: test-results/
+        if-no-files-found: warn
+        retention-days: 30

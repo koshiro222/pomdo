@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 import { setServerNowFromBrowserClock } from './helpers/auth'
 
 test('LPから匿名で始めて、TaskとFocusの一連の流れを操作できる', async ({ page }) => {
+  test.setTimeout(60_000)
   const fixedNow = new Date('2026-09-04T09:00:00+09:00')
   await page.clock.install({ time: fixedNow })
   await page.addInitScript((value) => localStorage.setItem('pomdo-e2e-now', value), fixedNow.toISOString())

@@ -1,7 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { delayAuthenticationRequests, failAppProcedure, openAppAsAnonymous } from './helpers/auth'
 
+const DEMO_VIDEO_URL = 'https://pub-7e2638ec617c45a7a55b30232114a3a0.r2.dev/pomdo-demo.mp4'
+
 test('LPの使ってみるボタンは背景と異なる文字色で表示する', async ({ page }) => {
+  await page.route(DEMO_VIDEO_URL, (route) => route.abort())
   await page.goto('/')
   const cta = page.getByRole('link', { name: '使ってみる' })
   await expect(cta).toBeVisible()
@@ -13,6 +16,7 @@ test('LPの使ってみるボタンは背景と異なる文字色で表示する
 })
 
 test('LP のテーマトグルは即時反映し、リロード後も明示テーマを復元する', async ({ page }) => {
+  await page.route(DEMO_VIDEO_URL, (route) => route.abort())
   await page.emulateMedia({ colorScheme: 'light' })
   await page.goto('/')
   const toggle = page.locator('label.theme-toggle')
@@ -68,10 +72,127 @@ test('App・Review・Settings の共通ヘッダーでテーマを操作でき�
   await expect(page.getByRole('slider', { name: '音量' })).toBeVisible()
 })
 
+test('Appの設定ギアはテーマトグルと同じ色で、Tabフォーカスを表示する', async ({ page }) => {
+  await openAppAsAnonymous(page)
+  const settingsLink = page.getByRole('link', { name: '設定' })
+
+  for (const theme of ['corporate', 'business']) {
+    await page.locator('html').evaluate((element, selectedTheme) => element.setAttribute('data-theme', selectedTheme), theme)
+    await expect.poll(() => page.evaluate(() => {
+      const settings = document.querySelector('.settings-icon-link svg')!
+      const toggle = document.querySelector('.theme-toggle svg')!
+      return getComputedStyle(settings).color === getComputedStyle(toggle).color
+    })).toBe(true)
+    const defaultColors = await page.evaluate(() => ({
+      settings: getComputedStyle(document.querySelector('.settings-icon-link svg')!).color,
+      toggle: getComputedStyle(document.querySelector('.theme-toggle svg')!).color,
+    }))
+    expect(defaultColors.settings).toBe(defaultColors.toggle)
+
+    await settingsLink.hover()
+    await expect.poll(() => page.evaluate(() => {
+      const settings = document.querySelector('.settings-icon-link svg')!
+      const toggle = document.querySelector('.theme-toggle svg')!
+      return getComputedStyle(settings).color === getComputedStyle(toggle).color
+    })).toBe(true)
+    const hoverColors = await page.evaluate(() => ({
+      settings: getComputedStyle(document.querySelector('.settings-icon-link svg')!).color,
+      toggle: getComputedStyle(document.querySelector('.theme-toggle svg')!).color,
+    }))
+    expect(hoverColors.settings).toBe(hoverColors.toggle)
+    await page.mouse.move(0, 0)
+  }
+
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Tab')
+  await expect(settingsLink).toBeFocused()
+  const focusOutline = await settingsLink.evaluate((element) => getComputedStyle(element).outlineStyle)
+  expect(focusOutline).not.toBe('none')
+})
+
+test('LP動画は指定属性で表示し、読み込み失敗時もCTAと画面幅を保つ', async ({ page }) => {
+  let releaseVideoRequest!: () => void
+  const videoRequestGate = new Promise<void>((resolve) => { releaseVideoRequest = resolve })
+  let videoRequestStarted = false
+  await page.route(DEMO_VIDEO_URL, async (route) => {
+    videoRequestStarted = true
+    await videoRequestGate
+    await route.abort()
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+
+  const video = page.locator('.demo-video')
+  await expect(video).toBeVisible()
+  await expect(video).toHaveAttribute('src', DEMO_VIDEO_URL)
+  await expect(video).toHaveAttribute('autoplay')
+  await expect.poll(() => video.evaluate((element) => (element as HTMLVideoElement).muted)).toBe(true)
+  await expect(video).toHaveAttribute('loop')
+  await expect(video).toHaveAttribute('playsinline')
+  await expect(video).not.toHaveAttribute('controls')
+  await expect(page.getByRole('slider', { name: 'デモの残り時間' })).toHaveCount(0)
+  await expect.poll(() => videoRequestStarted).toBe(true)
+  const mobileLayout = await page.evaluate(() => ({
+    viewportWidth: window.innerWidth,
+    documentWidth: document.documentElement.scrollWidth,
+    videoWidth: document.querySelector('video')!.getBoundingClientRect().width,
+  }))
+  expect(mobileLayout.documentWidth).toBeLessThanOrEqual(mobileLayout.viewportWidth)
+  expect(mobileLayout.videoWidth).toBeLessThan(mobileLayout.viewportWidth)
+
+  releaseVideoRequest()
+  await expect(page.getByRole('status')).toContainText('動画を再生できませんでした。')
+  await expect(page.getByRole('status')).toContainText('タイマーを始めたら、今やることに集中。終わったら、次のタスクへ進みます。')
+  await expect(page.getByRole('link', { name: '使ってみる' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'プライバシーポリシー' })).toBeVisible()
+
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440)
+})
+
+test('reduced-motionでは初期表示を静止させ、表示中の動画も設定変更で停止する', async ({ page }) => {
+  let releaseVideoRequest!: () => void
+  const videoRequestGate = new Promise<void>((resolve) => { releaseVideoRequest = resolve })
+  let videoRequestStarted = false
+  await page.addInitScript(() => {
+    const browserWindow = window as Window & { pomdoVideoPauseCalls: number }
+    browserWindow.pomdoVideoPauseCalls = 0
+    const pauseVideo = HTMLMediaElement.prototype.pause
+    HTMLMediaElement.prototype.pause = function pause() {
+      browserWindow.pomdoVideoPauseCalls += 1
+      return pauseVideo.call(this)
+    }
+  })
+  await page.route(DEMO_VIDEO_URL, async (route) => {
+    videoRequestStarted = true
+    await videoRequestGate
+    await route.abort()
+  })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await expect(page.locator('.demo-video-fallback')).toContainText('タイマーを始めたら、今やることに集中。終わったら、次のタスクへ進みます。')
+  await expect(page.locator('video')).toHaveCount(0)
+  expect(videoRequestStarted).toBe(false)
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  const video = page.locator('.demo-video')
+  await expect(video).toBeVisible()
+  await expect(video).toHaveAttribute('autoplay')
+  await expect.poll(() => videoRequestStarted).toBe(true)
+
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await expect(video).toHaveCount(0)
+  await expect.poll(() => page.evaluate(() => (window as Window & { pomdoVideoPauseCalls: number }).pomdoVideoPauseCalls)).toBeGreaterThan(0)
+  await expect(page.getByRole('link', { name: '使ってみる' })).toBeVisible()
+  releaseVideoRequest()
+})
+
 test('Review のテーマ変更は settings.update に Turnstile token を含める', async ({ page }) => {
   await openAppAsAnonymous(page)
   await page.getByRole('link', { name: /振り返りを見る/ }).click()
-  await expect(page.getByRole('heading', { name: 'できた分を、静かに見る。' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '今日の振り返り' })).toBeVisible()
+  await expect(page.getByText('今日を振り返る')).toHaveCount(0)
+  await expect(page.getByText('合計集中時間')).toBeVisible()
 
   const toggleInput = page.getByRole('checkbox', { name: /テーマに切り替え/ })
   const toggle = page.locator('label.theme-toggle')

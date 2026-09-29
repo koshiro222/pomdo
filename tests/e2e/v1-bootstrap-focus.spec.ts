@@ -3,6 +3,7 @@ import { setServerNowFromBrowserClock } from './helpers/auth'
 
 test('LPから匿名で始めて、TaskとFocusの一連の流れを操作できる', async ({ page }) => {
   test.setTimeout(60_000)
+  await page.route('https://pub-7e2638ec617c45a7a55b30232114a3a0.r2.dev/pomdo-demo.mp4', (route) => route.abort())
   const fixedNow = new Date('2026-09-04T09:00:00+09:00')
   await page.clock.install({ time: fixedNow })
   await page.addInitScript((value) => localStorage.setItem('pomdo-e2e-now', value), fixedNow.toISOString())
@@ -46,25 +47,31 @@ test('LPから匿名で始めて、TaskとFocusの一連の流れを操作でき
   await page.clock.runFor('00:01:01')
   await page.getByRole('button', { name: 'ストップ' }).click()
   await page.getByRole('link', { name: /振り返りを見る/ }).click()
+  await expect(page.getByRole('heading', { name: '今日の振り返り' })).toBeVisible()
   await expect(page.getByText('合計集中時間')).toBeVisible()
   await expect(page.getByText('16分')).toBeVisible()
 })
 
-test('BacklogからNowへ昇格し、Nowが空ならJust Focusを選べる', async ({ page }) => {
+test('NextからNowへ移動し、Nowが空ならNextタスクでFocusを開始できる', async ({ page }) => {
   await page.goto('/app')
   await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible()
+  await expect(page.getByText('Now', { exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Next' })).toBeVisible()
 
-  await page.getByRole('button', { name: /Backlog/ }).click()
-  await page.getByLabel('タスクを追加').last().fill('いつか読む記事')
-  await page.getByRole('button', { name: '追加' }).last().click()
-  await expect(page.getByText('いつか読む記事')).toBeVisible()
-  await page.getByRole('button', { name: /^いつか読む記事 \d+ 本$/ }).click()
-  await expect(page.getByRole('heading', { name: 'いつか読む記事' })).toBeVisible()
+  await page.getByLabel('タスクを追加').first().fill('次のタスク')
+  await page.getByRole('button', { name: '追加' }).first().click()
+  await expect(page.getByText('次のタスク')).toBeVisible()
 
-  await page.getByRole('button', { name: '完了' }).first().click()
+  await page.getByRole('button', { name: '次のタスクのメニュー' }).click()
+  await page.getByRole('menuitem', { name: 'Move to Now' }).click()
+  await expect(page.getByRole('heading', { name: '次のタスク' })).toBeVisible()
+  await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible()
+
+  await page.locator('.now-card').getByRole('button', { name: '完了' }).click()
   await expect(page.getByText('今は、決めなくて大丈夫。')).toBeVisible()
+  await expect(page.getByText('Next から1つ選ぶか、このまま集中できます。')).toBeVisible()
+  await page.locator('.task-suggestion').getByRole('button', { name: 'あとで' }).click()
   await page.getByRole('button', { name: 'このまま集中する' }).click()
-  await page.getByRole('button', { name: '▶ はじめる' }).click()
+  await page.getByRole('button', { name: 'Nextから1つ選ぶ' }).click()
   await expect(page.getByRole('button', { name: 'ストップ' })).toBeVisible()
-  await page.getByRole('button', { name: 'ストップ' }).click()
 })

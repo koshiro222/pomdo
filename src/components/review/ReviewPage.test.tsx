@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => ({
       completedFocusCount: 1,
       focusedDays: 1,
       days: Array.from({ length: 7 }, (_, index) => ({ date: `2026-09-${String(index + 1).padStart(2, '0')}`, totalFocusSecs: index * 60 })),
-      completedTasks: [],
+      completedTasks: [{ id: 'task-1', title: '記事を読む' }],
     },
   },
   update: {
@@ -64,6 +64,21 @@ describe('ReviewPage', () => {
     mocks.update.mutateAsync.mockResolvedValue(undefined)
     mocks.summary.isPending = false
     mocks.summary.isError = false
+  })
+
+  it('今日の振り返り見出しと集計内容を表示する', () => {
+    renderReview()
+
+    expect(screen.getByRole('heading', { level: 1, name: '今日の振り返り' })).toBeVisible()
+    expect(screen.queryByText('今日を振り返る')).not.toBeInTheDocument()
+    expect(screen.getByText('合計集中時間')).toBeVisible()
+    expect(screen.getByText('25分')).toBeVisible()
+    expect(screen.getByText('完了した Focus')).toBeVisible()
+    expect(screen.getByText('1本')).toBeVisible()
+    expect(screen.getByRole('img', { name: '直近7日の集中時間' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: '完了したタスク' })).toBeVisible()
+    expect(screen.getByText('記事を読む')).toBeVisible()
+    expect(screen.getByText('累計 1日')).toBeVisible()
   })
 
   it('テーマトグルで Turnstile token 付き settings.update を呼ぶ', async () => {

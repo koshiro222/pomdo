@@ -33,16 +33,16 @@ describe('TaskRow', () => {
 
     expect(screen.getByRole('menuitem', { name: '編集' })).toBeVisible()
     expect(screen.getByRole('menuitem', { name: '削除' })).toBeVisible()
-    expect(screen.queryByRole('menuitem', { name: '今これにする' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: 'Move to Now' })).not.toBeInTheDocument()
   })
 
-  it('Nowへ移動できるタスクではメニューに今これにするが表示される', async () => {
+  it('Nowへ移動できるタスクではメニューに Move to Now が表示される', async () => {
     const user = userEvent.setup()
     renderTaskRow(vi.fn())
 
     await user.click(screen.getByRole('button', { name: '記事を読むのメニュー' }))
 
-    expect(screen.getByRole('menuitem', { name: '今これにする' })).toBeVisible()
+    expect(screen.getByRole('menuitem', { name: 'Move to Now' })).toBeVisible()
   })
 
   it('メニュー項目を選ぶと対応するcallbackが呼ばれる', async () => {
@@ -63,7 +63,7 @@ describe('TaskRow', () => {
     expect(onEdit).toHaveBeenCalledOnce()
 
     await user.click(screen.getByRole('button', { name: '記事を読むのメニュー' }))
-    await user.click(screen.getByRole('menuitem', { name: '今これにする' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Move to Now' }))
     expect(onMoveToNow).toHaveBeenCalledOnce()
 
     await user.click(screen.getByRole('button', { name: '記事を読むのメニュー' }))

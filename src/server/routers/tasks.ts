@@ -4,6 +4,7 @@ import { router, protectedProcedure, turnstileProcedure } from '../context'
 import { recordFirstTaskCreated } from '../services/analytics-service'
 import { hasAnalyticsEvent } from '../repositories/analytics-event-repository'
 import { buildDeckOrder, deriveTaskBuckets, formatTaskCalendarDate, promoteTaskToNow } from '../services/task-service'
+import { deleteSelectedTasks, NoTasksDeletedError } from '../services/task-bulk-delete-service'
 import {
   completeTask,
   createTask,
@@ -20,6 +21,7 @@ import { confirmTaskDecomposition, decompositionProposalSchema, generateTaskDeco
 
 const writeInput = z.object({ turnstileToken: z.string().optional() })
 const taskIdInput = z.object({ id: z.string().uuid(), turnstileToken: z.string().optional() })
+const taskIdsInput = z.object({ ids: z.array(z.string().uuid()).min(1), turnstileToken: z.string().optional() })
 const decompositionConfirmInput = z.object({
   id: z.string().uuid(),
   items: decompositionProposalSchema.shape.items,
@@ -88,6 +90,15 @@ export const tasksRouter = router({
     const deleted = await deleteTask(ctx.db, ctx.user.id, input.id)
     if (!deleted) throw new TRPCError({ code: 'NOT_FOUND', message: 'タスクが見つかりません' })
     return deleted
+  }),
+
+  deleteMany: turnstileProcedure.input(taskIdsInput).mutation(async ({ ctx, input }) => {
+    try {
+      return await deleteSelectedTasks(ctx.db, ctx.user.id, input.ids)
+    } catch (error) {
+      if (error instanceof NoTasksDeletedError) throw new TRPCError({ code: 'NOT_FOUND', message: 'タスクが見つかりません' })
+      throw error
+    }
   }),
 
   moveToNow: turnstileProcedure.input(taskIdInput).mutation(async ({ ctx, input }) => {

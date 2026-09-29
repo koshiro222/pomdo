@@ -75,3 +75,16 @@ test('NextからNowへ移動し、Nowが空ならNextタスクでFocusを開始�
   await page.getByRole('button', { name: 'Nextから1つ選ぶ' }).click()
   await expect(page.getByRole('button', { name: 'ストップ' })).toBeVisible()
 })
+
+test("Task行のメニューから完了し、Today's Doneでは選択できない", async ({ page }) => {
+  await page.goto('/app')
+  await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible()
+  await page.getByLabel('タスクを追加').first().fill('メニューから完了するTask')
+  await page.getByRole('button', { name: '追加' }).first().click()
+  await page.getByRole('button', { name: 'メニューから完了するTaskのメニュー' }).click()
+  await page.getByRole('menuitem', { name: '完了' }).click()
+
+  await page.getByRole('button', { name: /今日完了したこと/ }).click()
+  await expect(page.getByRole('button', { name: 'メニューから完了するTaskを完了' })).toBeDisabled()
+  await expect(page.getByRole('checkbox', { name: 'メニューから完了するTaskを削除対象に選択' })).not.toBeVisible()
+})

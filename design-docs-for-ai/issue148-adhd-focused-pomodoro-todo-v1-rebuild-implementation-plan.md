@@ -354,7 +354,7 @@ Neon PostgreSQL（本番） / PGlite（結合テスト）
 - `ai-rules/ARCHITECTURE.md`、`ai-rules/TESTING.md`、`ai-rules/TROUBLESHOOTING.md`、`ai-rules/ISSUE_GUIDELINES.md`、`ai-rules/COMMIT_AND_PR_GUIDELINES.md`、`ai-rules/WORK_FLOW.md`: v1 の単一の正に書き換える。テスト helper のパスは v1 で新設する `tests/e2e/helpers/auth.ts` に統一し（旧 `tests/helpers/auth.ts` は削除）、ドキュメント・計画・実コードで表記を揃える
 - `README.md`: v1 の起動、env、DB、test、deploy を簡潔に書き直す
 - `.planning/DESIGN.md`: 削除する
-- `.planning/` の旧成果物: 実在ファイルを確認して `.planning/archive/v0/` に退避する。新しい GSD phase/roadmap は作らない。退避対象と除外対象は Git diff で明示する
+- `.planning/` の旧成果物: 公開前の履歴整理で削除する。新しい GSD phase/roadmap は作らない
 - `public/audio/README.md`、`public/bg/README.md`、BGM/R2 関連の README/コードを削除する。`public/favicon.svg` は残す。`src/assets/react.svg` は削除する
 - 完了条件: `rg` で `MigrateDialog`、`admin()`、`emailAndPassword`、`recharts`、`BGM_BUCKET`、`pomodoro_sessions`、`todos`、`pause`（非スコープ説明を除く）などの旧実装参照がない。旧 ADR と `docs/v1-mockup.html` は残す
 
@@ -455,7 +455,7 @@ Neon PostgreSQL（本番） / PGlite（結合テスト）
 | `tests/global-setup.ts`、`tests/helpers/auth.ts` | email/password seed と旧 sign-in を廃止。v1 は `tests/e2e/helpers/auth.ts`（新規）が `/api/test/auth` を使う。`globalSetup` は不要なら `playwright.config.ts` から外す |
 | `functions/lib/auth.ts`、`functions/lib/db.ts`、`functions/lib/schema.ts` | `src/server/auth.ts`、`src/server/db/client.ts`、`src/server/db/schema.ts` へ移動後に削除 |
 | `.github/workflows/e2e.yml` | `deploy.yml` に E2E を統合 |
-| `.planning/DESIGN.md`、旧 `.planning/` 成果物 | `archive/v0` へ退避、GSD を継続利用しない |
+| `.planning/DESIGN.md`、旧 `.planning/` 成果物 | 公開前の履歴整理で削除、GSD を継続利用しない |
 
 **catch-all ルール**: 上記および §7.1 / §7.2 に「残す」「新規」と明記されていない `src/**` / `functions/**` / `tests/**` / `drizzle/**` の既存ファイルは、v0 機能に属するものとして削除する。判断に迷うファイル（`src/lib/utils.ts`、`src/global.d.ts`、`src/test/setup.ts`、`src/test/accessibility-test-utils.tsx`、`src/main.tsx` 等）は §7.1 の「変更」側に該当するか確認してから残す。Issue #148 の「推奨ビルド順序」1 は `src` / `functions` / `drizzle` / `tests` の全消しを起点に置いているが、本計画は Better Auth テーブル・`favicon.svg`・ADR・`docs/v1-mockup.html`・tsconfig/vite/wrangler の土台を保持したいため、全消しではなく上記の明示リスト + catch-all で同じ結果（v0 参照ゼロ）を得る。
 

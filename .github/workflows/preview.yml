@@ -188,7 +188,7 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$CANDIDATE_URL"
-          candidate_health="$(curl --fail --silent --show-error --retry 10 --retry-delay 5 "${CANDIDATE_URL%/}/api/health")"
+          candidate_health="$(curl --fail --silent --show-error --retry 10 --retry-delay 5 --retry-all-errors "${CANDIDATE_URL%/}/api/health")"
           printf '%s' "$candidate_health" | jq -e '.status == "ok" and .db == "connected"' > /dev/null
           auth_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --request POST "${CANDIDATE_URL%/}/api/test/auth")"
           test "$auth_status" = 404
@@ -223,7 +223,7 @@ jobs:
         continue-on-error: true
         run: |
           set -euo pipefail
-          stable_health="$(curl --fail --silent --show-error --retry 10 --retry-delay 5 https://develop.pomdo.pages.dev/api/health)"
+          stable_health="$(curl --fail --silent --show-error --retry 10 --retry-delay 5 --retry-all-errors https://develop.pomdo.pages.dev/api/health)"
           printf '%s' "$stable_health" | jq -e '.status == "ok" and .db == "connected"' > /dev/null
 
       - name: Prepare previous successful bundle for recovery
@@ -258,7 +258,7 @@ jobs:
         continue-on-error: true
         run: |
           set -euo pipefail
-          recovery_health="$(curl --fail --silent --show-error --retry 10 --retry-delay 5 https://develop.pomdo.pages.dev/api/health)"
+          recovery_health="$(curl --fail --silent --show-error --retry 10 --retry-delay 5 --retry-all-errors https://develop.pomdo.pages.dev/api/health)"
           printf '%s' "$recovery_health" | jq -e '.status == "ok" and .db == "connected"' > /dev/null
 
       - name: Cleanup old candidate deployments
@@ -323,7 +323,7 @@ jobs:
           {
             echo '## Shared Preview deploy'
             echo
-            echo "- commit: `${GITHUB_SHA}`"
+            echo "- commit: \`${GITHUB_SHA}\`"
             echo "- candidate URL: ${CANDIDATE_URL:-未取得}"
             echo "- candidate deployment ID: ${CANDIDATE_ID:-未取得}"
             echo "- candidate health: ${CANDIDATE_HEALTH:-未実行}"

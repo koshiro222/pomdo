@@ -35,7 +35,7 @@ export function createAuthInstance(environment: AuthBindings) {
     secret: environment.BETTER_AUTH_SECRET,
     baseURL: environment.BETTER_AUTH_URL,
     basePath: '/api/auth',
-    trustedOrigins: [environment.FRONTEND_URL ?? 'https://pomdo.pages.dev', ...localOrigins],
+    trustedOrigins: [environment.FRONTEND_URL ?? environment.BETTER_AUTH_URL, ...localOrigins],
     socialProviders: {
       google: {
         clientId: environment.GOOGLE_CLIENT_ID,

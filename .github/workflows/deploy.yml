@@ -1,88 +1,98 @@
-name: Deploy
+name: Production deploy
 
 on:
   push:
     branches: [main]
 
-jobs:
-  deploy:
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
+concurrency:
+  group: pomdo-production
+  cancel-in-progress: false
 
+permissions:
+  contents: read
+  actions: read
+  deployments: write
+
+jobs:
+  quality:
+    name: Quality gate / Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: pomdo-e2e-${{ github.repository }}
+      cancel-in-progress: false
+    environment: e2e
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          ref: ${{ github.sha }}
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Run quality checks
+        uses: ./.github/actions/run-quality-checks
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
 
-      - name: Lint
-        run: npm run lint
+  build:
+    name: Quality gate / Build
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    outputs:
+      build_artifact_name: ${{ steps.build.outputs.artifact_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
 
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Vitest
-        run: npm test -- --run
-
-      - name: Coverage
-        run: npm run test:coverage
-
-      - name: Build
+      - name: Build distribution
+        id: build
+        uses: ./.github/actions/build-dist
         env:
           VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: npm run build
 
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
+  deploy:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
 
-      - name: Prepare E2E environment
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: http://localhost:5173
-          FRONTEND_URL: http://localhost:5173
-          ADMIN_CRON_SECRET: ${{ secrets.ADMIN_CRON_SECRET }}
-          E2E_TEST_MODE: 'true'
-        run: |
-          {
-            printf 'DATABASE_URL=%s\n' "$DATABASE_URL"
-            printf 'GOOGLE_CLIENT_ID=%s\n' "$GOOGLE_CLIENT_ID"
-            printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET"
-            printf 'BETTER_AUTH_SECRET=%s\n' "$BETTER_AUTH_SECRET"
-            printf 'BETTER_AUTH_URL=%s\n' "$BETTER_AUTH_URL"
-            printf 'FRONTEND_URL=%s\n' "$FRONTEND_URL"
-            printf 'ADMIN_CRON_SECRET=%s\n' "$ADMIN_CRON_SECRET"
-            printf 'TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA\n'
-            printf 'E2E_TEST_MODE=%s\n' "$E2E_TEST_MODE"
-          } > .dev.vars
-
-      - name: Chromium E2E
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: http://localhost:5173
-          FRONTEND_URL: http://localhost:5173
-          E2E_TEST_MODE: 'true'
-        run: npm run test:e2e -- --project=chromium
+      - name: Download verified build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.build_artifact_name }}
+          path: dist
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        env:
-          LANG: C.UTF-8
-          LC_ALL: C.UTF-8
+        id: deploy
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=pomdo --branch=${{ github.ref_name }} --commit-hash=${{ github.sha }}
+          command: pages deploy dist --project-name=pomdo --branch=main --commit-hash=${{ github.sha }}
+
+      - name: Write deployment summary
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+          ALIAS_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url }}
+        run: |
+          {
+            echo '## Production deploy'
+            echo
+            echo "- commit: `${GITHUB_SHA}`"
+            echo "- deployment URL: ${DEPLOYMENT_URL}"
+            echo "- alias URL: ${ALIAS_URL:-https://pomdo.pages.dev}"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,26 +1,26 @@
 // @vitest-environment node
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { PGlite } from '@electric-sql/pglite'
 import { eq } from 'drizzle-orm'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { createTestDb, type TestDb } from '../../src/server/db/client'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import type { TestDb } from '../../src/server/db/client'
 import { focusSessions, tasks, users } from '../../src/server/db/schema'
 import { listDailyFocusSummaries } from '../../src/server/repositories/focus-session-repository'
 import { recordAnalyticsEvent } from '../../src/server/repositories/analytics-event-repository'
+import { createPGliteTestDatabase, type PGliteTestDatabase } from '../helpers/pglite-test-database'
 
 describe('v1 schema', () => {
-  let client: PGlite
+  let testDatabase: PGliteTestDatabase
   let db: TestDb
 
-  beforeEach(async () => {
-    client = new PGlite()
-    await client.exec(readFileSync(resolve(process.cwd(), 'drizzle/0000_v1_initial.sql'), 'utf8'))
-    await client.exec(readFileSync(resolve(process.cwd(), 'drizzle/0001_v1_constraints.sql'), 'utf8'))
-    db = createTestDb(client)
+  beforeAll(async () => {
+    testDatabase = await createPGliteTestDatabase()
+    db = testDatabase.db
   })
 
-  afterEach(async () => { await client.close() })
+  beforeEach(async () => {
+    await testDatabase.truncateTables()
+  })
+
+  afterAll(async () => { await testDatabase.close() })
 
   it('Task削除でFocus Sessionのtask_idだけをNULLにする', async () => {
     const userId = crypto.randomUUID()

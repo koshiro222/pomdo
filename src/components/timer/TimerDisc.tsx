@@ -8,7 +8,7 @@ export function TimerDisc({ remainingSecs, plannedSecs, mode }: { remainingSecs:
   return (
     <div className={`disc ${mode !== 'focus' ? 'disc-break' : ''}`} role="timer" aria-label={label} aria-live="polite">
       <svg viewBox="0 0 264 264" aria-hidden="true">
-        <circle cx="132" cy="132" r="120" fill="var(--color-surface-raised)" stroke="var(--color-hairline)" strokeWidth="1.5" />
+        <circle cx="132" cy="132" r="120" fill="var(--color-base-300)" stroke="color-mix(in srgb, var(--color-base-content) 12%, transparent)" strokeWidth="1.5" />
         <path d={buildFocusWedgePath(fraction)} fill="currentColor" opacity="0.92" />
       </svg>
       <div className="mmss tabular">{minutes}:{seconds}</div>

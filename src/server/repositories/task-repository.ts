@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, isNotNull, isNull, lt, ne, sql } from 'drizzle-orm'
-import type { Database } from '../db/client'
+import type { Database, TestDb } from '../db/client'
 import { tasks, users } from '../db/schema'
 
 type TaskRow = typeof tasks.$inferSelect
@@ -83,6 +83,68 @@ export async function deleteTask(db: Database, userId: string, taskId: string) {
     return deletedRows
   })
   return rows[0] ?? null
+}
+
+type TaskReplacementPlan = {
+  replacementTasks: Array<typeof tasks.$inferInsert>
+  deckOrderUpdates: readonly { id: string; deckOrder: string }[]
+  currentTaskReplacementId: string | null
+}
+
+function buildTaskReplacementQueries(
+  db: Database,
+  userId: string,
+  sourceTaskId: string,
+  plan: TaskReplacementPlan,
+) {
+  const deleteSourceQuery = db.delete(tasks)
+    .where(and(eq(tasks.id, sourceTaskId), eq(tasks.userId, userId)))
+  const insertReplacementQuery = db.insert(tasks).values(plan.replacementTasks)
+  const updateDeckOrderQueries = plan.deckOrderUpdates.map((update) => db.update(tasks)
+    .set({ deckOrder: update.deckOrder, updatedAt: new Date() })
+    .where(and(eq(tasks.id, update.id), eq(tasks.userId, userId))))
+  const updateCurrentTaskQuery = plan.currentTaskReplacementId
+    ? db.update(users)
+      .set({ currentTaskId: plan.currentTaskReplacementId, updatedAt: new Date() })
+      .where(and(eq(users.id, userId), eq(users.currentTaskId, sourceTaskId)))
+    : null
+
+  return { deleteSourceQuery, insertReplacementQuery, updateDeckOrderQueries, updateCurrentTaskQuery }
+}
+
+async function executeTaskReplacementQueries(
+  queries: ReturnType<typeof buildTaskReplacementQueries>,
+): Promise<void> {
+  await queries.insertReplacementQuery
+  if (queries.updateCurrentTaskQuery) await queries.updateCurrentTaskQuery
+  await queries.deleteSourceQuery
+  for (const query of queries.updateDeckOrderQueries) await query
+}
+
+export async function replaceTaskWithDecomposedTasks(
+  db: Database,
+  userId: string,
+  sourceTaskId: string,
+  plan: TaskReplacementPlan,
+): Promise<void> {
+  const batch = getBatch(db)
+  if (batch) {
+    const queries = buildTaskReplacementQueries(db, userId, sourceTaskId, plan)
+    const allQueries = [
+      queries.insertReplacementQuery,
+      ...(queries.updateCurrentTaskQuery ? [queries.updateCurrentTaskQuery] : []),
+      queries.deleteSourceQuery,
+      ...queries.updateDeckOrderQueries,
+    ]
+    await batch(allQueries)
+    return
+  }
+
+  const transaction = (db as Partial<TestDb>).transaction
+  if (typeof transaction !== 'function') throw new Error('Task置換に対応するトランザクション機能がありません')
+  await transaction.call(db, async (transactionDb) => {
+    await executeTaskReplacementQueries(buildTaskReplacementQueries(transactionDb as unknown as Database, userId, sourceTaskId, plan))
+  })
 }
 
 export async function completeTask(db: Database, userId: string, taskId: string) {

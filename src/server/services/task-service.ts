@@ -287,4 +287,16 @@ export function buildDeckOrder<T extends TaskRecord>(
   return generateKeyBetween(previousKeyOrTasks, nextKey ?? null)
 }
 
+/** 隣接キーの間に、指定した本数ぶんの連続した deck_order を作る。 */
+export function buildDeckOrdersBetween(
+  previousKey: string | null,
+  nextKey: string | null,
+  count: number,
+): string[] {
+  if (!Number.isInteger(count) || count < 0) {
+    throw new RangeError('deck_order の本数は 0 以上の整数である必要があります')
+  }
+  return generateNKeysBetween(previousKey, nextKey, count)
+}
+
 export { formatDateParts as formatTaskCalendarDate }

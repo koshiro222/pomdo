@@ -2,12 +2,23 @@ import { expect, test } from '@playwright/test'
 import { setServerNowFromBrowserClock } from './helpers/auth'
 
 test('LPから匿名で始めて、TaskとFocusの一連の流れを操作できる', async ({ page }) => {
+  test.setTimeout(60_000)
   const fixedNow = new Date('2026-09-04T09:00:00+09:00')
   await page.clock.install({ time: fixedNow })
   await page.addInitScript((value) => localStorage.setItem('pomdo-e2e-now', value), fixedNow.toISOString())
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: /集中は、/ })).toBeVisible()
-  await page.getByRole('link', { name: '今すぐ使ってみる' }).click()
+  await expect(page.getByRole('heading', { name: 'ひとつずつ、前に進める。' })).toBeVisible()
+  await expect(page.getByRole('link', { name: '使ってみる' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '数字を追わない' })).toBeVisible()
+  const firstPillarHeading = page.locator('.pillar-heading').first()
+  const firstPillarIcon = await firstPillarHeading.locator('svg').boundingBox()
+  const firstPillarTitle = await firstPillarHeading.getByRole('heading').boundingBox()
+  expect(firstPillarIcon).not.toBeNull()
+  expect(firstPillarTitle).not.toBeNull()
+  expect(firstPillarIcon!.x + firstPillarIcon!.width).toBeLessThanOrEqual(firstPillarTitle!.x)
+  expect(firstPillarIcon!.y).toBeLessThan(firstPillarTitle!.y + firstPillarTitle!.height)
+  expect(firstPillarIcon!.y + firstPillarIcon!.height).toBeGreaterThan(firstPillarTitle!.y)
+  await page.getByRole('link', { name: '使ってみる' }).click()
   await expect(page).toHaveURL(/\/app$/)
   await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible()
 

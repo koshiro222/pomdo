@@ -26,6 +26,16 @@ _Avoid_: Current Task, Active Task, Selected
 Today のうち Now スロットに入っていない Task の待ち行列。「次はこれ」の控え。
 _Avoid_: Queue, Up Next, Pending
 
+### AI分解
+
+**分解**:
+大きすぎる、または曖昧な Task を、ユーザーの明示的な操作によって AI が複数の実行可能な Task に分割すること。生成される Task は元の Task と親子関係を持たず、独立した Task として並ぶ。分解を確定すると元の Task は削除される。
+_Avoid_: Breakdown（Break と紛らわしいため避ける）, Split, Subtask（階層構造を連想させるため避ける）
+
+**分解案**:
+分解の実行によって AI が生成した、まだ確定していない Task の候補。ユーザーが確定前に編集・削除・並び替えできる一時的な状態で、確定すると通常の Task になる。
+_Avoid_: Proposal, Suggestion, Draft Task
+
 ### 集中と時間
 
 **Focus Session**:
@@ -57,3 +67,21 @@ _Avoid_: Trash, Deleted
 **Focused Days**:
 Focus Session を1回以上完了した日の累積カウント。減らない。途切れて0に戻る Streak の代わり。
 _Avoid_: Streak, Chain
+
+### 環境とリリース
+
+**Preview**:
+`develop` の変更を確認するための共有環境。固定URLは `https://develop.pomdo.pages.dev` で、Neon staging branchと `E2E_TEST_MODE=false` を使う。本番ユーザー・本番データとは分離されている。
+_Avoid_: Production, Personal preview
+
+**Staging DB**:
+Preview が使う Neon のデータベースbranch。Previewで作成したTaskやFocus Sessionは本番へ持ち込まれない。
+_Avoid_: Production DB, E2E DB
+
+**E2E environment**:
+ GitHub ActionsとローカルE2Eが自動操作に使う、Previewとは別のNeon E2E branchを持つ検証環境。`E2E_TEST_MODE=true` で動作し、テストが作成するユーザーやTaskはPreviewに表示されない。例えばGitHub Actionsの `E2E_DATABASE_URL` はこのbranchだけを指す。
+_Avoid_: Staging, Preview
+
+**Production**:
+`main` の変更を公開する環境。本番ユーザーの認証・Task・Focus Sessionを扱い、PreviewやE2E environmentから分離されている。
+_Avoid_: Live preview, Staging

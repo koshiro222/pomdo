@@ -1,78 +1,116 @@
-name: E2E Tests
+name: E2E quality gate
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
 
-jobs:
-  e2e-tests:
-    timeout-minutes: 30
-    runs-on: ubuntu-latest
+permissions:
+  contents: read
+  actions: read
 
+jobs:
+  guard:
+    name: Validate workflow ref
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject untrusted manual ref
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            exit 0
+          fi
+          if [ "$REF" != "refs/heads/main" ] && [ "$REF" != "refs/heads/develop" ]; then
+            echo 'workflow_dispatchはmainまたはdevelopからだけ実行できます。'
+            exit 1
+          fi
+
+  quality-e2e-pr:
+    name: Quality gate / Checks (e2e-pr)
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: pomdo-e2e-${{ github.repository }}
+      cancel-in-progress: false
+    environment: e2e-pr
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: npm
+          ref: ${{ github.sha }}
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Coverage
-        run: npm run test:coverage
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Prepare E2E environment
+      - name: Run quality checks
+        uses: ./.github/actions/run-quality-checks
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: http://localhost:5173
-          FRONTEND_URL: http://localhost:5173
-          E2E_TEST_MODE: 'true'
-        run: |
-          {
-            printf 'DATABASE_URL=%s\n' "$DATABASE_URL"
-            printf 'GOOGLE_CLIENT_ID=%s\n' "$GOOGLE_CLIENT_ID"
-            printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET"
-            printf 'BETTER_AUTH_SECRET=%s\n' "$BETTER_AUTH_SECRET"
-            printf 'BETTER_AUTH_URL=%s\n' "$BETTER_AUTH_URL"
-            printf 'FRONTEND_URL=%s\n' "$FRONTEND_URL"
-            printf 'TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA\n'
-            printf 'E2E_TEST_MODE=%s\n' "$E2E_TEST_MODE"
-          } > .dev.vars
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
 
-      - name: Run Chromium E2E
+  build-e2e-pr:
+    name: Quality gate / Build (e2e-pr)
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: quality-e2e-pr
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: e2e-pr
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Build distribution
+        uses: ./.github/actions/build-dist
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+  quality-e2e:
+    name: Quality gate / Checks (e2e)
+    if: ${{ github.event_name != 'pull_request' }}
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: pomdo-e2e-${{ github.repository }}
+      cancel-in-progress: false
+    environment: e2e
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Run quality checks
+        uses: ./.github/actions/run-quality-checks
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: http://localhost:5173
-          FRONTEND_URL: http://localhost:5173
-          E2E_TEST_MODE: 'true'
-        run: npm run test:e2e -- --project=chromium
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
 
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
+  build-e2e:
+    name: Quality gate / Build (e2e)
+    if: ${{ github.event_name != 'pull_request' }}
+    needs: quality-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: e2e
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
+          ref: ${{ github.sha }}
 
-      - name: Upload Playwright results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-results
-          path: test-results/
-          retention-days: 7
+      - name: Build distribution
+        uses: ./.github/actions/build-dist
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

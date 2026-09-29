@@ -1,0 +1,364 @@
+name: Shared Preview deploy
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+concurrency:
+  group: pomdo-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  deployments: write
+
+jobs:
+  guard-develop:
+    name: Validate develop ref
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject non-develop ref
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$REF" != "refs/heads/develop" ]; then
+            echo '共有Previewはdevelopブランチからだけ更新できます。'
+            exit 1
+          fi
+
+  quality:
+    name: Quality gate / Checks
+    needs: guard-develop
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: pomdo-e2e-${{ github.repository }}
+      cancel-in-progress: false
+    environment: e2e
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Run quality checks
+        uses: ./.github/actions/run-quality-checks
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+
+  build:
+    name: Quality gate / Build
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: preview
+    outputs:
+      build_artifact_name: ${{ steps.build.outputs.artifact_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Build distribution
+        id: build
+        uses: ./.github/actions/build-dist
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+  migrate-staging:
+    name: Migrate staging database
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: preview
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run staging migration
+        env:
+          DATABASE_URL: ${{ secrets.PREVIEW_DATABASE_URL }}
+        run: |
+          set -eu
+          test -n "$DATABASE_URL"
+          npm run db:migrate
+
+  deploy-preview:
+    name: Deploy shared Preview
+    needs: [build, migrate-staging]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: preview
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download verified build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.build_artifact_name }}
+          path: dist
+
+      - name: Download previous successful Preview bundle
+        id: previous-bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          set +e
+          previous_run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/preview.yml/runs?branch=develop&status=success&per_page=20" --jq ".workflow_runs[] | select(.id != ${CURRENT_RUN_ID}) | .id" | head -n 1)"
+          if [ -z "$previous_run_id" ]; then
+            echo '前回成功Previewのbundleはありません。'
+            printf 'available=false\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if gh run download "$previous_run_id" --name preview-last-good --dir rollback-bundle; then
+            metadata_path="$(find rollback-bundle -maxdepth 2 -name preview-metadata.json -type f -print -quit)"
+            previous_commit_sha="$(jq -r '.commitSha // empty' "$metadata_path" 2>/dev/null)"
+            if [ -n "$previous_commit_sha" ] && [ -d rollback-bundle/dist ] && [ -d rollback-bundle/functions ]; then
+              printf 'available=true\n' >> "$GITHUB_OUTPUT"
+              printf 'commit_sha=%s\n' "$previous_commit_sha" >> "$GITHUB_OUTPUT"
+            else
+              echo '前回成功Previewのbundleに必要なmetadataまたはファイルがありません。'
+              printf 'available=false\n' >> "$GITHUB_OUTPUT"
+            fi
+            printf 'run_id=%s\n' "$previous_run_id" >> "$GITHUB_OUTPUT"
+          else
+            echo '前回成功Previewのbundleを取得できませんでした。'
+            printf 'available=false\n' >> "$GITHUB_OUTPUT"
+            printf 'run_id=%s\n' "$previous_run_id" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy candidate Preview
+        id: deploy-candidate
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=pomdo --branch=develop-candidate --commit-hash=${{ github.sha }}
+
+      - name: Capture candidate deployment ID
+        id: candidate-metadata
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CANDIDATE_URL: ${{ steps.deploy-candidate.outputs.deployment-url }}
+        run: |
+          set -euo pipefail
+          test -n "$CANDIDATE_URL"
+          candidate_id="$(npx --no-install wrangler pages deployment list --project-name=pomdo --environment=preview --json | jq -r --arg url "$CANDIDATE_URL" '[.[] | select(.Branch == "develop-candidate" and .Deployment == $url)] | .[0].Id // empty')"
+          test -n "$candidate_id"
+          printf 'deployment_id=%s\n' "$candidate_id" >> "$GITHUB_OUTPUT"
+
+      - name: Verify candidate health and endpoint isolation
+        id: candidate-health
+        env:
+          CANDIDATE_URL: ${{ steps.deploy-candidate.outputs.deployment-url }}
+        run: |
+          set -euo pipefail
+          test -n "$CANDIDATE_URL"
+          candidate_health="$(curl --fail --silent --show-error --retry 10 --retry-delay 5 "${CANDIDATE_URL%/}/api/health")"
+          printf '%s' "$candidate_health" | jq -e '.status == "ok" and .db == "connected"' > /dev/null
+          auth_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --request POST "${CANDIDATE_URL%/}/api/test/auth")"
+          test "$auth_status" = 404
+
+      - name: Deploy stable Preview alias
+        id: deploy-stable
+        if: ${{ steps.candidate-health.outcome == 'success' }}
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=pomdo --branch=develop --commit-hash=${{ github.sha }}
+
+      - name: Capture stable deployment ID
+        id: stable-metadata
+        if: ${{ steps.deploy-stable.outcome == 'success' }}
+        continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          STABLE_URL: ${{ steps.deploy-stable.outputs.deployment-url }}
+        run: |
+          set -euo pipefail
+          test -n "$STABLE_URL"
+          stable_id="$(npx --no-install wrangler pages deployment list --project-name=pomdo --environment=preview --json | jq -r --arg url "$STABLE_URL" '[.[] | select(.Branch == "develop" and .Deployment == $url)] | .[0].Id // empty')"
+          test -n "$stable_id"
+          printf 'deployment_id=%s\n' "$stable_id" >> "$GITHUB_OUTPUT"
+
+      - name: Verify stable Preview health
+        id: stable-health
+        if: ${{ always() && steps.deploy-stable.outcome == 'success' }}
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          stable_health="$(curl --fail --silent --show-error --retry 10 --retry-delay 5 https://develop.pomdo.pages.dev/api/health)"
+          printf '%s' "$stable_health" | jq -e '.status == "ok" and .db == "connected"' > /dev/null
+
+      - name: Prepare previous successful bundle for recovery
+        id: prepare-rollback
+        if: ${{ always() && steps.deploy-stable.outcome == 'success' && steps.stable-health.outcome != 'success' }}
+        run: |
+          set -euo pipefail
+          test "${{ steps.previous-bundle.outputs.available }}" = true
+          test -d rollback-bundle/dist
+          test -d rollback-bundle/functions
+          metadata_path="$(find rollback-bundle -maxdepth 2 -name preview-metadata.json -type f -print -quit)"
+          test -n "$metadata_path"
+          commit_hash="$(jq -r '.commitSha // empty' "$metadata_path")"
+          test -n "$commit_hash"
+          printf 'commit_hash=%s\n' "$commit_hash" >> "$GITHUB_OUTPUT"
+          rm -rf dist functions
+          cp -R rollback-bundle/dist dist
+          cp -R rollback-bundle/functions functions
+
+      - name: Re-deploy previous successful Preview bundle
+        id: deploy-rollback
+        if: ${{ always() && steps.prepare-rollback.outcome == 'success' }}
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=pomdo --branch=develop --commit-hash=${{ steps.prepare-rollback.outputs.commit_hash }}
+
+      - name: Verify recovery health
+        id: rollback-health
+        if: ${{ always() && steps.deploy-rollback.outcome == 'success' }}
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          recovery_health="$(curl --fail --silent --show-error --retry 10 --retry-delay 5 https://develop.pomdo.pages.dev/api/health)"
+          printf '%s' "$recovery_health" | jq -e '.status == "ok" and .db == "connected"' > /dev/null
+
+      - name: Cleanup old candidate deployments
+        id: cleanup-candidates
+        if: always()
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set +e
+          deployments_json="$(npx --no-install wrangler pages deployment list --project-name=pomdo --environment=preview --json 2>/dev/null)"
+          if [ $? -ne 0 ]; then
+            echo 'candidate deployment一覧を取得できませんでした。次回実行で再試行します。'
+            printf 'status=unavailable\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          old_candidate_ids="$(printf '%s' "$deployments_json" | jq -r '[.[] | select(.Branch == "develop-candidate")] | .[1:][] | .Id')"
+          cleanup_status=success
+          for deployment_id in $old_candidate_ids; do
+            if ! npx --no-install wrangler pages deployment delete "$deployment_id" --project-name=pomdo --force; then
+              cleanup_status=partial
+              echo "candidate deployment ${deployment_id} を削除できませんでした。"
+            fi
+          done
+          printf 'status=%s\n' "$cleanup_status" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare Preview last-good bundle
+        id: prepare-last-good
+        if: ${{ steps.stable-health.outcome == 'success' }}
+        run: printf '{"commitSha":"%s"}\n' "$GITHUB_SHA" > preview-metadata.json
+
+      - name: Upload Preview last-good bundle
+        id: upload-last-good
+        if: ${{ steps.stable-health.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-last-good
+          path: |
+            dist/
+            functions/
+            preview-metadata.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Write Preview deployment summary
+        if: always()
+        env:
+          CANDIDATE_URL: ${{ steps.deploy-candidate.outputs.deployment-url }}
+          STABLE_URL: ${{ steps.deploy-stable.outputs.deployment-url }}
+          ALIAS_URL: ${{ steps.deploy-stable.outputs.pages-deployment-alias-url }}
+          PREVIOUS_RUN_ID: ${{ steps.previous-bundle.outputs.run_id }}
+          PREVIOUS_COMMIT_SHA: ${{ steps.previous-bundle.outputs.commit_sha }}
+          CANDIDATE_ID: ${{ steps.candidate-metadata.outputs.deployment_id }}
+          STABLE_ID: ${{ steps.stable-metadata.outputs.deployment_id }}
+          CANDIDATE_HEALTH: ${{ steps.candidate-health.outcome }}
+          STABLE_DEPLOY: ${{ steps.deploy-stable.outcome }}
+          STABLE_HEALTH: ${{ steps.stable-health.outcome }}
+          ROLLBACK_HEALTH: ${{ steps.rollback-health.outcome }}
+          CLEANUP_STATUS: ${{ steps.cleanup-candidates.outputs.status }}
+        run: |
+          {
+            echo '## Shared Preview deploy'
+            echo
+            echo "- commit: `${GITHUB_SHA}`"
+            echo "- candidate URL: ${CANDIDATE_URL:-未取得}"
+            echo "- candidate deployment ID: ${CANDIDATE_ID:-未取得}"
+            echo "- candidate health: ${CANDIDATE_HEALTH:-未実行}"
+            echo "- stable deployment URL: ${STABLE_URL:-未実行}"
+            echo "- stable deployment ID: ${STABLE_ID:-未取得}"
+            echo "- stable alias URL: ${ALIAS_URL:-https://develop.pomdo.pages.dev}"
+            echo "- stable health: ${STABLE_HEALTH:-未実行}"
+            echo "- recovery source run: ${PREVIOUS_RUN_ID:-なし}"
+            echo "- recovery source commit: ${PREVIOUS_COMMIT_SHA:-未取得}"
+            echo "- recovery health: ${ROLLBACK_HEALTH:-未実行}"
+            echo "- candidate cleanup: ${CLEANUP_STATUS:-未取得}"
+            echo '- build: quality gateで1回だけ実行したArtifactをcandidate/stableへ公開'
+            if [ "${STABLE_DEPLOY:-}" != success ] || [ "${STABLE_HEALTH:-}" != success ]; then
+              echo '- manual recovery: Cloudflare Pagesで上記stable deployment IDを確認し、直前成功commitのdist/functionsをdevelopへ再公開する。bundleがない、または再公開に失敗した場合はforward fixをdevelopへpushする。'
+              echo '- manual recovery example: `npx wrangler pages deploy dist --project-name=pomdo --branch=develop --commit-hash=<直前成功commit SHA>`'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Assert Preview deployment result
+        if: always()
+        env:
+          CANDIDATE_HEALTH: ${{ steps.candidate-health.outcome }}
+          STABLE_DEPLOY: ${{ steps.deploy-stable.outcome }}
+          STABLE_HEALTH: ${{ steps.stable-health.outcome }}
+          ROLLBACK_HEALTH: ${{ steps.rollback-health.outcome }}
+          LAST_GOOD_UPLOAD: ${{ steps.upload-last-good.outcome }}
+        run: |
+          if [ "$CANDIDATE_HEALTH" != success ]; then
+            exit 1
+          fi
+          if [ "$STABLE_DEPLOY" != success ]; then
+            exit 1
+          fi
+          if [ "$STABLE_HEALTH" = success ]; then
+            test "$LAST_GOOD_UPLOAD" = success
+            exit 0
+          fi
+          test "$ROLLBACK_HEALTH" = success

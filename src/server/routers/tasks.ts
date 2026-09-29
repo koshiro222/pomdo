@@ -16,9 +16,15 @@ import {
   updateDeckOrders,
   updateTask,
 } from '../repositories/task-repository'
+import { confirmTaskDecomposition, decompositionProposalSchema, generateTaskDecompositionProposal, TaskDecompositionError } from '../services/task-decomposition-service'
 
 const writeInput = z.object({ turnstileToken: z.string().optional() })
 const taskIdInput = z.object({ id: z.string().uuid(), turnstileToken: z.string().optional() })
+const decompositionConfirmInput = z.object({
+  id: z.string().uuid(),
+  items: decompositionProposalSchema.shape.items,
+  turnstileToken: z.string().optional(),
+})
 
 function getToday(timezone: string, now: Date): string {
   return formatTaskCalendarDate(now, timezone)
@@ -121,6 +127,41 @@ export const tasksRouter = router({
       const rebalanced = buildDeckOrder(ordered)
       await updateDeckOrders(ctx.db, ctx.user.id, rebalanced.map((task) => ({ id: task.id, deckOrder: task.deckOrder ?? '' })))
       return rebalanced.find((task) => task.id === target.id) ?? null
+    }
+  }),
+
+  decomposePreview: turnstileProcedure.input(taskIdInput).mutation(async ({ ctx, input }) => {
+    const task = await findTaskById(ctx.db, ctx.user.id, input.id)
+    if (!task) throw new TRPCError({ code: 'NOT_FOUND', message: 'タスクが見つかりません' })
+    try {
+      return await generateTaskDecompositionProposal({
+        ai: ctx.env.AI,
+        title: task.title,
+        note: task.note,
+        e2eTestMode: ctx.env.E2E_TEST_MODE === 'true',
+      })
+    } catch (error) {
+      if (error instanceof TaskDecompositionError) {
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '分解案を生成できませんでした。もう一度お試しください' })
+      }
+      throw error
+    }
+  }),
+
+  decomposeConfirm: turnstileProcedure.input(decompositionConfirmInput).mutation(async ({ ctx, input }) => {
+    try {
+      const plan = await confirmTaskDecomposition({
+        db: ctx.db,
+        userId: ctx.user.id,
+        taskId: input.id,
+        today: getToday(ctx.user.timezone, ctx.now),
+        items: input.items,
+      })
+      if (!plan) throw new TRPCError({ code: 'NOT_FOUND', message: 'タスクが見つかりません' })
+      return { items: plan.replacementTasks.map(({ title, note }) => ({ title, note })) }
+    } catch (error) {
+      if (error instanceof TRPCError) throw error
+      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'タスクの分解を確定できませんでした。元のタスクは変更されていません' })
     }
   }),
 })

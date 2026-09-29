@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: 0,
   workers: 1,
   reporter: [
     ['html'],
@@ -31,8 +31,8 @@ export default defineConfig({
     },
   ],
   webServer: process.env.BASE_URL ? undefined : {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
+    command: 'npm run dev:e2e',
+    url: 'http://localhost:8788/api/health',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
     env: {

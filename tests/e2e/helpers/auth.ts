@@ -17,3 +17,32 @@ export async function signInAsTestIdentity(page: Page, identity: string, seedExi
 export async function setServerNowFromBrowserClock(page: Page): Promise<void> {
   await page.evaluate(() => localStorage.setItem('pomdo-e2e-now', new Date().toISOString()))
 }
+
+export async function delayAuthenticationRequests(page: Page, delayMs = 800): Promise<void> {
+  await page.route('**/api/auth/**', async (route) => {
+    const url = route.request().url()
+    if (url.includes('get-session') || url.includes('sign-in/anonymous')) await page.waitForTimeout(delayMs)
+    try {
+      await route.continue()
+    } catch {
+      await route.abort().catch(() => undefined)
+    }
+  })
+}
+
+export async function failAppProcedure(page: Page, procedure: string): Promise<void> {
+  await page.route('**/api/**', async (route) => {
+    if (!route.request().url().includes('/api/trpc')) {
+      await route.continue()
+      return
+    }
+    const requestPath = new URL(route.request().url()).pathname.split('/').pop() ?? ''
+    const procedures = requestPath.split(',')
+    const matchesProcedure = procedures.includes(procedure)
+    if (matchesProcedure) {
+      await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: { message: 'E2E simulated failure' } }) })
+      return
+    }
+    await route.continue()
+  })
+}

@@ -71,7 +71,7 @@
 - `/app/settings` でサウンド、テーマ、アカウント、JSON エクスポート、アカウント削除、表示専用タイムゾーンを操作できる
 - 匿名アカウントと Google アカウントの結合は、Google 側にドメインデータがなければ匿名側の FK と設定を新ユーザーへ付け替え、既存データがあれば匿名側を破棄する
 - `docs/v1-mockup.html` のトークン、単一カラム、円盤、詳細シート、LP コピー、reduced-motion/transparency の契約に準拠する
-- CI は `install → typecheck → Vitest → build → Chromium E2E → deploy` の順で、途中失敗時にデプロイしない
+- CI は Reusable Workflowの品質ゲートで `install → lint → typecheck → Vitest → coverage → build → Chromium E2E` を実行し、同一commitのbuild Artifactだけをdeployする。途中失敗時にデプロイしない
 
 ### 2.2 非スコープ
 
@@ -339,7 +339,7 @@ Neon PostgreSQL（本番） / PGlite（結合テスト）
 - `src/server/services/analytics-service.ts`（新規）: 4 イベントの insert を各初回地点に埋め込む。UI は作らない
 - `src/server/test-auth.ts`（新規）: `E2E_TEST_MODE=true` の時だけ、Google UI を経由せず Better Auth 互換のテスト session を作る。テスト専用 endpoint は本番 bundle/route に登録しない。link の E2E は実際の `account-link-service` を通す
 - `functions/api/test/auth.ts`（新規、E2E 専用）: `/api/test/auth` を `E2E_TEST_MODE` 条件下だけ登録し、固定 test input を検証して HttpOnly session cookie を返す。production env で route が 404 になるテストも入れる
-- **E2E の env 供給**: `npm run dev` は vite + `wrangler pages dev` を起動する。wrangler は `.dev.vars` から env を読むため、CI では GitHub secret から `.dev.vars` を生成する step を入れる（`DATABASE_URL` = v1 Neon branch、`E2E_TEST_MODE=true`、`BETTER_AUTH_SECRET`、`BETTER_AUTH_URL=http://localhost:5173`、`TURNSTILE_SITE_KEY=1x00000000000000000000AA`、`TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA`、`SENTRY_DSN` は空）。`playwright.config.ts` の `webServer.command` は `npm run dev` のままでよいが、`webServer.env` か生成した `.dev.vars` で上記を渡す。`playwright.config.ts` の `firefox` / `webkit` project は残してもよいが CI は `--project=chromium` のみ実行する
+- **E2E の env 供給**: `npm run dev` は vite + `wrangler pages dev` を起動する。wranglerは `.dev.vars` からenvを読むため、CIでは `e2e` または `e2e-pr` Environmentの値から `.dev.vars` を生成するstepを入れる（`E2E_DATABASE_URL`を `DATABASE_URL` として使い、`E2E_TEST_MODE=true`、`BETTER_AUTH_SECRET`、`BETTER_AUTH_URL=http://localhost:5173`、`TURNSTILE_SITE_KEY`、`TURNSTILE_SECRET_KEY`、`SENTRY_DSN`は空）。`playwright.config.ts` の `webServer.command` は `npm run dev` のままでよいが、`webServer.env` か生成した `.dev.vars` で上記を渡す。`playwright.config.ts` の `firefox` / `webkit` project は残してもよいがCIは `--project=chromium` のみ実行する
 - **vitest の環境分離**: `vitest.config.ts` は `environment: 'jsdom'` を全体既定にしている。`tests/integration/**` の PGlite テストは Node 環境が必要なので、各ファイル冒頭に `// @vitest-environment node` を付けるか、`test.projects`（vitest v4）で `tests/integration/**` を `environment: 'node'` の別 project にする。`vitest.config.ts` の `exclude` は現状 `tests/e2e/**` のみ。`tests/integration/**` は除外しない
 - `src/lib/sentry.ts`（新規）: `@sentry/react` の `Sentry.init({ dsn, sendDefaultPii: false, tracesSampleRate: 0.1 })` と `ErrorBoundary` を設定する。DSN 未設定の local/test は無効化する
 - `functions/entry.ts`（新規）または Functions entry: `@sentry/cloudflare` の `withSentry` で Pages handler を包む。Edge で Node API を使わない
@@ -354,7 +354,7 @@ Neon PostgreSQL（本番） / PGlite（結合テスト）
 - `ai-rules/ARCHITECTURE.md`、`ai-rules/TESTING.md`、`ai-rules/TROUBLESHOOTING.md`、`ai-rules/ISSUE_GUIDELINES.md`、`ai-rules/COMMIT_AND_PR_GUIDELINES.md`、`ai-rules/WORK_FLOW.md`: v1 の単一の正に書き換える。テスト helper のパスは v1 で新設する `tests/e2e/helpers/auth.ts` に統一し（旧 `tests/helpers/auth.ts` は削除）、ドキュメント・計画・実コードで表記を揃える
 - `README.md`: v1 の起動、env、DB、test、deploy を簡潔に書き直す
 - `.planning/DESIGN.md`: 削除する
-- `.planning/` の旧成果物: 実在ファイルを確認して `.planning/archive/v0/` に退避する。新しい GSD phase/roadmap は作らない。退避対象と除外対象は Git diff で明示する
+- `.planning/` の旧成果物: 公開前の履歴整理で削除する。新しい GSD phase/roadmap は作らない
 - `public/audio/README.md`、`public/bg/README.md`、BGM/R2 関連の README/コードを削除する。`public/favicon.svg` は残す。`src/assets/react.svg` は削除する
 - 完了条件: `rg` で `MigrateDialog`、`admin()`、`emailAndPassword`、`recharts`、`BGM_BUCKET`、`pomodoro_sessions`、`todos`、`pause`（非スコープ説明を除く）などの旧実装参照がない。旧 ADR と `docs/v1-mockup.html` は残す
 
@@ -455,7 +455,7 @@ Neon PostgreSQL（本番） / PGlite（結合テスト）
 | `tests/global-setup.ts`、`tests/helpers/auth.ts` | email/password seed と旧 sign-in を廃止。v1 は `tests/e2e/helpers/auth.ts`（新規）が `/api/test/auth` を使う。`globalSetup` は不要なら `playwright.config.ts` から外す |
 | `functions/lib/auth.ts`、`functions/lib/db.ts`、`functions/lib/schema.ts` | `src/server/auth.ts`、`src/server/db/client.ts`、`src/server/db/schema.ts` へ移動後に削除 |
 | `.github/workflows/e2e.yml` | `deploy.yml` に E2E を統合 |
-| `.planning/DESIGN.md`、旧 `.planning/` 成果物 | `archive/v0` へ退避、GSD を継続利用しない |
+| `.planning/DESIGN.md`、旧 `.planning/` 成果物 | 公開前の履歴整理で削除、GSD を継続利用しない |
 
 **catch-all ルール**: 上記および §7.1 / §7.2 に「残す」「新規」と明記されていない `src/**` / `functions/**` / `tests/**` / `drizzle/**` の既存ファイルは、v0 機能に属するものとして削除する。判断に迷うファイル（`src/lib/utils.ts`、`src/global.d.ts`、`src/test/setup.ts`、`src/test/accessibility-test-utils.tsx`、`src/main.tsx` 等）は §7.1 の「変更」側に該当するか確認してから残す。Issue #148 の「推奨ビルド順序」1 は `src` / `functions` / `drizzle` / `tests` の全消しを起点に置いているが、本計画は Better Auth テーブル・`favicon.svg`・ADR・`docs/v1-mockup.html`・tsconfig/vite/wrangler の土台を保持したいため、全消しではなく上記の明示リスト + catch-all で同じ結果（v0 参照ゼロ）を得る。
 
@@ -632,19 +632,19 @@ Playwright は page clock を page load 前に install する。例として 25 
 - 削除: `JWT_SECRET`、`GOOGLE_REDIRECT_URI`、`APP_URL`
 - `TURNSTILE_SECRET_KEY`、`BETTER_AUTH_SECRET`、`ADMIN_CRON_SECRET` はフロントへ公開しない。`TURNSTILE_SITE_KEY` だけを client に渡す
 - ローカルは `.dev.vars`（gitignore 済み、`wrangler pages dev` が読む）に置く。上記キー一覧を `.dev.vars.example`（新規、tracked）に実値なしで用意し、README と CI の `.dev.vars` 生成 step から参照する
-- CI（E2E）は GitHub secret から `.dev.vars` を生成し、`DATABASE_URL` は v1 Neon branch、`E2E_TEST_MODE=true`、`BETTER_AUTH_URL=http://localhost:5173`、Turnstile は Cloudflare テストキー、`SENTRY_DSN` は空にする
+- CI（E2E）は `e2e` または `e2e-pr` Environmentの値から `.dev.vars` を生成し、`E2E_DATABASE_URL` を `DATABASE_URL` として使う。`E2E_TEST_MODE=true`、`BETTER_AUTH_URL=http://localhost:5173`、TurnstileはCloudflareテストキー、`SENTRY_DSN`は空にする
 
 ### 12.2 Staging/production
 
 - DB は旧 DB を参照用に残したまま、新 Neon branch を作り、新 `0000` migration を適用する
-- Staging は Cloudflare の `rebuild/v1` branch alias、v1 Neon branch、テスト用 Google OAuth client を使う。Google の本番 callback/trusted origin は `pomdo.pages.dev` を正にする
-- preview URL は実 Google OAuth の trusted origin に追加しない。staging 固定 URL と `/api/test/auth` で検証する
+- Preview は Cloudflare Pages の `develop` branch alias（固定URL: `https://develop.pomdo.pages.dev`）、Neon staging branch、Preview専用のAuth/Turnstile設定を使う。Googleの本番callback/trusted originは `pomdo.pages.dev` のままにする
+- Preview URLは実Google OAuthのtrusted originへ追加しない。`https://develop.pomdo.pages.dev/api/health` と本番モードで404になる `/api/test/auth` を使って検証する
 - 90 日 purge は GitHub Actions の日次 cron から `POST /api/admin/purge-anonymous` を `ADMIN_CRON_SECRET` 付きで呼ぶ
 
 ### 12.3 手戻り時の扱い
 
 - 新 DB は旧 DB と別なので、初期 migration 前は新 branch を破棄して再作成できる。既存本番 DB の migration を書き換えたり destructive SQL を本番旧 DB に向けたりしない
-- v1 のスキーマ/コードが staging で失敗した場合は Pages の deployment を切り戻し、`DATABASE_URL` を旧 deployment に戻す。旧 DB との互換 API は実装しない
+- v1 のスキーマ/コードがPreview stagingで失敗した場合は、前回成功時の `dist/` と `functions/` bundleを `develop` aliasへ再公開する。Pages PreviewにはProduction向けの公式rollback APIがないため、bundle再公開に失敗した場合は手動復旧またはforward fixへ送る。旧DBとの互換APIは実装しない
 - 実装後に必要となった互換・移行は、この Issue の完了後に別 Issue として扱う
 
 ## 13. 実装担当者の提出前セルフチェック

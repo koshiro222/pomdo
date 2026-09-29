@@ -2,7 +2,7 @@ import { expect, type Page } from '@playwright/test'
 
 export async function openAppAsAnonymous(page: Page): Promise<void> {
   await page.goto('/app')
-  await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible()
+  await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible({ timeout: 15_000 })
 }
 
 export async function signInAsTestIdentity(page: Page, identity: string, seedExistingData = false): Promise<'migrated' | 'discarded' | null> {

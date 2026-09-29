@@ -1,15 +1,6 @@
 name: Build distribution
 description: 検証済みcommitのProduction buildを作成してArtifactへ保存する
 
-inputs:
-  turnstile-site-key:
-    description: buildへ埋め込むTurnstile Site Key
-    required: true
-  sentry-dsn:
-    description: buildへ埋め込むSentry DSN
-    required: false
-    default: ''
-
 outputs:
   artifact_name:
     description: 作成したbuild Artifact名
@@ -30,9 +21,6 @@ runs:
 
     - name: Build
       shell: bash
-      env:
-        VITE_TURNSTILE_SITE_KEY: ${{ inputs.turnstile-site-key }}
-        VITE_SENTRY_DSN: ${{ inputs.sentry-dsn }}
       run: npm run build
 
     - name: Set build metadata

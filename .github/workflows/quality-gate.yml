@@ -35,12 +35,12 @@ jobs:
 
       - name: Run quality checks
         uses: ./.github/actions/run-quality-checks
-        with:
-          database-url: ${{ secrets.E2E_DATABASE_URL }}
-          google-client-id: ${{ secrets.GOOGLE_CLIENT_ID }}
-          google-client-secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          better-auth-secret: ${{ secrets.BETTER_AUTH_SECRET }}
-          turnstile-secret-key: ${{ secrets.TURNSTILE_SECRET_KEY }}
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
 
   checks-e2e-pr:
     name: Checks
@@ -59,12 +59,12 @@ jobs:
 
       - name: Run quality checks
         uses: ./.github/actions/run-quality-checks
-        with:
-          database-url: ${{ secrets.E2E_DATABASE_URL }}
-          google-client-id: ${{ secrets.GOOGLE_CLIENT_ID }}
-          google-client-secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          better-auth-secret: ${{ secrets.BETTER_AUTH_SECRET }}
-          turnstile-secret-key: ${{ secrets.TURNSTILE_SECRET_KEY }}
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
 
   build-e2e:
     name: Build (e2e)
@@ -84,9 +84,9 @@ jobs:
       - name: Build distribution
         id: build
         uses: ./.github/actions/build-dist
-        with:
-          turnstile-site-key: ${{ secrets.TURNSTILE_SITE_KEY }}
-          sentry-dsn: ${{ secrets.SENTRY_DSN }}
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
   build-e2e-pr:
     name: Build (e2e-pr)
@@ -106,9 +106,9 @@ jobs:
       - name: Build distribution
         id: build
         uses: ./.github/actions/build-dist
-        with:
-          turnstile-site-key: ${{ secrets.TURNSTILE_SITE_KEY }}
-          sentry-dsn: ${{ secrets.SENTRY_DSN }}
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
   build-preview:
     name: Build (preview)
@@ -128,9 +128,9 @@ jobs:
       - name: Build distribution
         id: build
         uses: ./.github/actions/build-dist
-        with:
-          turnstile-site-key: ${{ secrets.TURNSTILE_SITE_KEY }}
-          sentry-dsn: ${{ secrets.SENTRY_DSN }}
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
   build-production:
     name: Build (production)
@@ -150,6 +150,6 @@ jobs:
       - name: Build distribution
         id: build
         uses: ./.github/actions/build-dist
-        with:
-          turnstile-site-key: ${{ secrets.TURNSTILE_SITE_KEY }}
-          sentry-dsn: ${{ secrets.SENTRY_DSN }}
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

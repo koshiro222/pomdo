@@ -44,13 +44,13 @@ describe('useThemePreference', () => {
     act(() => result.current.selectTheme('light'))
 
     expect(result.current.theme).toBe('light')
-    expect(document.documentElement).toHaveAttribute('data-theme', 'corporate')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'cmyk')
     expect(localStorage.getItem('pomdo-theme')).toBe('light')
 
     act(() => result.current.toggleTheme())
 
     expect(result.current.theme).toBe('dark')
-    expect(document.documentElement).toHaveAttribute('data-theme', 'night')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'sunset')
     expect(localStorage.getItem('pomdo-theme')).toBe('dark')
   })
 
@@ -84,7 +84,7 @@ describe('useThemePreference', () => {
 
     act(() => result.current.toggleTheme())
     expect(result.current.theme).toBe('light')
-    expect(document.documentElement).toHaveAttribute('data-theme', 'corporate')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'cmyk')
 
     unmount()
     expect(mediaQuery.removeEventListener).toHaveBeenCalledOnce()

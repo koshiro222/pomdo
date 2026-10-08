@@ -31,7 +31,7 @@
     </noscript>
     <script>
       const theme = localStorage.getItem('pomdo-theme');
-      const daisyTheme = theme === 'light' ? 'corporate' : theme === 'dark' ? 'business' : null;
+      const daisyTheme = theme === 'light' ? 'cmyk' : theme === 'dark' ? 'sunset' : null;
       if (daisyTheme) document.documentElement.dataset.theme = daisyTheme;
     </script>
     <script type="module" src="/src/main.tsx"></script>

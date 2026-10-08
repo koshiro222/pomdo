@@ -24,7 +24,7 @@ test('LP のテーマトグルは即時反映し、リロード後も明示テ�
   await toggle.click()
   await expect(page.getByRole('checkbox', { name: 'ライトテーマに切り替え' })).toBeChecked()
   await expect.poll(() => page.evaluate(() => localStorage.getItem('pomdo-theme'))).toBe('dark')
-  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('night')
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('sunset')
 
   await page.reload()
   await expect(page.getByRole('checkbox', { name: 'ライトテーマに切り替え' })).toBeChecked()
@@ -50,9 +50,9 @@ test('App・Review・Settings の共通ヘッダーでテーマを操作でき�
   await expect(themeOptions.getByRole('button', { name: 'light' })).toBeVisible()
   await expect(themeOptions.getByRole('button', { name: 'dark' })).toBeVisible()
   await themeOptions.getByRole('button', { name: 'light' }).click()
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'corporate')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'cmyk')
   await themeOptions.getByRole('button', { name: 'dark' }).click()
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'night')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'sunset')
   await themeOptions.getByRole('button', { name: 'system' }).click()
   await expect(page.locator('html')).not.toHaveAttribute('data-theme')
   await page.emulateMedia({ colorScheme: 'dark' })
@@ -116,7 +116,7 @@ test('Appの設定ギアはテーマトグルと同じ色で、Tabフォーカ�
   await openAppAsAnonymous(page)
   const settingsLink = page.getByRole('link', { name: '設定' })
 
-  for (const theme of ['corporate', 'night']) {
+  for (const theme of ['cmyk', 'sunset']) {
     await page.locator('html').evaluate((element, selectedTheme) => element.setAttribute('data-theme', selectedTheme), theme)
     await expect.poll(() => page.evaluate(() => {
       const settings = document.querySelector('.settings-icon-link svg')!

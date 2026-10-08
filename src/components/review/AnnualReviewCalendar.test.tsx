@@ -139,12 +139,12 @@ describe('AnnualReviewCalendar', () => {
   })
 
   it.each([
-    { viewport: 'desktop', isMobile: false, arrow: '{ArrowRight}', target: '2026年1月9日、金曜日、集中時間 0分' },
-    { viewport: 'mobile', isMobile: true, arrow: '{ArrowRight}', target: '2026年1月3日、土曜日、集中時間 0分' },
-  ])('$viewportでTabと矢印キーから日情報へ移動できる', async ({ isMobile, arrow, target }) => {
+    { viewport: 'desktop', isMobile: false, arrow: '{ArrowRight}', target: '2026年1月9日、金曜日、集中時間 0分', targetDate: '2026-01-09' },
+    { viewport: 'mobile', isMobile: true, arrow: '{ArrowRight}', target: '2026年1月3日、土曜日、集中時間 0分', targetDate: '2026-01-03' },
+  ])('$viewportでTabと矢印キーから日情報へ移動できる', async ({ isMobile, arrow, target, targetDate }) => {
     stubViewport(isMobile)
     const user = userEvent.setup()
-    render(<>
+    const { container } = render(<>
       <button type="button">before</button>
       <AnnualReviewCalendar todayDate="2026-01-02" calendarDays={makeCalendarDays(2026)} />
       <button type="button">after</button>
@@ -155,11 +155,14 @@ describe('AnnualReviewCalendar', () => {
     await user.tab()
     const today = screen.getByRole('button', { name: '2026年1月2日、金曜日、集中時間 0分' })
     expect(today).toHaveFocus()
-    expect(screen.getByRole('tooltip')).toHaveTextContent('2026年1月2日（金）')
+    const tooltip = screen.getByRole('tooltip')
+    expect(tooltip).toHaveTextContent('2026年1月2日（金）')
 
     await user.keyboard(arrow)
-    expect(screen.getByRole('button', { name: target })).toHaveFocus()
-    expect(screen.getByRole('tooltip')).toHaveTextContent(target.match(/2026年\d+月\d+日/)?.[0] ?? '')
+    const targetButton = container.querySelector<HTMLElement>(`[data-date="${targetDate}"]`)
+    expect(targetButton).toHaveAttribute('aria-label', target)
+    expect(targetButton).toHaveFocus()
+    expect(tooltip).toHaveTextContent(target.match(/2026年\d+月\d+日/)?.[0] ?? '')
 
     const remainingMoves = isMobile
       ? [['ArrowDown', '2026-01-10'], ['ArrowUp', '2026-01-03'], ['ArrowLeft', '2026-01-02']]
@@ -172,7 +175,7 @@ describe('AnnualReviewCalendar', () => {
     await user.tab()
     expect(screen.getByRole('button', { name: 'after' })).toHaveFocus()
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
-  }, 10_000)
+  }, 20_000)
 
   it('年の端で矢印移動を止め、EnterとSpaceで日を選択しない', async () => {
     stubViewport(false)

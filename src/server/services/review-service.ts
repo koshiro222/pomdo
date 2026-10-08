@@ -93,12 +93,6 @@ function parseCalendarDate(value: string | Date | number, timeZone: string): str
   return formatSessionDate(value, timeZone)
 }
 
-function shiftCalendarDate(date: string, days: number): string {
-  const [year, month, day] = date.split('-').map(Number)
-  const shifted = new Date(Date.UTC(year, month - 1, day + days))
-  return shifted.toISOString().slice(0, 10)
-}
-
 function summarizeSessionsForDate(
   sessions: readonly ReviewFocusSession[],
   date: string,
@@ -145,17 +139,31 @@ export function summarizeToday(
   }
 }
 
-/** 今日を含む直近 7 日を古い順に並べて返す。 */
-export function summarizeRecentSevenDays(
-  sessions: readonly ReviewFocusSession[],
-  today: string | Date | number,
-  timeZone: string,
+/** 年内の日別集計をそろえ、記録がない日を 0 で埋める。 */
+export function buildCalendarYearSummaries(
+  dailySummaries: readonly DailyReviewSummary[],
+  year: number,
 ): DailyReviewSummary[] {
-  assertTimeZone(timeZone)
-  const todayDate = parseCalendarDate(today, timeZone)
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = shiftCalendarDate(todayDate, index - 6)
-    return summarizeSessionsForDate(sessions, date, timeZone)
+  if (!Number.isInteger(year) || year < 1 || year > 9999) {
+    throw new RangeError('year は 1 以上 9999 以下の整数である必要があります')
+  }
+
+  const summariesByDate = new Map(dailySummaries.map((summary) => [summary.date, summary]))
+  const firstDay = new Date(0)
+  firstDay.setUTCFullYear(year, 0, 1)
+  firstDay.setUTCHours(0, 0, 0, 0)
+  const daysInYear = (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 366 : 365
+
+  return Array.from({ length: daysInYear }, (_, index) => {
+    const date = new Date(firstDay.getTime())
+    date.setUTCDate(date.getUTCDate() + index)
+    const dateString = date.toISOString().slice(0, 10)
+    return summariesByDate.get(dateString) ?? {
+      date: dateString,
+      totalFocusSecs: 0,
+      completedFocusCount: 0,
+      interruptedFocusCount: 0,
+    }
   })
 }
 

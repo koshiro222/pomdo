@@ -1,10 +1,10 @@
 /// <reference types="vitest/globals" />
 
 import {
+  buildCalendarYearSummaries,
   countFocusedDays,
   listCompletedTaskIds,
   listTasksCompletedOnDate,
-  summarizeRecentSevenDays,
   summarizeToday,
 } from './review-service'
 
@@ -46,7 +46,7 @@ describe('Review service', () => {
     })
   })
 
-  it('Tokyo の 23:59:59/00:00:00 → 直近 7 日を別日として集計する', () => {
+  it('Tokyo の 23:59:59/00:00:00 → 今日の要約を別日として集計する', () => {
     const boundarySessions = [
       {
         startedAt: '2026-01-02T14:59:59.000Z',
@@ -59,26 +59,50 @@ describe('Review service', () => {
         durationSecs: 60,
       },
     ]
-    const result = summarizeRecentSevenDays(boundarySessions, '2026-01-03', timeZone)
-    expect(result).toHaveLength(7)
-    expect(result[4]).toEqual({
-      date: '2026-01-01',
-      totalFocusSecs: 0,
-      completedFocusCount: 0,
-      interruptedFocusCount: 0,
-    })
-    expect(result[5]).toEqual({
-      date: '2026-01-02',
+    expect(summarizeToday(boundarySessions, '2026-01-02', timeZone)).toEqual({
       totalFocusSecs: 1_500,
       completedFocusCount: 1,
       interruptedFocusCount: 0,
     })
-    expect(result[6]).toEqual({
-      date: '2026-01-03',
+    expect(summarizeToday(boundarySessions, '2026-01-03', timeZone)).toEqual({
       totalFocusSecs: 60,
       completedFocusCount: 0,
       interruptedFocusCount: 1,
     })
+  })
+
+  it('うるう年は 366 日を昇順で返し、既存集計と欠落日の 0 値を保つ', () => {
+    const result = buildCalendarYearSummaries([
+      { date: '2024-02-29', totalFocusSecs: 1_800, completedFocusCount: 1, interruptedFocusCount: 0 },
+      { date: '2024-12-31', totalFocusSecs: 60, completedFocusCount: 0, interruptedFocusCount: 1 },
+      { date: '2025-01-01', totalFocusSecs: 300, completedFocusCount: 0, interruptedFocusCount: 1 },
+    ], 2024)
+
+    expect(result).toHaveLength(366)
+    expect(result[0]).toEqual({
+      date: '2024-01-01',
+      totalFocusSecs: 0,
+      completedFocusCount: 0,
+      interruptedFocusCount: 0,
+    })
+    expect(result[59]).toEqual({
+      date: '2024-02-29',
+      totalFocusSecs: 1_800,
+      completedFocusCount: 1,
+      interruptedFocusCount: 0,
+    })
+    expect(result[365]).toEqual({
+      date: '2024-12-31',
+      totalFocusSecs: 60,
+      completedFocusCount: 0,
+      interruptedFocusCount: 1,
+    })
+    expect(result.map((day) => day.date)).toEqual([...result.map((day) => day.date)].sort())
+  })
+
+  it('平年は 365 日を返し、整数でない年は拒否する', () => {
+    expect(buildCalendarYearSummaries([], 2023)).toHaveLength(365)
+    expect(() => buildCalendarYearSummaries([], 2023.5)).toThrow(RangeError)
   })
 
   it('Completed が存在するローカル日付 → Interrupted のみの日を除いて Focused Days に数える', () => {

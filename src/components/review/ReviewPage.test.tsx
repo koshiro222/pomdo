@@ -21,7 +21,17 @@ const mocks = vi.hoisted(() => ({
       totalFocusSecs: 1500,
       completedFocusCount: 1,
       focusedDays: 1,
-      days: Array.from({ length: 7 }, (_, index) => ({ date: `2026-09-${String(index + 1).padStart(2, '0')}`, totalFocusSecs: index * 60 })),
+      todayDate: '2026-09-07',
+      calendarDays: Array.from({ length: 365 }, (_, index) => {
+        const date = new Date(Date.UTC(2026, 0, index + 1)).toISOString().slice(0, 10)
+        const totalFocusSecs = date === '2026-09-04' ? 1_500 : 0
+        return {
+          date,
+          totalFocusSecs,
+          completedFocusCount: totalFocusSecs > 0 ? 1 : 0,
+          interruptedFocusCount: 0,
+        }
+      }),
       completedTasks: [{ id: 'task-1', title: '記事を読む' }],
     },
   },
@@ -66,7 +76,8 @@ describe('ReviewPage', () => {
     mocks.summary.isError = false
   })
 
-  it('今日の振り返り見出しと集計内容を表示する', () => {
+  it('今日の統計を保ち、年間カレンダーで記録日の詳細を表示する', async () => {
+    const user = userEvent.setup()
     renderReview()
 
     expect(screen.getByRole('heading', { level: 1, name: '今日の振り返り' })).toBeVisible()
@@ -75,10 +86,16 @@ describe('ReviewPage', () => {
     expect(screen.getByText('25分')).toBeVisible()
     expect(screen.getByText('完了した Focus')).toBeVisible()
     expect(screen.getByText('1本')).toBeVisible()
-    expect(screen.getByRole('img', { name: '直近7日の集中時間' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: '年間の集中時間' })).toBeVisible()
+    expect(screen.getByRole('button', { name: '2026年9月4日、金曜日、集中時間25分' })).toBeVisible()
+    expect(screen.queryByText('直近7日')).not.toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: '直近7日の集中時間' })).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: '完了したタスク' })).toBeVisible()
     expect(screen.getByText('記事を読む')).toBeVisible()
     expect(screen.getByText('累計 1日')).toBeVisible()
+
+    await user.click(screen.getByRole('button', { name: '2026年9月4日、金曜日、集中時間25分' }))
+    expect(screen.getByText('集中時間 25分')).toBeVisible()
   })
 
   it('テーマトグルで Turnstile token 付き settings.update を呼ぶ', async () => {
@@ -88,7 +105,7 @@ describe('ReviewPage', () => {
     await user.click(screen.getByRole('checkbox', { name: 'ダークテーマに切り替え' }))
 
     await waitFor(() => expect(mocks.update.mutateAsync).toHaveBeenCalledWith({ theme: 'dark', turnstileToken: 'turnstile-token' }))
-    expect(document.documentElement).toHaveAttribute('data-theme', 'business')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'night')
   })
 
   it('テーマ保存に失敗しても表示テーマを維持し Toast を表示する', async () => {
@@ -99,7 +116,7 @@ describe('ReviewPage', () => {
     await user.click(screen.getByRole('checkbox', { name: 'ダークテーマに切り替え' }))
 
     await waitFor(() => expect(screen.getByText('テーマを保存できませんでした。画面のテーマは維持しています。')).toBeVisible())
-    expect(document.documentElement).toHaveAttribute('data-theme', 'business')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'night')
     expect(localStorage.getItem('pomdo-theme')).toBe('dark')
   })
 })

@@ -20,9 +20,9 @@ describe('theme', () => {
     expect(resolveEffectiveTheme('dark')).toBe('dark')
   })
 
-  it('明示テーマをdaisyUIのcorporate/businessへ対応付ける', () => {
+  it('明示テーマをdaisyUIのcorporate/nightへ対応付ける', () => {
     expect(resolveDaisyTheme('light')).toBe('corporate')
-    expect(resolveDaisyTheme('dark')).toBe('business')
+    expect(resolveDaisyTheme('dark')).toBe('night')
   })
 
   it('system は OS の color scheme から実効テーマを解決する', () => {
@@ -45,7 +45,7 @@ describe('theme', () => {
 
   it('明示テーマと system を document と localStorage に適用する', () => {
     applyTheme('dark')
-    expect(document.documentElement).toHaveAttribute('data-theme', 'business')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'night')
     expect(localStorage.getItem('pomdo-theme')).toBe('dark')
 
     applyTheme('system')

@@ -2,7 +2,7 @@ export type Theme = 'system' | 'light' | 'dark'
 
 export type EffectiveTheme = Exclude<Theme, 'system'>
 
-export type DaisyTheme = 'corporate' | 'business'
+export type DaisyTheme = 'corporate' | 'night'
 
 const THEME_STORAGE_KEY = 'pomdo-theme'
 const DARK_MODE_MEDIA_QUERY = '(prefers-color-scheme: dark)'
@@ -21,7 +21,7 @@ export function applyTheme(theme: Theme): void {
 }
 
 export function resolveDaisyTheme(theme: EffectiveTheme): DaisyTheme {
-  return theme === 'dark' ? 'business' : 'corporate'
+  return theme === 'dark' ? 'night' : 'corporate'
 }
 
 export function resolveEffectiveTheme(theme: Theme): EffectiveTheme {

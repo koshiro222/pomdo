@@ -50,7 +50,7 @@ describe('useThemePreference', () => {
     act(() => result.current.toggleTheme())
 
     expect(result.current.theme).toBe('dark')
-    expect(document.documentElement).toHaveAttribute('data-theme', 'business')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'night')
     expect(localStorage.getItem('pomdo-theme')).toBe('dark')
   })
 

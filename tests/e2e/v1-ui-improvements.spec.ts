@@ -24,7 +24,7 @@ test('LP のテーマトグルは即時反映し、リロード後も明示テ�
   await toggle.click()
   await expect(page.getByRole('checkbox', { name: 'ライトテーマに切り替え' })).toBeChecked()
   await expect.poll(() => page.evaluate(() => localStorage.getItem('pomdo-theme'))).toBe('dark')
-  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('business')
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('night')
 
   await page.reload()
   await expect(page.getByRole('checkbox', { name: 'ライトテーマに切り替え' })).toBeChecked()
@@ -52,7 +52,17 @@ test('App・Review・Settings の共通ヘッダーでテーマを操作でき�
   await themeOptions.getByRole('button', { name: 'light' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'corporate')
   await themeOptions.getByRole('button', { name: 'dark' }).click()
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'business')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'night')
+  await themeOptions.getByRole('button', { name: 'system' }).click()
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme')
+  await page.emulateMedia({ colorScheme: 'dark' })
+  const systemDarkSurface = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--color-base-100').trim())
+  await page.emulateMedia({ colorScheme: 'light' })
+  const systemLightSurface = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--color-base-100').trim())
+  expect(systemDarkSurface).not.toBe(systemLightSurface)
+  await page.reload()
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme')
+  await expect(page.getByRole('button', { name: 'system' })).toHaveClass(/btn-soft/)
   await expect(themeButtons.first()).toHaveClass(/btn-soft/)
   const themeWidths = await themeButtons.evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().width))
   expect(Math.max(...themeWidths) - Math.min(...themeWidths)).toBeLessThanOrEqual(1)
@@ -72,11 +82,41 @@ test('App・Review・Settings の共通ヘッダーでテーマを操作でき�
   await expect(page.getByRole('slider', { name: '音量' })).toBeVisible()
 })
 
+test('desktop本文は960px以内に揃い、Taskシートは528px以内に保つ', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await openAppAsAnonymous(page)
+
+  const appWidths = await page.evaluate(() => {
+    const header = document.querySelector('.appbar-inner')!.getBoundingClientRect()
+    const content = document.querySelector('.app-wrap')!.getBoundingClientRect()
+    return {
+      headerWidth: header.width,
+      contentWidth: content.width,
+      centerDifference: Math.abs((header.left + header.right) / 2 - (content.left + content.right) / 2),
+    }
+  })
+  expect(appWidths.headerWidth).toBeLessThanOrEqual(960)
+  expect(appWidths.contentWidth).toBeLessThanOrEqual(960)
+  expect(appWidths.centerDifference).toBeLessThanOrEqual(1)
+
+  await page.getByRole('button', { name: '編集' }).click()
+  const sheet = page.locator('.sheet')
+  await expect(sheet).toBeVisible()
+  const sheetWidth = await sheet.evaluate((element) => element.getBoundingClientRect().width)
+  expect(sheetWidth).toBeLessThanOrEqual(528)
+  await page.keyboard.press('Escape')
+
+  await page.getByRole('link', { name: /振り返りを見る/ }).click()
+  await expect(page.getByRole('heading', { name: '年間の集中時間' })).toBeVisible()
+  const reviewWidth = await page.locator('.review-page').evaluate((element) => element.getBoundingClientRect().width)
+  expect(reviewWidth).toBeLessThanOrEqual(960)
+})
+
 test('Appの設定ギアはテーマトグルと同じ色で、Tabフォーカスを表示する', async ({ page }) => {
   await openAppAsAnonymous(page)
   const settingsLink = page.getByRole('link', { name: '設定' })
 
-  for (const theme of ['corporate', 'business']) {
+  for (const theme of ['corporate', 'night']) {
     await page.locator('html').evaluate((element, selectedTheme) => element.setAttribute('data-theme', selectedTheme), theme)
     await expect.poll(() => page.evaluate(() => {
       const settings = document.querySelector('.settings-icon-link svg')!
@@ -108,6 +148,20 @@ test('Appの設定ギアはテーマトグルと同じ色で、Tabフォーカ�
   await expect(settingsLink).toBeFocused()
   const focusOutline = await settingsLink.evaluate((element) => getComputedStyle(element).outlineStyle)
   expect(focusOutline).not.toBe('none')
+})
+
+test('reduced-transparencyではヘッダーのぼかしを外し、Reviewを表示できる', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'reduced-transparency の emulation は Chromium CDP を使う')
+  const devtools = await page.context().newCDPSession(page)
+  await devtools.send('Emulation.setEmulatedMedia', {
+    features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }],
+  })
+  await page.goto('/app/review')
+  await expect(page.getByRole('heading', { name: '年間の集中時間' })).toBeVisible()
+  await expect.poll(() => page.evaluate(() => window.matchMedia('(prefers-reduced-transparency: reduce)').matches)).toBe(true)
+  const headerBackdrop = await page.locator('.appbar').evaluate((element) => getComputedStyle(element).backdropFilter)
+  expect(headerBackdrop).toBe('none')
+  await expect(page.getByRole('group', { name: /\d{4}年の集中時間/ })).toBeVisible()
 })
 
 test('LP動画は指定属性で表示し、読み込み失敗時もCTAと画面幅を保つ', async ({ page }) => {

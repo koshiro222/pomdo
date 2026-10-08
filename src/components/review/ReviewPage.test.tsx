@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -76,8 +76,7 @@ describe('ReviewPage', () => {
     mocks.summary.isError = false
   })
 
-  it('今日の統計を保ち、年間カレンダーで記録日の詳細を表示する', async () => {
-    const user = userEvent.setup()
+  it('今日の統計を保ち、フォーカスで記録日の詳細を表示する', () => {
     renderReview()
 
     expect(screen.getByRole('heading', { level: 1, name: '今日の振り返り' })).toBeVisible()
@@ -87,16 +86,21 @@ describe('ReviewPage', () => {
     expect(screen.getByText('完了した Focus')).toBeVisible()
     expect(screen.getByText('1本')).toBeVisible()
     expect(screen.getByRole('heading', { name: '年間の集中時間' })).toBeVisible()
-    expect(screen.getByRole('button', { name: '2026年9月4日、金曜日、集中時間25分' })).toBeVisible()
+    const recordedDay = screen.getByRole('button', { name: '2026年9月4日、金曜日、集中時間 25分' })
+    expect(recordedDay).toBeVisible()
     expect(screen.queryByText('直近7日')).not.toBeInTheDocument()
     expect(screen.queryByRole('img', { name: '直近7日の集中時間' })).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: '完了したタスク' })).toBeVisible()
     expect(screen.getByText('記事を読む')).toBeVisible()
     expect(screen.getByText('累計 1日')).toBeVisible()
 
-    await user.click(screen.getByRole('button', { name: '2026年9月4日、金曜日、集中時間25分' }))
-    expect(screen.getByText('集中時間 25分')).toBeVisible()
-  })
+    act(() => recordedDay.focus())
+    expect(screen.getByRole('tooltip')).toHaveTextContent('2026年9月4日（金）')
+    expect(screen.getByRole('tooltip')).toHaveTextContent('集中時間 25分')
+    expect(screen.queryByText(/集中時間がある日を選ぶと/)).not.toBeInTheDocument()
+    expect(screen.queryByText('1マスが1日です')).not.toBeInTheDocument()
+    expect(document.querySelector('.annual-calendar-selection')).not.toBeInTheDocument()
+  }, 10_000)
 
   it('テーマトグルで Turnstile token 付き settings.update を呼ぶ', async () => {
     const user = userEvent.setup()

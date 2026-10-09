@@ -150,7 +150,7 @@ function CalendarDayCell({
     <button
       ref={registerButton}
       type="button"
-      className="annual-calendar-day"
+      className="btn btn-ghost annual-calendar-day"
       style={positionStyle}
       data-date={day.date}
       data-focus-level={getFocusIntensityLevel(displayFocusSecs)}

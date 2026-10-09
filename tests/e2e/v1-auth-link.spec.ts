@@ -27,7 +27,9 @@ test('匿名データを既存データのないテストGoogle identityへ引�
   const result = await signInAsTestIdentity(page, `empty-${crypto.randomUUID()}`)
   expect(result).toBe('migrated')
   await page.getByRole('link', { name: '設定' }).click()
-  await expect(page.getByRole('button', { name: 'ログアウト' })).toBeVisible()
+  const logout = page.getByRole('button', { name: 'ログアウト' })
+  await expect(logout).toBeVisible()
+  await expect(logout).toHaveClass(/btn-outline/)
   await expect(page.getByText('匿名アカウント')).not.toBeVisible()
 })
 

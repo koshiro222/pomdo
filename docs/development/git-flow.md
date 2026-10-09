@@ -46,6 +46,16 @@ PR本文には、少なくとも次を記載します。
 
 PRのチェックとレビューが完了したら、PRを`develop`へマージします。機能ブランチから`main`へ直接マージすることは避けます。
 
+### PRのマージ方式
+
+PRの取り込み先に応じて、GitHubのマージ方式を次のように選びます。
+
+- `feature/*`、`fix/*`、`docs/*`から`develop`へのPRは **Squash and merge** を使います。PRごとにdevelopの履歴を1コミットにまとめられ、例えば実装・テスト修正・文書更新を含むPRを、後からPR単位で追跡・取り消しできます。
+- `develop`から`main`へのリリースPRは **Create a merge commit** を使います。developの変更履歴をmainへ引き継ぎ、次のリリースPRで取り込み済みの変更が再び差分に現れるのを防ぎます。
+- hotfix後の`main`から`develop`への同期PRも **Create a merge commit** を使います。mainの修正コミットをdevelopの履歴に含め、同じ修正を別コミットとして重ねて取り込むのを防ぎます。
+
+例えば、リリースPRをSquash and mergeすると、mainには変更内容が入ってもdevelopのコミットがmainの祖先になりません。その状態で次のリリースPRを作ると、前回分が差分に再表示されることがあります。マージ方式を選べる場合も、上記の取り込み先ごとの方式に揃えます。
+
 ## 4. developへのマージ後に共有Previewを確認する
 
 `develop`へのマージを起点に、GitHub Actionsが品質チェックとProduction buildを実行し、同じArtifactを共有Previewへデプロイします。共有Previewは次で確認します。

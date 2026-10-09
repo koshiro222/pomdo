@@ -68,6 +68,16 @@ _Avoid_: Trash, Deleted
 Focus Session を1回以上完了した日の累積カウント。減らない。途切れて0に戻る Streak の代わり。
 _Avoid_: Streak, Chain
 
+### アカウントと認証
+
+**匿名アカウント**:
+Google OAuth を完了する前に Pomdo を利用するためのユーザーアカウント。Task、Focus Session、ユーザー設定を保持する。
+_Avoid_: ゲスト, ローカルユーザー
+
+**アカウント連携**:
+匿名アカウントの利用者が Google OAuth を完了し、同じ Pomdo ユーザーとして継続利用できるようにすること。Google 側に Pomdo の Task と Focus Session がない場合は匿名データを引き継ぎ、既存データがある場合は Google 側のデータを保ち、匿名データが引き継がれなかったことを伝える。
+_Avoid_: Googleログイン（匿名アカウントの連携を含む場合の曖昧な呼び方）
+
 ### 環境とリリース
 
 **Preview**:

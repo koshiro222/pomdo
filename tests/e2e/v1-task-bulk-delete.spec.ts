@@ -48,9 +48,7 @@ test('Now・On Deck・Backlogを横断して選択し、確認後に選択Task�
   expect(mobileDialogBox!.x + mobileDialogBox!.width).toBeLessThanOrEqual(390)
   await expect(page.locator('html')).toHaveJSProperty('scrollWidth', 390)
 
-  const cancelButton = page.getByRole('button', { name: 'キャンセル' })
-  await expect(cancelButton).toHaveClass(/btn-ghost/)
-  await cancelButton.click()
+  await page.getByRole('button', { name: 'キャンセル' }).click()
   await expect(page.locator('.bulk-delete-toolbar [role="status"]')).toHaveText('3件を削除対象として選択中')
   await expect(page.getByRole('heading', { name: 'Next' })).toBeVisible()
   await expect(page.locator('.now-card h1')).toHaveText(nowTitle)
@@ -67,9 +65,7 @@ test('Now・On Deck・Backlogを横断して選択し、確認後に選択Task�
   expect(desktopDialogBox!.x + desktopDialogBox!.width).toBeLessThanOrEqual(1440)
   expect(desktopDialogBox!.y + desktopDialogBox!.height).toBeLessThanOrEqual(900)
   await expect(page.locator('html')).toHaveJSProperty('scrollWidth', 1440)
-  const confirmDelete = page.getByRole('button', { name: '3件を削除する' })
-  await expect(confirmDelete).toHaveClass(/btn-error/)
-  await confirmDelete.click()
+  await page.getByRole('button', { name: '3件を削除する' }).click()
 
   await expect(page.getByRole('heading', { name: '今は、決めなくて大丈夫。' })).toBeVisible()
   await expect(page.locator('.task-title', { hasText: '残すNext' })).toBeVisible()

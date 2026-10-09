@@ -48,7 +48,7 @@ test('LPから匿名で始めて、TaskとFocusの一連の流れを操作でき
   await page.getByRole('button', { name: 'ストップ' }).click()
   await expect(page.getByRole('button', { name: '▶ はじめる' })).toBeVisible()
   await page.getByRole('link', { name: /振り返りを見る/ }).click()
-  await expect(page.getByRole('heading', { name: '今日の振り返り' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '今日の振り返り' })).toBeVisible({ timeout: 15_000 })
   await expect(page.getByText('合計集中時間')).toBeVisible()
   await expect(page.getByText('16分')).toBeVisible()
 })

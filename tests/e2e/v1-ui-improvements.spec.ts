@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { delayAuthenticationRequests, failAppProcedure, openAppAsAnonymous } from './helpers/auth'
+import { delayAuthenticationRequests, failAppProcedure, openAppAsAnonymous, signInAsTestIdentity } from './helpers/auth'
 
 const DEMO_VIDEO_URL = 'https://pub-7e2638ec617c45a7a55b30232114a3a0.r2.dev/pomdo-demo.mp4'
 
@@ -42,18 +42,41 @@ test('App・Review・Settings の共通ヘッダーでテーマを操作でき�
   await page.getByRole('link', { name: '戻る' }).click()
   await page.getByRole('link', { name: '設定' }).click()
   await expect(page.getByRole('heading', { name: '設定' })).toBeVisible()
+  const settingsPage = page.locator('.settings-page')
+  await expect(settingsPage.locator('button.btn-soft')).toHaveCount(0)
   await expect(page.locator('label.theme-toggle')).toBeVisible()
   const themeOptions = page.locator('.theme-options')
   await expect(themeOptions).toBeVisible()
   const themeButtons = themeOptions.getByRole('button')
   await expect(themeButtons).toHaveCount(3)
+  for (const button of await themeButtons.all()) {
+    await expect(button).toHaveClass(/\bbtn\b/)
+    await expect(button).not.toHaveClass(/btn-soft/)
+  }
   await expect(themeOptions.getByRole('button', { name: 'light' })).toBeVisible()
   await expect(themeOptions.getByRole('button', { name: 'dark' })).toBeVisible()
-  await themeOptions.getByRole('button', { name: 'light' }).click()
+  await expect(themeOptions.getByRole('button', { name: 'system' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(themeOptions.getByRole('button', { name: 'system' })).toHaveClass(/btn-primary/)
+  await expect(themeOptions.getByRole('button', { name: 'light' })).toHaveAttribute('aria-pressed', 'false')
+  await expect(themeOptions.getByRole('button', { name: 'light' })).not.toHaveClass(/btn-primary/)
+  const selectThemeAndWaitForSave = async (theme: 'system' | 'light' | 'dark') => {
+    const saveResponse = page.waitForResponse((response) => response.url().includes('/api/trpc/settings.update'))
+    await themeOptions.getByRole('button', { name: theme }).click()
+    expect((await saveResponse).ok()).toBe(true)
+  }
+  await selectThemeAndWaitForSave('light')
+  await expect(themeOptions.getByRole('button', { name: 'light' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(themeOptions.getByRole('button', { name: 'light' })).toHaveClass(/btn-primary/)
+  await expect(themeOptions.getByRole('button', { name: 'system' })).not.toHaveClass(/btn-primary/)
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'cmyk')
-  await themeOptions.getByRole('button', { name: 'dark' }).click()
+  await selectThemeAndWaitForSave('dark')
+  await expect(themeOptions.getByRole('button', { name: 'dark' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(themeOptions.getByRole('button', { name: 'dark' })).toHaveClass(/btn-primary/)
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'sunset')
-  await themeOptions.getByRole('button', { name: 'system' }).click()
+  await selectThemeAndWaitForSave('system')
+  await expect(themeOptions.getByRole('button', { name: 'system' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(themeOptions.getByRole('button', { name: 'system' })).toHaveClass(/btn-primary/)
+  await expect(themeOptions.getByRole('button', { name: 'dark' })).not.toHaveClass(/btn-primary/)
   await expect(page.locator('html')).not.toHaveAttribute('data-theme')
   await page.emulateMedia({ colorScheme: 'dark' })
   const systemDarkSurface = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--color-base-100').trim())
@@ -62,16 +85,30 @@ test('App・Review・Settings の共通ヘッダーでテーマを操作でき�
   expect(systemDarkSurface).not.toBe(systemLightSurface)
   await page.reload()
   await expect(page.locator('html')).not.toHaveAttribute('data-theme')
-  await expect(page.getByRole('button', { name: 'system' })).toHaveClass(/btn-soft/)
-  await expect(themeButtons.first()).toHaveClass(/btn-soft/)
+  await expect(page.getByRole('button', { name: 'system' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'system' })).toHaveClass(/btn-primary/)
+  await expect(themeButtons.first()).not.toHaveClass(/btn-soft/)
   const themeWidths = await themeButtons.evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().width))
   expect(Math.max(...themeWidths) - Math.min(...themeWidths)).toBeLessThanOrEqual(1)
+
+  const testSoundButton = page.getByRole('button', { name: 'テスト再生' })
+  await expect(testSoundButton).toHaveClass(/btn-sm/)
+  await expect(testSoundButton).not.toHaveClass(/btn-soft/)
+  await expect(testSoundButton).toHaveCSS('min-height', '34px')
+  await expect(testSoundButton).toHaveCSS('padding-left', '11px')
+  await expect(testSoundButton).toHaveCSS('padding-right', '11px')
+  await expect(testSoundButton).toHaveCSS('padding-top', '6px')
+  await expect(testSoundButton).toHaveCSS('padding-bottom', '6px')
 
   const dataActions = page.locator('.data-actions')
   const dataButtons = dataActions.getByRole('button')
   await expect(dataButtons).toHaveCount(2)
-  await expect(dataButtons.nth(0)).toHaveClass(/btn-soft/)
-  await expect(dataButtons.nth(1)).toHaveClass(/btn-soft/)
+  await expect(dataButtons.nth(0)).toHaveClass(/btn-block/)
+  await expect(dataButtons.nth(0)).not.toHaveClass(/btn-soft/)
+  await expect(dataButtons.nth(1)).toHaveClass(/btn-block/)
+  await expect(dataButtons.nth(1)).toHaveClass(/btn-error/)
+  await expect(dataButtons.nth(1)).not.toHaveClass(/btn-soft/)
+  await expect(dataButtons.nth(0)).toBeEnabled()
   const dataLayout = await dataActions.evaluate((element) => {
     const buttons = [...element.querySelectorAll('button')]
     const widths = buttons.map((button) => button.getBoundingClientRect().width)
@@ -79,7 +116,173 @@ test('App・Review・Settings の共通ヘッダーでテーマを操作でき�
   })
   expect(dataLayout.gap).toBe('10px')
   expect(dataLayout.widths[0]).toBeCloseTo(dataLayout.widths[1], 1)
+  const [download] = await Promise.all([page.waitForEvent('download'), dataButtons.nth(0).click()])
+  expect(download.suggestedFilename()).toMatch(/^pomdo-export-\d{8}\.json$/)
   await expect(page.getByRole('slider', { name: '音量' })).toBeVisible()
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  await expect(themeOptions.getByRole('button')).toHaveCount(3)
+  await expect(dataButtons).toHaveCount(2)
+})
+
+test('設定のGoogleボタンは両テーマでGoogle配色とフォーカス表示を保つ', async ({ page }) => {
+  await openAppAsAnonymous(page)
+  await page.getByRole('link', { name: '設定' }).click()
+  const googleButton = page.getByRole('button', { name: 'Googleでログイン' })
+  await expect(googleButton).toBeVisible()
+  await expect(googleButton).toHaveClass(/\bbtn\b/)
+  await expect(googleButton).toHaveClass(/google-login-button/)
+  await expect(googleButton).not.toHaveClass(/btn-soft|btn-primary/)
+  await expect(googleButton.locator('svg')).toHaveAttribute('aria-hidden', 'true')
+  const logoColors = await googleButton.locator('svg path').evaluateAll((paths) => [...new Set(paths.map((path) => path.getAttribute('fill')))])
+  expect(logoColors).toEqual(expect.arrayContaining(['#FFC107', '#FF3D00', '#4CAF50', '#1976D2']))
+
+  for (const theme of ['cmyk', 'sunset']) {
+    await page.locator('html').evaluate((element, selectedTheme) => element.setAttribute('data-theme', selectedTheme), theme)
+    await expect(googleButton).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+    await expect(googleButton).toHaveCSS('color', 'rgb(31, 31, 31)')
+    await expect(googleButton).toHaveCSS('border-top-color', 'rgb(116, 119, 117)')
+    await expect(googleButton).toHaveCSS('border-top-width', '1px')
+    await googleButton.hover()
+    await expect(googleButton).toHaveCSS('background-color', 'rgb(242, 242, 242)')
+    await page.mouse.move(0, 0)
+  }
+
+  await page.keyboard.press('Tab')
+  for (let attempts = 0; attempts < 20 && !(await googleButton.evaluate((element) => element.matches(':focus'))); attempts += 1) {
+    await page.keyboard.press('Tab')
+  }
+  await expect(googleButton).toBeFocused()
+  await expect(googleButton).toHaveCSS('outline-style', 'solid')
+  await expect(googleButton).toHaveCSS('outline-width', '2px')
+})
+
+test('匿名ユーザーが設定からGoogle providerへリクエストし、OAuth画面へ遷移しない', async ({ page }) => {
+  await openAppAsAnonymous(page)
+  await page.getByRole('link', { name: '設定' }).click()
+  await page.route('**/api/auth/sign-in/social', (route) => route.fulfill({
+    status: 503,
+    contentType: 'application/json',
+    body: JSON.stringify({ message: 'E2E OAuth stub' }),
+  }))
+
+  const requestPromise = page.waitForRequest((request) => request.url().includes('/api/auth/sign-in/social'))
+  await page.getByRole('button', { name: 'Googleでログイン' }).click()
+  const request = await requestPromise
+  expect(request.postDataJSON()).toMatchObject({ provider: 'google', callbackURL: '/app' })
+  await expect(page).toHaveURL(/\/app\/settings$/)
+})
+
+test('Focus送信中のGoogleボタンは無効になり、送信失敗後に再操作できる', async ({ page }) => {
+  await openAppAsAnonymous(page)
+  await page.getByRole('link', { name: '設定' }).click()
+  const sessionResponse = await page.request.get('/api/auth/get-session')
+  const session = await sessionResponse.json() as { user?: { id?: string } }
+  const ownerUserId = session.user?.id
+  expect(ownerUserId).toBeTruthy()
+  if (!ownerUserId) throw new Error('匿名セッションの user.id が取得できませんでした')
+  await page.evaluate((ownerUserId) => {
+    localStorage.setItem('pomdo-focus-outbox', JSON.stringify({
+      ownerUserId,
+      startToken: crypto.randomUUID(),
+      id: crypto.randomUUID(),
+      taskId: null,
+      startedAt: new Date(Date.now() - 60_000).toISOString(),
+      completedAt: new Date().toISOString(),
+      durationSecs: 60,
+      plannedSecs: 60,
+      kind: 'completed',
+    }))
+  }, ownerUserId)
+
+  let releaseCompleteRequest!: () => void
+  let signalCompleteRequest!: () => void
+  const completeRequestGate = new Promise<void>((resolve) => { releaseCompleteRequest = resolve })
+  const completeRequestStarted = new Promise<void>((resolve) => { signalCompleteRequest = resolve })
+  await page.route('**/api/trpc/focus.complete**', async (route) => {
+    signalCompleteRequest()
+    await completeRequestGate
+    await route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: { message: 'E2E simulated failure' } }),
+    })
+  })
+
+  const googleButton = page.locator('button.google-login-button')
+  await expect(page.getByRole('button', { name: 'Googleでログイン' })).toBeVisible()
+  try {
+    await googleButton.click()
+    await completeRequestStarted
+    await expect(googleButton).toBeDisabled()
+    await expect(googleButton).toHaveText('送信を確認中…')
+    await expect(googleButton).toHaveCSS('opacity', '0.55')
+    await expect(googleButton).toHaveCSS('cursor', 'not-allowed')
+    await expect(googleButton).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+  } finally {
+    releaseCompleteRequest()
+  }
+  await expect(page.getByRole('alert')).toContainText('送信待ちの Focus を保存できませんでした。接続を確認してからもう一度お試しください。')
+  await expect(googleButton).toBeEnabled()
+  await expect(googleButton).toHaveText('Googleでログイン')
+})
+
+test('匿名サインイン失敗時の設定 retry は再試行後に復旧する', async ({ page }) => {
+  let signInAttempts = 0
+  await page.route('**/api/auth/sign-in/anonymous', async (route) => {
+    signInAttempts += 1
+    if (signInAttempts === 1) {
+      await route.abort('failed')
+      return
+    }
+    await route.continue()
+  })
+  await page.goto('/app/settings')
+  const retry = page.getByRole('alert').getByRole('button', { name: 'もう一度試す' })
+  await expect(retry).toBeVisible()
+  await expect(retry).toHaveClass(/\bbtn\b/)
+  await expect(retry).not.toHaveClass(/btn-soft/)
+  await retry.click()
+  await expect(page.getByRole('heading', { name: '設定' })).toBeVisible({ timeout: 15_000 })
+  expect(signInAttempts).toBeGreaterThanOrEqual(2)
+})
+
+test('bootstrap初期化失敗時の設定 retry は再試行後に復旧する', async ({ page }) => {
+  let bootstrapAttempts = 0
+  await page.route('**/api/trpc/**', async (route) => {
+    const requestPath = new URL(route.request().url()).pathname.split('/').pop() ?? ''
+    if (requestPath.split(',').includes('bootstrap.initialize')) {
+      bootstrapAttempts += 1
+      if (bootstrapAttempts === 1) {
+        await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: { message: 'E2E simulated failure' } }) })
+        return
+      }
+    }
+    await route.continue()
+  })
+  await page.goto('/app/settings')
+  const retry = page.getByRole('alert').getByRole('button', { name: 'もう一度試す' })
+  await expect(retry).toBeVisible()
+  await expect(retry).toHaveClass(/\bbtn\b/)
+  await expect(retry).not.toHaveClass(/btn-soft/)
+  await retry.click()
+  await expect(page.getByRole('heading', { name: '設定' })).toBeVisible({ timeout: 15_000 })
+  expect(bootstrapAttempts).toBeGreaterThanOrEqual(2)
+})
+
+test('認証済みユーザーのログアウトは通常ボタンでsign-outを送る', async ({ page }) => {
+  await openAppAsAnonymous(page)
+  await signInAsTestIdentity(page, `settings-${crypto.randomUUID()}`)
+  await page.getByRole('link', { name: '設定' }).click()
+  const logout = page.getByRole('button', { name: 'ログアウト' })
+  await expect(logout).toBeVisible()
+  await expect(logout).toHaveClass(/\bbtn\b/)
+  await expect(logout).not.toHaveClass(/btn-soft/)
+  const signOutRequest = page.waitForRequest((request) => request.url().includes('/api/auth/sign-out'))
+  await logout.click()
+  await signOutRequest
+  await expect(page).toHaveURL(/\/app\/settings$/)
 })
 
 test('desktop本文は960px以内に揃い、Taskシートは528px以内に保つ', async ({ page }) => {

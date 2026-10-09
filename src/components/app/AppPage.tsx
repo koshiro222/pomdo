@@ -4,7 +4,7 @@ import { Link } from 'react-router'
 import { useAppSession } from '../../hooks/useAppSession'
 import { useTurnstileToken } from '../../hooks/useTurnstileToken'
 import { flushFocusSessionOutbox, peekFocusSession, queueFocusSession, type FocusOutboxPayload } from '../../lib/focus-outbox'
-import { requestNotificationPermissionOnce, notifyFocusCompleted } from '../../lib/notifications'
+import { notifyTimerCompleted, setTimerCompletionTitle } from '../../lib/notifications'
 import { playFocusChime } from '../../lib/sound'
 import { trpc } from '../../lib/trpc'
 import { resolveNextTheme } from '../../lib/theme'
@@ -185,7 +185,8 @@ export function AppPage() {
     const sessionId = createRuntimeSessionKey(runtime)
     if (completedBreakRuntimeId.current === sessionId) return
     completedBreakRuntimeId.current = sessionId
-    notifyFocusCompleted()
+    setTimerCompletionTitle()
+    void notifyTimerCompleted('break', sessionId)
     playFocusChime(user?.soundVolume ?? 0.7, user?.soundMuted ?? false)
     useFocusRuntime.getState().clearSession()
     useFocusRuntime.setState({ plannedSecs: 25 * 60 })
@@ -215,6 +216,9 @@ export function AppPage() {
     if (!preserved) setToast('匿名データを確認できませんでした。Google側に既存データがある場合は引き継がれません。')
   }, [sessionsQuery.data, taskList, toast, user])
   const completeRuntimeSession = useCallback(async (snapshot: FocusRuntimeSnapshot) => {
+    setTimerCompletionTitle()
+    void notifyTimerCompleted('focus', snapshot.sessionId)
+    playFocusChime(user?.soundVolume ?? 0.7, user?.soundMuted ?? false)
     const payload: FocusOutboxPayload = {
       id: snapshot.sessionId,
       ownerUserId: snapshot.ownerUserId,
@@ -251,8 +255,6 @@ export function AppPage() {
         refresh()
       },
     })
-    notifyFocusCompleted()
-    playFocusChime(user?.soundVolume ?? 0.7, user?.soundMuted ?? false)
   }, [completeFocus, resolveProtectedActionToken, refresh, user])
   useEffect(() => {
     if (!isActive || runtime.mode !== 'focus' || runtime.ownerUserId !== user?.id || remainingSecs > 0 || tabReturnNeedsConfirmation || !runtime.startedAt || !runtime.endsAt || !runtime.startToken) return
@@ -275,7 +277,6 @@ export function AppPage() {
       setToast('前回の Focus を送信中です。再送が完了してから次を始めてください。')
       return
     }
-    await requestNotificationPermissionOnce()
     const sessionId = crypto.randomUUID()
     const turnstileToken = await resolveProtectedActionToken()
     if (!turnstileToken) return

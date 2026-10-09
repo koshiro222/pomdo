@@ -1,6 +1,7 @@
-/app /index.html 200
-# Wrangler pages devがwildcardから/index.htmlへの書き換えを無限ループとして警告するため、SPA入口の/へ書き換える。
+# Pages は /index.html を / にリダイレクトしてSPAの元パスを失うため、ルートへ書き換える。
+# Wrangler Pages Devのループ警告を避けるため、wildcardも/index.htmlではなく/へ向ける。
+/app / 200
+/about / 200
+/legal / 200
 /app/* / 200
-/about /index.html 200
-/legal /index.html 200
 /legal/* / 200

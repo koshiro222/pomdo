@@ -54,6 +54,16 @@ _Avoid_: Untracked session, Freestyle
 Task の完了に必要そうな Focus Session の本数（任意）。残り本数を見せて「時間の外在化」に使う。
 _Avoid_: Points, Effort
 
+### 通知
+
+**完了通知設定**:
+Pomdo が Focus Session または Break の完了時にブラウザ通知を送るかを決める、ブラウザ単位の設定。アカウント設定やブラウザ側の通知許可とは別に扱う。
+_Avoid_: 通知許可
+
+**ブラウザ通知の許可**:
+Pomdo の完了通知をブラウザや OS に表示するために、ブラウザがサイトごとに管理する許可。完了通知設定とは別に扱う。
+_Avoid_: Pomdo の通知設定
+
 ### 振り返り
 
 **Today's Done**:

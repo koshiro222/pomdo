@@ -58,6 +58,7 @@ test('LPから匿名で始めて、TaskとFocusの一連の流れを操作でき
   // 停止時刻がちょうど60秒境界になると、ブラウザのイベント処理順で59秒扱いになり得るため1秒余裕を持たせる。
   await page.clock.runFor('00:01:01')
   await page.getByRole('button', { name: 'ストップ' }).click()
+  await expect(page.getByRole('button', { name: '▶ はじめる' })).toBeVisible()
   await page.getByRole('link', { name: /振り返りを見る/ }).click()
   await expect(page.getByRole('heading', { name: '今日の振り返り' })).toBeVisible()
   await expect(page.getByText('合計集中時間')).toBeVisible()

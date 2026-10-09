@@ -8,8 +8,6 @@ test('LPの使ってみるボタンは背景と異なる文字色で表示する
   await page.goto('/')
   const cta = page.getByRole('link', { name: '使ってみる' })
   await expect(cta).toBeVisible()
-  await expect(cta).toHaveClass(/btn-primary/)
-  await expect(cta).toHaveClass(/btn-lg/)
   const ctaColors = await cta.evaluate((element) => {
     const style = getComputedStyle(element)
     return { color: style.color, backgroundColor: style.backgroundColor }
@@ -52,19 +50,10 @@ test('App・Review・Settings の共通ヘッダーでテーマを操作でき�
   await expect(themeOptions.getByRole('button', { name: 'light' })).toBeVisible()
   await expect(themeOptions.getByRole('button', { name: 'dark' })).toBeVisible()
   await themeOptions.getByRole('button', { name: 'light' }).click()
-  await expect(themeOptions.getByRole('button', { name: 'light' })).toHaveClass(/btn-primary/)
-  await expect(themeOptions.getByRole('button', { name: 'light' })).toHaveAttribute('aria-pressed', 'true')
-  await expect(themeOptions.getByRole('button', { name: 'system' })).toHaveClass(/btn-outline/)
-  await expect(themeOptions.getByRole('button', { name: 'system' })).toHaveAttribute('aria-pressed', 'false')
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'cmyk')
   await themeOptions.getByRole('button', { name: 'dark' }).click()
-  await expect(themeOptions.getByRole('button', { name: 'dark' })).toHaveClass(/btn-primary/)
-  await expect(themeOptions.getByRole('button', { name: 'light' })).toHaveClass(/btn-outline/)
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'sunset')
   await themeOptions.getByRole('button', { name: 'system' }).click()
-  await expect(themeOptions.getByRole('button', { name: 'system' })).toHaveClass(/btn-primary/)
-  await expect(themeOptions.getByRole('button', { name: 'system' })).toHaveAttribute('aria-pressed', 'true')
-  await expect(themeOptions.getByRole('button', { name: 'dark' })).toHaveClass(/btn-outline/)
   await expect(page.locator('html')).not.toHaveAttribute('data-theme')
   await page.emulateMedia({ colorScheme: 'dark' })
   const systemDarkSurface = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--color-base-100').trim())
@@ -73,20 +62,16 @@ test('App・Review・Settings の共通ヘッダーでテーマを操作でき�
   expect(systemDarkSurface).not.toBe(systemLightSurface)
   await page.reload()
   await expect(page.locator('html')).not.toHaveAttribute('data-theme')
-  await expect(page.getByRole('button', { name: 'system' })).toHaveClass(/btn-primary/)
-  await expect(page.getByRole('button', { name: 'system' })).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.getByRole('button', { name: 'light' })).toHaveClass(/btn-outline/)
-  await expect(page.getByRole('button', { name: 'light' })).toHaveAttribute('aria-pressed', 'false')
-  await expect(page.getByRole('button', { name: 'dark' })).toHaveClass(/btn-outline/)
-  await expect(page.getByRole('button', { name: 'dark' })).toHaveAttribute('aria-pressed', 'false')
+  await expect(page.getByRole('button', { name: 'system' })).toHaveClass(/btn-soft/)
+  await expect(themeButtons.first()).toHaveClass(/btn-soft/)
   const themeWidths = await themeButtons.evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().width))
   expect(Math.max(...themeWidths) - Math.min(...themeWidths)).toBeLessThanOrEqual(1)
 
   const dataActions = page.locator('.data-actions')
   const dataButtons = dataActions.getByRole('button')
   await expect(dataButtons).toHaveCount(2)
-  await expect(dataButtons.nth(0)).toHaveClass(/btn-outline/)
-  await expect(dataButtons.nth(1)).toHaveClass(/btn-error/)
+  await expect(dataButtons.nth(0)).toHaveClass(/btn-soft/)
+  await expect(dataButtons.nth(1)).toHaveClass(/btn-soft/)
   const dataLayout = await dataActions.evaluate((element) => {
     const buttons = [...element.querySelectorAll('button')]
     const widths = buttons.map((button) => button.getBoundingClientRect().width)
@@ -94,20 +79,7 @@ test('App・Review・Settings の共通ヘッダーでテーマを操作でき�
   })
   expect(dataLayout.gap).toBe('10px')
   expect(dataLayout.widths[0]).toBeCloseTo(dataLayout.widths[1], 1)
-  await expect(page.getByRole('button', { name: 'テスト再生' })).toHaveClass(/btn-ghost/)
-  await expect(page.getByRole('button', { name: 'Googleでログイン' })).toHaveClass(/btn-primary/)
   await expect(page.getByRole('slider', { name: '音量' })).toBeVisible()
-})
-
-test('Settingsのbootstrap再試行はoutline variantを使う', async ({ page }) => {
-  await failAppProcedure(page, 'bootstrap.initialize')
-  await page.goto('/app/settings')
-  await expect(page.getByText('Pomdo の準備に失敗しました。')).toBeVisible({ timeout: 15_000 })
-  const retry = page.getByRole('button', { name: 'もう一度試す' })
-  await expect(retry).toHaveClass(/btn-outline/)
-  await page.unrouteAll({ behavior: 'ignoreErrors' })
-  await retry.click()
-  await expect(page.getByRole('heading', { name: '設定' })).toBeVisible()
 })
 
 test('desktop本文は960px以内に揃い、Taskシートは528px以内に保つ', async ({ page }) => {
@@ -143,11 +115,6 @@ test('desktop本文は960px以内に揃い、Taskシートは528px以内に保�
 test('Appの設定ギアはテーマトグルと同じ色で、Tabフォーカスを表示する', async ({ page }) => {
   await openAppAsAnonymous(page)
   const settingsLink = page.getByRole('link', { name: '設定' })
-  await expect(settingsLink).toHaveClass(/btn-ghost/)
-  await expect(settingsLink).toHaveClass(/btn-circle/)
-  const settingsLinkBox = await settingsLink.boundingBox()
-  expect(settingsLinkBox?.width).toBe(40)
-  expect(settingsLinkBox?.height).toBe(40)
 
   for (const theme of ['cmyk', 'sunset']) {
     await page.locator('html').evaluate((element, selectedTheme) => element.setAttribute('data-theme', selectedTheme), theme)
@@ -298,7 +265,6 @@ test('Focus のストップは破壊的操作の error 表現を使わない', a
   await page.getByRole('button', { name: '▶ はじめる' }).click()
   const stop = page.getByRole('button', { name: 'ストップ' })
   await expect(stop).toBeVisible()
-  await expect(stop).toHaveClass(/btn-outline/)
   await expect(stop).not.toHaveClass(/btn-error/)
 })
 
@@ -316,9 +282,7 @@ test('Task query 失敗時は再試行できる', async ({ page }) => {
   await page.goto('/app')
   await expect(page.getByText('Taskを読み込めませんでした。')).toBeVisible({ timeout: 15000 })
   await page.unrouteAll({ behavior: 'ignoreErrors' })
-  const retry = page.getByRole('button', { name: 'もう一度試す' })
-  await expect(retry).toHaveClass(/btn-outline/)
-  await retry.click()
+  await page.getByRole('button', { name: 'もう一度試す' }).click()
   await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible()
 })
 

@@ -14,7 +14,7 @@ export function AppHeader({ theme, onToggleTheme }: { theme: Theme; onToggleThem
         {isSubpage ? <PomdoBrand /> : null}
         <div className="appbar-actions">
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-          {!isSubpage ? <Link className="btn btn-ghost btn-circle iconbtn settings-icon-link" to="/app/settings" aria-label="設定"><Settings size={19} aria-hidden="true" /></Link> : null}
+          {!isSubpage ? <Link className="iconbtn settings-icon-link" to="/app/settings" aria-label="設定"><Settings size={19} aria-hidden="true" /></Link> : null}
         </div>
       </div>
     </header>

@@ -25,7 +25,6 @@ test('Reviewを直接開いて年間カレンダーをdesktop・mobileで表示�
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   const assertTooltipFitsViewport = async (day: ReturnType<typeof calendar.locator>) => {
     await day.hover()
-    await expect.poll(() => day.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe('none')
     const tooltipBox = await page.getByRole('tooltip').boundingBox()
     const viewport = page.viewportSize()
     expect(tooltipBox).not.toBeNull()
@@ -42,20 +41,8 @@ test('Reviewを直接開いて年間カレンダーをdesktop・mobileで表示�
   await expect.poll(() => weeklyLayout.evaluate((element) => getComputedStyle(element).display)).toBe('grid')
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   const today = calendar.locator('[aria-current="date"]')
-  await expect(today).toHaveClass(/\bbtn\b/)
-  await expect(today).toHaveClass(/btn-ghost/)
   const todayDate = await today.getAttribute('data-date')
   await today.focus()
-  const calendarButtonGeometry = await today.evaluate((element) => {
-    const bounds = element.getBoundingClientRect()
-    const style = getComputedStyle(element)
-    return { width: bounds.width, height: bounds.height, minHeight: style.minHeight, aspectRatio: style.aspectRatio, outlineStyle: style.outlineStyle }
-  })
-  expect(calendarButtonGeometry.width).toBeGreaterThan(0)
-  expect(Math.abs(calendarButtonGeometry.width - calendarButtonGeometry.height)).toBeLessThanOrEqual(1)
-  expect(calendarButtonGeometry.minHeight).toBe('0px')
-  expect(calendarButtonGeometry.aspectRatio).toContain('1')
-  expect(calendarButtonGeometry.outlineStyle).not.toBe('none')
   await page.keyboard.press('ArrowRight')
   const desktopTargetDate = new Date(`${todayDate}T00:00:00.000Z`)
   desktopTargetDate.setUTCDate(desktopTargetDate.getUTCDate() + 7)

@@ -61,7 +61,7 @@ function SortableDecompositionItem({
           <button className="btn btn-ghost btn-xs" type="button" onClick={() => onMove('down')} disabled={index === total - 1} aria-label={`${item.title || messages.decomposition.itemTitle}を${messages.decomposition.moveDown}`}>
             ↓
           </button>
-          <button className="btn btn-error btn-ghost btn-xs" type="button" onClick={onDelete} aria-label={`${item.title || messages.decomposition.itemTitle}を${messages.decomposition.delete}`}>
+          <button className="btn btn-ghost btn-xs" type="button" onClick={onDelete} aria-label={`${item.title || messages.decomposition.itemTitle}を${messages.decomposition.delete}`}>
             ×
           </button>
         </div>
@@ -173,7 +173,7 @@ export function TaskDecompositionPreview({
   }
 
   if (preview.isError || turnstileError) {
-    return <div className="decomposition-state"><div className="alert alert-error" role="alert">{turnstileError ? messages.decomposition.verificationError : messages.decomposition.error}</div><div className="decomposition-actions"><button className="btn btn-outline" type="button" onClick={() => { setTurnstileError(false); setRetryCount((count) => count + 1) }}>{messages.decomposition.retry}</button><button className="btn btn-ghost" type="button" onClick={onCancel}>{messages.decomposition.cancel}</button></div></div>
+    return <div className="decomposition-state"><div className="alert alert-error" role="alert">{turnstileError ? messages.decomposition.verificationError : messages.decomposition.error}</div><div className="decomposition-actions"><button className="btn" type="button" onClick={() => { setTurnstileError(false); setRetryCount((count) => count + 1) }}>{messages.decomposition.retry}</button><button className="btn btn-ghost" type="button" onClick={onCancel}>{messages.decomposition.cancel}</button></div></div>
   }
 
   return <div className="decomposition-preview">

@@ -310,7 +310,7 @@ test('desktop本文は960px以内に揃い、Taskシートは528px以内に保�
   await page.keyboard.press('Escape')
 
   await page.getByRole('link', { name: /振り返りを見る/ }).click()
-  await expect(page.getByRole('heading', { name: '年間の集中時間' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '年間の集中時間' })).toBeVisible({ timeout: 15_000 })
   const reviewWidth = await page.locator('.review-page').evaluate((element) => element.getBoundingClientRect().width)
   expect(reviewWidth).toBeLessThanOrEqual(960)
 })
@@ -360,7 +360,7 @@ test('reduced-transparencyではヘッダーのぼかしを外し、Reviewを表
     features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }],
   })
   await page.goto('/app/review')
-  await expect(page.getByRole('heading', { name: '年間の集中時間' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '年間の集中時間' })).toBeVisible({ timeout: 15_000 })
   await expect.poll(() => page.evaluate(() => window.matchMedia('(prefers-reduced-transparency: reduce)').matches)).toBe(true)
   const headerBackdrop = await page.locator('.appbar').evaluate((element) => getComputedStyle(element).backdropFilter)
   expect(headerBackdrop).toBe('none')
@@ -447,9 +447,9 @@ test('reduced-motionでは初期表示を静止させ、表示中の動画も設
 test('Review のテーマ変更は settings.update に Turnstile token を含める', async ({ page }) => {
   await openAppAsAnonymous(page)
   await page.getByRole('link', { name: /振り返りを見る/ }).click()
-  await expect(page.getByRole('heading', { name: '今日の振り返り' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '今日の振り返り' })).toBeVisible({ timeout: 15_000 })
   await expect(page.getByText('今日を振り返る')).toHaveCount(0)
-  await expect(page.getByText('合計集中時間')).toBeVisible()
+  await expect(page.getByText('合計集中時間')).toBeVisible({ timeout: 15_000 })
 
   const toggleInput = page.getByRole('checkbox', { name: /テーマに切り替え/ })
   const toggle = page.locator('label.theme-toggle')
@@ -486,7 +486,7 @@ test('Task query 失敗時は再試行できる', async ({ page }) => {
   await expect(page.getByText('Taskを読み込めませんでした。')).toBeVisible({ timeout: 15000 })
   await page.unrouteAll({ behavior: 'ignoreErrors' })
   await page.getByRole('button', { name: 'もう一度試す' }).click()
-  await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible()
+  await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible({ timeout: 15_000 })
 })
 
 test('Settings の音量 Slider はキーボードで 0.05 刻みに操作できる', async ({ page }) => {

@@ -14,8 +14,21 @@ permissions:
   deployments: write
 
 jobs:
-  quality:
-    name: Quality gate / Checks
+  quality-static:
+    name: Quality gate / Static checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Run static quality checks
+        uses: ./.github/actions/run-quality-checks
+
+  quality-e2e:
+    name: Quality gate / E2E checks
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -28,8 +41,8 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: Run quality checks
-        uses: ./.github/actions/run-quality-checks
+      - name: Run Chromium E2E checks
+        uses: ./.github/actions/run-e2e-checks
         env:
           DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
@@ -39,7 +52,7 @@ jobs:
 
   build:
     name: Quality gate / Build
-    needs: quality
+    needs: [quality-static, quality-e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production

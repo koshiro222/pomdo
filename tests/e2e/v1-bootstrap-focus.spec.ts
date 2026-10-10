@@ -31,7 +31,8 @@ test('LPから匿名で始めて、TaskとFocusの一連の流れを操作でき
   await page.getByRole('button', { name: '15' }).click()
   await page.getByRole('button', { name: '▶ はじめる' }).click()
   await expect(page.getByRole('button', { name: 'ストップ' })).toBeVisible()
-  await page.clock.runFor('00:15:01')
+  // 残り時間は絶対時刻から算出するため、中間tickを再生せず終了時刻へ進める。
+  await page.clock.fastForward('00:15:01')
   await expect(page.getByText('ひと区切り。少し休みますか？')).toBeVisible()
   await page.getByRole('button', { name: 'もう1本' }).click()
 

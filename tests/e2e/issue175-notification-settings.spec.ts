@@ -177,8 +177,8 @@ test('実行中に別タブで通知をオフにしてもFocusを記録し、中
   await installNotificationDouble(context, 'granted')
   const fixedNow = new Date('2026-10-10T11:00:00+09:00')
   await page.clock.install({ time: fixedNow })
-  await page.addInitScript((key) => localStorage.setItem(key, 'true'), preferenceKey)
   await openAppAsAnonymous(page)
+  await page.evaluate((key) => localStorage.setItem(key, 'true'), preferenceKey)
 
   await setServerNowFromBrowserClock(page)
   await page.getByRole('button', { name: '15', exact: true }).click()
@@ -191,6 +191,7 @@ test('実行中に別タブで通知をオフにしてもFocusを記録し、中
   await expect(completionSwitch).toBeChecked()
   await completionSwitch.click()
   await expect(completionSwitch).not.toBeChecked()
+  await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), preferenceKey)).toBe('false')
 
   const focusCompletion = page.waitForResponse((response) => response.url().includes('/api/trpc/focus.complete'))
   await page.clock.runFor('00:15:01')

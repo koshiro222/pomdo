@@ -1,5 +1,5 @@
-name: Run quality checks
-description: E2E用環境を準備して品質ゲートを実行する
+name: Run static quality checks
+description: 静的品質確認を実行し、各処理の所要時間を記録する
 
 runs:
   using: composite
@@ -10,70 +10,77 @@ runs:
         node-version: '20'
         cache: npm
 
-    - name: Install dependencies
-      shell: bash
-      run: npm ci
-
-    - name: Prepare E2E environment
+    - name: Initialize timing summary
       shell: bash
       run: |
-        set -eu
-        test -n "$DATABASE_URL"
-        test -n "$BETTER_AUTH_SECRET"
         {
-          printf 'DATABASE_URL=%s\n' "$DATABASE_URL"
-          printf 'GOOGLE_CLIENT_ID=%s\n' "$GOOGLE_CLIENT_ID"
-          printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET"
-          printf 'BETTER_AUTH_SECRET=%s\n' "$BETTER_AUTH_SECRET"
-          printf 'BETTER_AUTH_URL=http://localhost:5173\n'
-          printf 'FRONTEND_URL=http://localhost:5173\n'
-          printf 'TURNSTILE_SECRET_KEY=%s\n' "$TURNSTILE_SECRET_KEY"
-          printf 'E2E_TEST_MODE=true\n'
-          printf 'SENTRY_DSN=\n'
-        } > .dev.vars
+          echo '### 静的品質確認の所要時間'
+          echo
+          echo '| 処理 | 所要時間（秒） | 終了コード |'
+          echo '| --- | ---: | ---: |'
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        started=$SECONDS
+        if npm ci; then
+          status=0
+        else
+          status=$?
+        fi
+        elapsed=$((SECONDS - started))
+        printf '| npm ci | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
+        exit "$status"
 
     - name: Lint
       shell: bash
-      run: npm run lint
+      run: |
+        started=$SECONDS
+        if npm run lint; then
+          status=0
+        else
+          status=$?
+        fi
+        elapsed=$((SECONDS - started))
+        printf '| lint | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
+        exit "$status"
 
     - name: Typecheck
       shell: bash
-      run: npm run typecheck
+      run: |
+        started=$SECONDS
+        if npm run typecheck; then
+          status=0
+        else
+          status=$?
+        fi
+        elapsed=$((SECONDS - started))
+        printf '| typecheck | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
+        exit "$status"
 
     - name: Vitest
       shell: bash
-      run: npm test -- --run
+      run: |
+        started=$SECONDS
+        if npm test -- --run; then
+          status=0
+        else
+          status=$?
+        fi
+        elapsed=$((SECONDS - started))
+        printf '| Vitest | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
+        exit "$status"
 
     - name: Coverage
       shell: bash
-      run: npm run test:coverage
-
-    - name: Install Playwright Browsers
-      shell: bash
-      run: npx playwright install --with-deps chromium
-
-    - name: Run Chromium E2E
-      shell: bash
-      run: npm run test:e2e -- --project=chromium
-
-    - name: Assert Playwright report
-      shell: bash
-      run: npm run test:e2e:assert
-
-    - name: Upload Playwright report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: playwright-report-${{ github.sha }}
-        path: playwright-report/
-        if-no-files-found: warn
-        retention-days: 30
-
-    - name: Upload Playwright results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: playwright-results-${{ github.sha }}
-        path: test-results/
-        if-no-files-found: warn
-        retention-days: 30
+      run: |
+        started=$SECONDS
+        if npm run test:coverage; then
+          status=0
+        else
+          status=$?
+        fi
+        elapsed=$((SECONDS - started))
+        printf '| coverage | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
+        exit "$status"

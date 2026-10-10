@@ -27,8 +27,23 @@ jobs:
             exit 1
           fi
 
+  quality-static-e2e-pr:
+    name: Quality gate / Static checks (e2e-pr)
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Run static quality checks
+        uses: ./.github/actions/run-quality-checks
+
   quality-e2e-pr:
-    name: Quality gate / Checks (e2e-pr)
+    name: Quality gate / E2E checks (e2e-pr)
     if: ${{ github.event_name == 'pull_request' }}
     needs: guard
     runs-on: ubuntu-latest
@@ -43,8 +58,8 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: Run quality checks
-        uses: ./.github/actions/run-quality-checks
+      - name: Run Chromium E2E checks
+        uses: ./.github/actions/run-e2e-checks
         env:
           DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
@@ -55,7 +70,7 @@ jobs:
   build-e2e-pr:
     name: Quality gate / Build (e2e-pr)
     if: ${{ github.event_name == 'pull_request' }}
-    needs: quality-e2e-pr
+    needs: [quality-static-e2e-pr, quality-e2e-pr]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: e2e-pr
@@ -71,8 +86,23 @@ jobs:
           VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
+  quality-static-e2e:
+    name: Quality gate / Static checks (e2e)
+    if: ${{ github.event_name != 'pull_request' }}
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Run static quality checks
+        uses: ./.github/actions/run-quality-checks
+
   quality-e2e:
-    name: Quality gate / Checks (e2e)
+    name: Quality gate / E2E checks (e2e)
     if: ${{ github.event_name != 'pull_request' }}
     needs: guard
     runs-on: ubuntu-latest
@@ -87,8 +117,8 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: Run quality checks
-        uses: ./.github/actions/run-quality-checks
+      - name: Run Chromium E2E checks
+        uses: ./.github/actions/run-e2e-checks
         env:
           DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
@@ -99,7 +129,7 @@ jobs:
   build-e2e:
     name: Quality gate / Build (e2e)
     if: ${{ github.event_name != 'pull_request' }}
-    needs: quality-e2e
+    needs: [quality-static-e2e, quality-e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: e2e

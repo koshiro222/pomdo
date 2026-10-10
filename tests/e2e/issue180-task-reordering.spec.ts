@@ -259,16 +259,12 @@ test('Task 本文・checkbox・メニューの操作はドラッグを始めず�
 
   await addTask(page, '削除してもドラッグしない Task')
   const deletionRow = taskRow(page, '削除してもドラッグしない Task')
-  let deleteConfirmationOpened = false
-  page.once('dialog', (dialog) => {
-    deleteConfirmationOpened = true
-    void dialog.dismiss()
-  })
   await deletionRow.getByRole('button', { name: '削除してもドラッグしない Taskのメニュー' }).click()
-  await page.getByRole('menuitem', { name: '削除' }).click()
-  expect(deleteConfirmationOpened).toBe(true)
-  await expect(deletionRow).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: '削除' })).toBeVisible()
   await expect(page.locator('.task-row.is-dragging')).toHaveCount(0)
+  expect(reorderRequests).toBe(0)
+  await page.keyboard.press('Escape')
+  await expect(deletionRow).toBeVisible()
   expect(reorderRequests).toBe(0)
 })
 

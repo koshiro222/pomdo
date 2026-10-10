@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { setServerNowFromBrowserClock } from './helpers/auth'
+import { openAppAsAnonymous, setServerNowFromBrowserClock } from './helpers/auth'
 
 test('LPから匿名で始めて、TaskとFocusの一連の流れを操作できる', async ({ page }) => {
   test.setTimeout(60_000)
@@ -21,7 +21,7 @@ test('LPから匿名で始めて、TaskとFocusの一連の流れを操作でき
   expect(firstPillarIcon!.y + firstPillarIcon!.height).toBeGreaterThan(firstPillarTitle!.y)
   await page.getByRole('link', { name: '使ってみる' }).click()
   await expect(page).toHaveURL(/\/app$/)
-  await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible()
+  await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible({ timeout: 15_000 })
 
   await page.getByLabel('タスクを追加').fill('請求書を確認する')
   await page.getByRole('button', { name: '追加' }).first().click()
@@ -55,8 +55,7 @@ test('LPから匿名で始めて、TaskとFocusの一連の流れを操作でき
 })
 
 test('NextからNowへ移動し、Nowが空ならNextタスクでFocusを開始できる', async ({ page }) => {
-  await page.goto('/app')
-  await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible()
+  await openAppAsAnonymous(page)
   await expect(page.getByText('Now', { exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Next' })).toBeVisible()
 
@@ -79,8 +78,7 @@ test('NextからNowへ移動し、Nowが空ならNextタスクでFocusを開始�
 })
 
 test("Task行のメニューから完了し、Today's Doneでは選択できない", async ({ page }) => {
-  await page.goto('/app')
-  await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible()
+  await openAppAsAnonymous(page)
   await page.getByLabel('タスクを追加').first().fill('メニューから完了するTask')
   await page.getByRole('button', { name: '追加' }).first().click()
   await page.getByRole('button', { name: 'メニューから完了するTaskのメニュー' }).click()

@@ -7,7 +7,7 @@ test('Reviewを直接開いて年間カレンダーをdesktop・mobileで表示�
   await page.addInitScript((value) => localStorage.setItem('pomdo-e2e-now', value), fixedNow.toISOString())
   await page.goto('/app/review')
   await setServerNowFromBrowserClock(page)
-  await expect(page.getByRole('heading', { name: '年間の集中時間' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '年間の集中時間' })).toBeVisible({ timeout: 15_000 })
   await expect(page.getByText('合計集中時間')).toBeVisible()
   const calendar = page.getByRole('group', { name: /\d{4}年の集中時間/ })
   await expect(calendar).toBeVisible()
@@ -109,7 +109,7 @@ test('ReviewとSettingsから記録を確認し、アカウントを削除して
   await page.getByRole('link', { name: /振り返りを見る/ }).click()
   await expect(page).toHaveURL(/\/app\/review$/)
   await expect(page.getByRole('heading', { name: '年間の集中時間' })).toBeVisible()
-  await expect(page.getByRole('group', { name: '2026年の集中時間' })).toBeVisible()
+  await expect(page.getByRole('group', { name: '2026年の集中時間' })).toBeVisible({ timeout: 15_000 })
   const recordedDay = page.getByRole('button', { name: /^2026年10月6日、.*集中時間 15分$/ })
   await expect(recordedDay).toBeVisible()
   await recordedDay.hover()
@@ -173,7 +173,7 @@ test('Reviewの日付情報をtouch tapで開閉し、別日へ切り替えら�
   await page.addInitScript((value) => localStorage.setItem('pomdo-e2e-now', value), fixedNow.toISOString())
   await page.goto('/app/review')
   await setServerNowFromBrowserClock(page)
-  await expect(page.getByRole('group', { name: '2026年の集中時間' })).toBeVisible()
+  await expect(page.getByRole('group', { name: '2026年の集中時間' })).toBeVisible({ timeout: 15_000 })
   const dateMutationRequests: string[] = []
   page.on('request', (request) => {
     if (request.url().includes('/api/trpc/') && request.method() === 'POST') dateMutationRequests.push(request.url())

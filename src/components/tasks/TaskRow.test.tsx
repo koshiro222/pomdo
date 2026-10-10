@@ -14,17 +14,52 @@ const task: TaskView = {
   completedAt: null,
 }
 
-function renderTaskRow(onMoveToNow?: () => void) {
+function renderTaskRow(onMoveToNow?: () => void, canReorder = false, isReorderPending = false) {
   return render(
     <DndContext>
       <SortableContext items={[task.id]} strategy={verticalListSortingStrategy}>
-        <TaskRow task={task} onComplete={vi.fn()} onDelete={vi.fn()} onEdit={vi.fn()} onMoveToNow={onMoveToNow} />
+        <TaskRow task={task} onComplete={vi.fn()} onDelete={vi.fn()} onEdit={vi.fn()} onMoveToNow={onMoveToNow} canReorder={canReorder} isReorderPending={isReorderPending} />
       </SortableContext>
     </DndContext>,
   )
 }
 
 describe('TaskRow', () => {
+  it('並べ替え可能な行は名前付きハンドルだけを並べ替え操作として表示し、フォーカスできる', async () => {
+    const user = userEvent.setup()
+    renderTaskRow(undefined, true)
+
+    const handle = screen.getByRole('button', { name: '記事を読むをドラッグして並べ替え' })
+    expect(handle).toBeVisible()
+    expect(handle.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.queryByRole('button', { name: '記事を読むを上へ' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '記事を読むを下へ' })).not.toBeInTheDocument()
+
+    await user.tab()
+    await user.tab()
+    await user.tab()
+    expect(handle).toHaveFocus()
+  })
+
+  it('保存中のハンドルはdisabledにせずフォーカス可能なまま aria-disabled を伝える', async () => {
+    const user = userEvent.setup()
+    renderTaskRow(undefined, true, true)
+    const handle = screen.getByRole('button', { name: '記事を読むをドラッグして並べ替え' })
+
+    expect(handle).toHaveAttribute('aria-disabled', 'true')
+    expect(handle).not.toBeDisabled()
+    await user.tab()
+    await user.tab()
+    await user.tab()
+    expect(handle).toHaveFocus()
+  })
+
+  it('並べ替え不可の行にはハンドルを表示しない', () => {
+    renderTaskRow()
+
+    expect(screen.queryByRole('button', { name: /ドラッグして並べ替え/ })).not.toBeInTheDocument()
+  })
+
   it('メニュートリガーを押すと編集・完了・削除の項目が表示される', async () => {
     const user = userEvent.setup()
     renderTaskRow()

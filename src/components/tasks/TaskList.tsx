@@ -1,10 +1,11 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
-import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { TurnstileTokenResolver } from '../../hooks/useTurnstileToken'
 import { trpc } from '../../lib/trpc'
 import { messages } from '../../messages'
+import { Toast } from '../ui/Toast'
 import { TaskAddForm } from './TaskAddForm'
 import { TaskBulkDeleteDialog } from './TaskBulkDeleteDialog'
 import { TaskDetailsSheet } from './TaskDetailsSheet'
@@ -12,6 +13,10 @@ import { TaskRow, type TaskView } from './TaskRow'
 
 function sortOnDeck(tasks: TaskView[]) {
   return [...tasks].sort((left, right) => (left.deckOrder ?? '').localeCompare(right.deckOrder ?? ''))
+}
+
+function sameIds(left: string[], right: string[]) {
+  return left.length === right.length && left.every((id, index) => id === right[index])
 }
 
 export function TaskList({ currentTask, onDeck, backlog, done, selectedTaskIds, onSelectionChange, onSelectionRemove, onBulkDeleteSuccess, activeFocusTaskId, resolveTurnstileToken, onRefresh, onMoveToNow }: {
@@ -34,14 +39,38 @@ export function TaskList({ currentTask, onDeck, backlog, done, selectedTaskIds, 
   const [bulkDeleteSelectionKey, setBulkDeleteSelectionKey] = useState<string | null>(null)
   const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null)
   const [isResolvingBulkDelete, setIsResolvingBulkDelete] = useState(false)
+  const [optimisticOnDeckIds, setOptimisticOnDeckIds] = useState<string[] | null>(null)
+  const [isReorderPending, setIsReorderPending] = useState(false)
+  const [reorderError, setReorderError] = useState<string | null>(null)
   const bulkDeleteRequestStarted = useRef(false)
+  const reorderRequestStarted = useRef(false)
   const onDeckHeadingRef = useRef<HTMLHeadingElement>(null)
   const completeTask = trpc.tasks.complete.useMutation()
   const deleteTask = trpc.tasks.delete.useMutation()
   const deleteTasks = trpc.tasks.deleteMany.useMutation()
   const reorder = trpc.tasks.reorder.useMutation()
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
-  const orderedOnDeck = useMemo(() => sortOnDeck(onDeck), [onDeck])
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+  const serverOrderedOnDeck = useMemo(() => sortOnDeck(onDeck), [onDeck])
+  const serverOrderedOnDeckIds = useMemo(() => serverOrderedOnDeck.map((task) => task.id), [serverOrderedOnDeck])
+  const orderedOnDeck = useMemo(() => {
+    if (!optimisticOnDeckIds) return serverOrderedOnDeck
+    const tasksById = new Map(serverOrderedOnDeck.map((task) => [task.id, task]))
+    const optimisticTasks = optimisticOnDeckIds.flatMap((id) => {
+      const task = tasksById.get(id)
+      return task ? [task] : []
+    })
+    const optimisticIds = new Set(optimisticOnDeckIds)
+    return [...optimisticTasks, ...serverOrderedOnDeck.filter((task) => !optimisticIds.has(task.id))]
+  }, [optimisticOnDeckIds, serverOrderedOnDeck])
+  useEffect(() => {
+    if (!optimisticOnDeckIds || !sameIds(serverOrderedOnDeckIds, optimisticOnDeckIds)) return
+    // 一致を検出した後に state を破棄し、後続の別更新で古い順序を再適用しない。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOptimisticOnDeckIds(null)
+  }, [optimisticOnDeckIds, serverOrderedOnDeckIds])
   const selectedTasks = useMemo(() => [
     ...(currentTask ? [currentTask] : []),
     ...orderedOnDeck,
@@ -98,34 +127,56 @@ export function TaskList({ currentTask, onDeck, backlog, done, selectedTaskIds, 
       },
     })
   }
-  const moveTask = async (index: number, direction: 'up' | 'down') => {
-    const targetIndex = direction === 'up' ? index - 1 : index + 1
-    const target = orderedOnDeck[index]
-    if (!target || targetIndex < 0 || targetIndex >= orderedOnDeck.length) return
-    const reordered = [...orderedOnDeck]
-    reordered.splice(index, 1)
-    reordered.splice(targetIndex, 0, target)
-    const newIndex = targetIndex
-    const previousId = reordered[newIndex - 1]?.id ?? null
-    const nextId = reordered[newIndex + 1]?.id ?? null
-    const turnstileToken = await resolveTurnstileToken()
-    if (!turnstileToken) return
-    reorder.mutate({ id: target.id, previousId, nextId, turnstileToken }, { onSuccess: onRefresh })
-  }
-  const renderRows = (tasks: TaskView[], canMoveToNow: boolean, showMove: boolean, canSelect = true) => tasks.map((task, index) => <TaskRow key={task.id} task={task} isNow={currentTask?.id === task.id} isSelected={canSelect && selectedTaskIds.has(task.id)} onSelect={canSelect ? (selected) => { setBulkDeleteSelectionKey(null); onSelectionChange(task.id, selected) } : undefined} onComplete={!task.completedAt ? () => { void applyComplete(task) } : undefined} onDelete={() => { void applyDelete(task) }} onEdit={() => setDetailsTask(task)} onMoveToNow={canMoveToNow ? () => onMoveToNow(task) : undefined} onMove={showMove ? (direction) => { void moveTask(index, direction) } : undefined} />)
+  const renderRows = (tasks: TaskView[], canMoveToNow: boolean, canReorder = false, canSelect = true) => tasks.map((task) => <TaskRow key={task.id} task={task} isNow={currentTask?.id === task.id} isSelected={canSelect && selectedTaskIds.has(task.id)} onSelect={canSelect ? (selected) => { setBulkDeleteSelectionKey(null); onSelectionChange(task.id, selected) } : undefined} onComplete={!task.completedAt ? () => { void applyComplete(task) } : undefined} onDelete={() => { void applyDelete(task) }} onEdit={() => setDetailsTask(task)} onMoveToNow={canMoveToNow ? () => onMoveToNow(task) : undefined} canReorder={canReorder} isReorderPending={isReorderPending} />)
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
-    if (!over || active.id === over.id) return
+    if (!over || active.id === over.id || reorderRequestStarted.current) return
     const oldIndex = orderedOnDeck.findIndex((task) => task.id === active.id)
     const newIndex = orderedOnDeck.findIndex((task) => task.id === over.id)
     if (oldIndex < 0 || newIndex < 0) return
-    const reordered = [...orderedOnDeck]
-    const [target] = reordered.splice(oldIndex, 1)
+    const reordered = arrayMove(orderedOnDeck, oldIndex, newIndex)
+    const target = reordered[newIndex]
     if (!target) return
-    reordered.splice(newIndex, 0, target)
-    const turnstileToken = await resolveTurnstileToken()
-    if (!turnstileToken) return
-    reorder.mutate({ id: target.id, previousId: reordered[newIndex - 1]?.id ?? null, nextId: reordered[newIndex + 1]?.id ?? null, turnstileToken }, { onSuccess: onRefresh })
+    const reorderedIds = reordered.map((task) => task.id)
+    const originalIds = orderedOnDeck.map((task) => task.id)
+    if (sameIds(originalIds, reorderedIds)) return
+
+    reorderRequestStarted.current = true
+    setOptimisticOnDeckIds(reorderedIds)
+    setReorderError(null)
+    setIsReorderPending(true)
+
+    const finishReorder = () => {
+      reorderRequestStarted.current = false
+      setIsReorderPending(false)
+    }
+    const failReorder = () => {
+      setOptimisticOnDeckIds(originalIds)
+      setReorderError(messages.task.reorderError)
+      finishReorder()
+    }
+
+    try {
+      const turnstileToken = await resolveTurnstileToken()
+      if (!turnstileToken) {
+        failReorder()
+        return
+      }
+      reorder.mutate({
+        id: target.id,
+        previousId: reordered[newIndex - 1]?.id ?? null,
+        nextId: reordered[newIndex + 1]?.id ?? null,
+        turnstileToken,
+      }, {
+        onSuccess: () => {
+          finishReorder()
+          onRefresh()
+        },
+        onError: failReorder,
+      })
+    } catch {
+      failReorder()
+    }
   }
   return <>
     {selectedTasks.length > 0 ? <div className="bulk-delete-toolbar">
@@ -135,6 +186,8 @@ export function TaskList({ currentTask, onDeck, backlog, done, selectedTaskIds, 
     {bulkDeleteError ? <p className="bulk-delete-error" role="alert">{bulkDeleteError}</p> : null}
     <section className="section" aria-labelledby="on-deck-heading">
       <h2 id="on-deck-heading" ref={onDeckHeadingRef} tabIndex={-1}>{messages.app.onDeck}</h2>
+      {reorderError ? <Toast message={reorderError} role="alert" onClose={() => setReorderError(null)} /> : null}
+      {/* sensor配列を固定し、pending中はTaskRow側でactivatorを無効にする。dnd-kitは配列長の変更でReact警告を出す。 */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}><div className="group-list card card-border"><TaskAddForm bucket="onDeck" resolveTurnstileToken={resolveTurnstileToken} onCreated={onRefresh} /><SortableContext items={orderedOnDeck.map((task) => task.id)} strategy={verticalListSortingStrategy}>{renderRows(orderedOnDeck, true, true)}</SortableContext></div></DndContext>
     </section>
     <section className="disclosure"><button className="disclosure-trigger btn btn-ghost" type="button" aria-expanded={backlogOpen} onClick={() => setBacklogOpen(!backlogOpen)}><span>{messages.app.backlog}</span><span>{backlog.length}</span><ChevronDown size={16} /></button>{backlogOpen ? <div className="group-list disclosure-body card card-border"><TaskAddForm bucket="backlog" resolveTurnstileToken={resolveTurnstileToken} onCreated={onRefresh} />{renderRows(backlog, true, false)}</div> : null}</section>

@@ -1,5 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
+import type { ComponentProps } from 'react'
 import userEvent from '@testing-library/user-event'
+import type { DragEndEvent } from '@dnd-kit/core'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TaskList } from './TaskList'
 import type { TaskView } from './TaskRow'
@@ -9,7 +11,19 @@ const mocks = vi.hoisted(() => ({
   delete: { mutate: vi.fn(), isPending: false },
   deleteMany: { mutate: vi.fn(), isPending: false },
   reorder: { mutate: vi.fn(), isPending: false },
+  onDeckDragEnd: null as ((event: DragEndEvent) => void) | null,
 }))
+
+vi.mock('@dnd-kit/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dnd-kit/core')>()
+  return {
+    ...actual,
+    DndContext: (props: ComponentProps<typeof actual.DndContext>) => {
+      mocks.onDeckDragEnd = props.onDragEnd ?? null
+      return <actual.DndContext {...props} />
+    },
+  }
+})
 
 vi.mock('../../lib/trpc', () => ({
   trpc: {
@@ -27,13 +41,20 @@ vi.mock('./TaskDetailsSheet', () => ({ TaskDetailsSheet: () => null }))
 
 const nowTask: TaskView = { id: 'now-id', title: 'NowのTask', note: null, estimate: null, deckOrder: null, completedAt: null }
 const onDeckTask: TaskView = { id: 'deck-id', title: 'NextのTask', note: null, estimate: null, deckOrder: 'a', completedAt: null }
+const secondOnDeckTask: TaskView = { id: 'deck-second-id', title: 'その次のTask', note: null, estimate: null, deckOrder: 'b', completedAt: null }
+const thirdOnDeckTask: TaskView = { id: 'deck-third-id', title: '最後のTask', note: null, estimate: null, deckOrder: 'c', completedAt: null }
 const backlogTask: TaskView = { id: 'backlog-id', title: 'BacklogのTask', note: null, estimate: null, deckOrder: null, completedAt: null }
 const doneTask: TaskView = { id: 'done-id', title: '完了済みのTask', note: null, estimate: null, deckOrder: null, completedAt: new Date('2026-09-04T00:00:00Z') }
 
-function renderList({ selectedTaskIds = new Set([nowTask.id, onDeckTask.id]), activeFocusTaskId = null }: { selectedTaskIds?: ReadonlySet<string>; activeFocusTaskId?: string | null } = {}) {
+function renderList({ selectedTaskIds = new Set([nowTask.id, onDeckTask.id]), activeFocusTaskId = null, onDeck = [onDeckTask, secondOnDeckTask, thirdOnDeckTask], resolveTurnstileToken = async () => 'turnstile-token' }: {
+  selectedTaskIds?: ReadonlySet<string>
+  activeFocusTaskId?: string | null
+  onDeck?: TaskView[]
+  resolveTurnstileToken?: () => Promise<string | null>
+} = {}) {
   const props = {
     currentTask: nowTask,
-    onDeck: [onDeckTask],
+    onDeck,
     backlog: [backlogTask],
     done: [doneTask],
     selectedTaskIds,
@@ -41,19 +62,114 @@ function renderList({ selectedTaskIds = new Set([nowTask.id, onDeckTask.id]), ac
     onSelectionRemove: vi.fn(),
     onBulkDeleteSuccess: vi.fn(),
     activeFocusTaskId,
-    resolveTurnstileToken: async () => 'turnstile-token',
+    resolveTurnstileToken,
     onRefresh: vi.fn(),
     onMoveToNow: vi.fn(),
   }
   return { ...render(<TaskList {...props} />), props }
 }
 
-describe('TaskList bulk delete', () => {
+function visibleOnDeckTitles(container: HTMLElement) {
+  const section = container.querySelector('section[aria-labelledby="on-deck-heading"]')
+  return Array.from(section?.querySelectorAll('.task-row .task-title') ?? []).map((title) => title.textContent)
+}
+
+function dragOnDeck(activeId: string, overId: string) {
+  if (!mocks.onDeckDragEnd) throw new Error('On Deck のドラッグ終了処理が見つかりません')
+  mocks.onDeckDragEnd({ active: { id: activeId }, over: { id: overId } } as DragEndEvent)
+}
+
+describe('TaskList', () => {
   beforeEach(() => {
-    for (const mutation of Object.values(mocks)) {
+    for (const mutation of [mocks.complete, mocks.delete, mocks.deleteMany, mocks.reorder]) {
       mutation.mutate.mockReset()
       mutation.isPending = false
     }
+    mocks.onDeckDragEnd = null
+  })
+
+  it('ドロップ直後から並べ替え、表示順に隣接IDを使って保存する', async () => {
+    let resolveToken!: (token: string | null) => void
+    const resolveTurnstileToken = vi.fn(() => new Promise<string | null>((resolve) => { resolveToken = resolve }))
+    const { container, props, rerender } = renderList({ resolveTurnstileToken })
+    const handle = screen.getByRole('button', { name: '最後のTaskをドラッグして並べ替え' })
+    handle.focus()
+
+    act(() => dragOnDeck(thirdOnDeckTask.id, onDeckTask.id))
+    expect(visibleOnDeckTitles(container)).toEqual(['最後のTask', 'NextのTask', 'その次のTask'])
+    expect(handle).toHaveFocus()
+    expect(handle).toHaveAttribute('aria-disabled', 'true')
+    expect(handle).not.toBeDisabled()
+    expect(resolveTurnstileToken).toHaveBeenCalledOnce()
+    expect(mocks.reorder.mutate).not.toHaveBeenCalled()
+
+    act(() => dragOnDeck(secondOnDeckTask.id, onDeckTask.id))
+    expect(mocks.reorder.mutate).not.toHaveBeenCalled()
+
+    await act(async () => {
+      resolveToken('turnstile-token')
+      await Promise.resolve()
+    })
+    expect(mocks.reorder.mutate).toHaveBeenCalledWith({
+      id: thirdOnDeckTask.id,
+      previousId: null,
+      nextId: onDeckTask.id,
+      turnstileToken: 'turnstile-token',
+    }, expect.any(Object))
+
+    const options = mocks.reorder.mutate.mock.calls[0]?.[1]
+    act(() => options?.onSuccess())
+    expect(props.onRefresh).toHaveBeenCalledOnce()
+    expect(visibleOnDeckTitles(container)).toEqual(['最後のTask', 'NextのTask', 'その次のTask'])
+
+    rerender(<TaskList {...props} onDeck={[
+      { ...thirdOnDeckTask, deckOrder: 'a' },
+      { ...onDeckTask, deckOrder: 'b' },
+      { ...secondOnDeckTask, deckOrder: 'c' },
+    ]} />)
+    expect(visibleOnDeckTitles(container)).toEqual(['最後のTask', 'NextのTask', 'その次のTask'])
+  })
+
+  it.each([
+    ['tokenがnull', async () => null],
+    ['token取得がreject', async () => { throw new Error('token resolver failed') }],
+  ])('%s の場合は元の順序へ戻して alert を表示する', async (_scenario, resolveTurnstileToken) => {
+    const { container } = renderList({ resolveTurnstileToken })
+    act(() => dragOnDeck(thirdOnDeckTask.id, onDeckTask.id))
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Taskの順序を保存できませんでした'))
+    expect(visibleOnDeckTitles(container)).toEqual(['NextのTask', 'その次のTask', '最後のTask'])
+    expect(mocks.reorder.mutate).not.toHaveBeenCalled()
+  })
+
+  it('mutation失敗時は元の順序とTaskの選択状態を戻す', async () => {
+    const { container } = renderList()
+    act(() => dragOnDeck(thirdOnDeckTask.id, onDeckTask.id))
+    await waitFor(() => expect(mocks.reorder.mutate).toHaveBeenCalledOnce())
+
+    const options = mocks.reorder.mutate.mock.calls[0]?.[1]
+    act(() => options?.onError(new Error('reorder failed')))
+
+    expect(visibleOnDeckTitles(container)).toEqual(['NextのTask', 'その次のTask', '最後のTask'])
+    expect(screen.getByRole('checkbox', { name: 'NextのTaskを削除対象に選択' })).toBeChecked()
+    expect(screen.getByRole('alert')).toHaveTextContent('Taskの順序を保存できませんでした')
+  })
+
+  it('古い props のまま続けて並べ替えが失敗したら、2回目の開始順へ戻す', async () => {
+    const { container } = renderList()
+    act(() => dragOnDeck(thirdOnDeckTask.id, onDeckTask.id))
+    await waitFor(() => expect(mocks.reorder.mutate).toHaveBeenCalledOnce())
+    const firstOptions = mocks.reorder.mutate.mock.calls[0]?.[1]
+    act(() => firstOptions?.onSuccess())
+    expect(visibleOnDeckTitles(container)).toEqual(['最後のTask', 'NextのTask', 'その次のTask'])
+
+    act(() => dragOnDeck(thirdOnDeckTask.id, secondOnDeckTask.id))
+    await waitFor(() => expect(mocks.reorder.mutate).toHaveBeenCalledTimes(2))
+    const secondOptions = mocks.reorder.mutate.mock.calls[1]?.[1]
+    act(() => secondOptions?.onError(new Error('reorder failed')))
+
+    expect(visibleOnDeckTitles(container)).toEqual(['最後のTask', 'NextのTask', 'その次のTask'])
+    expect(screen.getByRole('alert')).toHaveTextContent('Taskの順序を保存できませんでした')
   })
 
   it('pending中は削除を再実行できない', async () => {

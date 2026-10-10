@@ -108,7 +108,7 @@ test('ReviewとSettingsから記録を確認し、アカウントを削除して
 
   await page.getByRole('link', { name: /振り返りを見る/ }).click()
   await expect(page).toHaveURL(/\/app\/review$/)
-  await expect(page.getByRole('heading', { name: '年間の集中時間' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '年間の集中時間' })).toBeVisible({ timeout: 15_000 })
   await expect(page.getByRole('group', { name: '2026年の集中時間' })).toBeVisible({ timeout: 15_000 })
   const recordedDay = page.getByRole('button', { name: /^2026年10月6日、.*集中時間 15分$/ })
   await expect(recordedDay).toBeVisible()

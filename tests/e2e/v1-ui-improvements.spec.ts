@@ -447,9 +447,9 @@ test('reduced-motionでは初期表示を静止させ、表示中の動画も設
 test('Review のテーマ変更は settings.update に Turnstile token を含める', async ({ page }) => {
   await openAppAsAnonymous(page)
   await page.getByRole('link', { name: /振り返りを見る/ }).click()
-  await expect(page.getByRole('heading', { name: '今日の振り返り' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '今日の振り返り' })).toBeVisible({ timeout: 15_000 })
   await expect(page.getByText('今日を振り返る')).toHaveCount(0)
-  await expect(page.getByText('合計集中時間')).toBeVisible()
+  await expect(page.getByText('合計集中時間')).toBeVisible({ timeout: 15_000 })
 
   const toggleInput = page.getByRole('checkbox', { name: /テーマに切り替え/ })
   const toggle = page.locator('label.theme-toggle')

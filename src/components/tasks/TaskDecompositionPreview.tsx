@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { GripVertical } from 'lucide-react'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -19,48 +20,38 @@ function createItemId(): string {
 function SortableDecompositionItem({
   item,
   index,
-  total,
   onTitleChange,
   onNoteChange,
   onDelete,
-  onMove,
 }: {
   item: DecompositionItem
   index: number
-  total: number
   onTitleChange: (value: string) => void
   onNoteChange: (value: string) => void
   onDelete: () => void
-  onMove: (direction: 'up' | 'down') => void
 }) {
-  const sortable = useSortable({ id: item.id })
-  const sortableEnabled = true
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
   const titleInputId = `decomposition-title-${item.id}`
   const noteInputId = `decomposition-note-${item.id}`
   return (
     <article
-      ref={sortableEnabled ? sortable.setNodeRef : undefined}
-      style={sortableEnabled ? { transform: CSS.Transform.toString(sortable.transform), transition: sortable.transition } : undefined}
-      className={`decomposition-item card card-border ${sortable.isDragging ? 'is-dragging' : ''}`}
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`decomposition-item card card-border ${isDragging ? 'is-dragging' : ''}`}
     >
       <div className="decomposition-item-heading">
         <button
           className="drag-handle btn btn-ghost btn-sm"
           type="button"
           aria-label={`${item.title || messages.decomposition.itemTitle}をドラッグして並べ替え`}
-          {...(sortableEnabled ? sortable.attributes : {})}
-          {...(sortableEnabled ? sortable.listeners : {})}
+          ref={setActivatorNodeRef}
+          {...attributes}
+          {...listeners}
         >
-          ⠿
+          <GripVertical size={18} aria-hidden="true" />
         </button>
         <span className="decomposition-item-number" aria-hidden="true">{index + 1}</span>
         <div className="decomposition-item-actions">
-          <button className="btn btn-ghost btn-xs" type="button" onClick={() => onMove('up')} disabled={index === 0} aria-label={`${item.title || messages.decomposition.itemTitle}を${messages.decomposition.moveUp}`}>
-            ↑
-          </button>
-          <button className="btn btn-ghost btn-xs" type="button" onClick={() => onMove('down')} disabled={index === total - 1} aria-label={`${item.title || messages.decomposition.itemTitle}を${messages.decomposition.moveDown}`}>
-            ↓
-          </button>
           <button className="btn btn-ghost btn-xs" type="button" onClick={onDelete} aria-label={`${item.title || messages.decomposition.itemTitle}を${messages.decomposition.delete}`}>
             ×
           </button>
@@ -132,12 +123,6 @@ export function TaskDecompositionPreview({
     setItems((current) => current.map((item) => item.id === itemId ? { ...item, ...update } : item))
   }
 
-  const moveItem = (index: number, direction: 'up' | 'down') => {
-    const targetIndex = direction === 'up' ? index - 1 : index + 1
-    if (targetIndex < 0 || targetIndex >= items.length) return
-    setItems((current) => arrayMove(current, index, targetIndex))
-  }
-
   const handleDragEnd = (event: DragEndEvent) => {
     if (!event.over || event.active.id === event.over.id) return
     setItems((current) => {
@@ -181,7 +166,7 @@ export function TaskDecompositionPreview({
     {items.length === 0 ? <p className="decomposition-empty" role="status">{messages.decomposition.empty}</p> : <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
         <div className="decomposition-list">
-          {items.map((item, index) => <SortableDecompositionItem key={item.id} item={item} index={index} total={items.length} onTitleChange={(title) => updateItem(item.id, { title })} onNoteChange={(note) => updateItem(item.id, { note })} onDelete={() => setItems((current) => current.filter((candidate) => candidate.id !== item.id))} onMove={(direction) => moveItem(index, direction)} />)}
+          {items.map((item, index) => <SortableDecompositionItem key={item.id} item={item} index={index} onTitleChange={(title) => updateItem(item.id, { title })} onNoteChange={(note) => updateItem(item.id, { note })} onDelete={() => setItems((current) => current.filter((candidate) => candidate.id !== item.id))} />)}
         </div>
       </SortableContext>
     </DndContext>}

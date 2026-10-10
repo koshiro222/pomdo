@@ -96,9 +96,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .task-meta { color: color-mix(in srgb, var(--color-base-content) 70%, transparent); font-size: .78rem; }
 .overflow-count { color: color-mix(in srgb, var(--color-base-content) 55%, transparent); }
 .now-badge { font-size: .66rem; font-weight: 700; letter-spacing: .06em; }
-.reorder-buttons { display: inline-flex; gap: 1px; }
-.reorder-buttons button { width: 26px; height: 26px; display: grid; place-items: center; }
-.drag-handle { width: 28px; min-height: 32px; font-size: 1.25rem; line-height: 1; touch-action: none; }
+.drag-handle { width: 32px; min-height: 32px; flex: none; padding: 0; cursor: grab; touch-action: none; }
 .disclosure { margin-top: 12px; }
 .disclosure-trigger { width: 100%; min-height: 48px; padding: 13px 14px; display: flex; align-items: center; justify-content: flex-start; gap: 8px; border: 0; border-radius: var(--radius-box); font-size: var(--fs-meta); text-align: left; }
 .disclosure-trigger span:nth-child(2) { margin-left: auto; }
@@ -153,7 +151,6 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .decomposition-item { padding: 12px; }
 .decomposition-item.is-dragging { position: relative; z-index: 2; background: var(--color-base-200); box-shadow: var(--shadow-card); }
 .decomposition-item-heading { display: flex; align-items: center; gap: 6px; }
-.decomposition-item-heading .drag-handle { width: 32px; min-height: 32px; padding: 0; cursor: grab; touch-action: none; }
 .decomposition-item-number { min-width: 1.5em; color: color-mix(in srgb, var(--color-base-content) 55%, transparent); font-size: var(--fs-meta); font-variant-numeric: tabular-nums; }
 .decomposition-item-actions { display: inline-flex; gap: 2px; margin-left: auto; }
 .decomposition-item-actions .btn { min-height: 30px; padding: 3px 8px; }

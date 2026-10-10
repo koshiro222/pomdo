@@ -1,4 +1,4 @@
-import { Check, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react'
+import { Check, GripVertical, MoreHorizontal } from 'lucide-react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { DropdownMenu } from 'radix-ui'
@@ -13,7 +13,7 @@ export type TaskView = {
   completedAt: Date | string | null
 }
 
-export function TaskRow({ task, isNow = false, isSelected = false, completedFocusCount = 0, onSelect, onComplete, onDelete, onMoveToNow, onEdit, onMove }: {
+export function TaskRow({ task, isNow = false, isSelected = false, completedFocusCount = 0, onSelect, onComplete, onDelete, onMoveToNow, onEdit, canReorder = false, isReorderPending = false }: {
   task: TaskView
   isNow?: boolean
   completedFocusCount?: number
@@ -23,12 +23,12 @@ export function TaskRow({ task, isNow = false, isSelected = false, completedFocu
   onDelete: () => void
   onMoveToNow?: () => void
   onEdit?: () => void
-  onMove?: (direction: 'up' | 'down') => void
+  canReorder?: boolean
+  isReorderPending?: boolean
 }) {
-  const sortable = useSortable({ id: task.id })
-  const sortableEnabled = onMove !== undefined
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: task.id, disabled: !canReorder || isReorderPending })
   const progress = task.estimate === null ? `${completedFocusCount} 本` : `${Math.min(completedFocusCount, task.estimate)} / ${task.estimate} 本${completedFocusCount > task.estimate ? `  ${completedFocusCount}` : ''}`
-  return <article ref={sortableEnabled ? sortable.setNodeRef : undefined} style={sortableEnabled ? { transform: CSS.Transform.toString(sortable.transform), transition: sortable.transition } : undefined} className={`task-row ${task.completedAt ? 'done' : ''} ${isNow ? 'is-now' : ''} ${isSelected ? 'is-selected' : ''} ${sortable.isDragging ? 'is-dragging' : ''}`}>
+  return <article ref={canReorder ? setNodeRef : undefined} style={canReorder ? { transform: CSS.Transform.toString(transform), transition } : undefined} className={`task-row ${task.completedAt ? 'done' : ''} ${isNow ? 'is-now' : ''} ${isSelected ? 'is-selected' : ''} ${isDragging ? 'is-dragging' : ''}`}>
     {task.completedAt
       ? <button className="check btn btn-circle btn-sm btn-primary" type="button" aria-label={`${task.title}を完了`} disabled><Check size={15} /></button>
       : <input className="task-select checkbox checkbox-primary" type="checkbox" checked={isSelected} aria-label={messages.task.selectForDelete(task.title)} onClick={(event) => event.stopPropagation()} onChange={(event) => onSelect?.(event.currentTarget.checked)} />}
@@ -36,8 +36,7 @@ export function TaskRow({ task, isNow = false, isSelected = false, completedFocu
       <span className="task-title">{task.title}</span>
       <span className="task-meta">{progress}{task.note ? ` · ${task.note}` : ''}</span>
     </button>
-    {sortableEnabled ? <button className="drag-handle btn btn-ghost btn-square btn-sm" type="button" aria-label={`${task.title}をドラッグして並べ替え`} {...sortable.attributes} {...sortable.listeners}>⠿</button> : null}
-    {onMove ? <span className="reorder-buttons"><button className="btn btn-ghost btn-square btn-xs" type="button" aria-label={`${task.title}を上へ`} onClick={() => onMove('up')}><ChevronUp size={15} /></button><button className="btn btn-ghost btn-square btn-xs" type="button" aria-label={`${task.title}を下へ`} onClick={() => onMove('down')}><ChevronDown size={15} /></button></span> : null}
+    {canReorder ? <button ref={setActivatorNodeRef} className="drag-handle btn btn-ghost btn-square btn-sm" type="button" aria-label={`${task.title}をドラッグして並べ替え`} {...attributes} {...listeners} aria-disabled={isReorderPending || undefined}><GripVertical size={18} aria-hidden="true" /></button> : null}
     {isNow ? <span className="now-badge badge badge-primary">NOW</span> : null}
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>

@@ -59,20 +59,7 @@ runs:
         printf '| typecheck | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
         exit "$status"
 
-    - name: Vitest
-      shell: bash
-      run: |
-        started=$SECONDS
-        if npm test -- --run; then
-          status=0
-        else
-          status=$?
-        fi
-        elapsed=$((SECONDS - started))
-        printf '| Vitest | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
-        exit "$status"
-
-    - name: Coverage
+    - name: Vitest with coverage
       shell: bash
       run: |
         started=$SECONDS
@@ -82,5 +69,5 @@ runs:
           status=$?
         fi
         elapsed=$((SECONDS - started))
-        printf '| coverage | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
+        printf '| Vitest + coverage | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
         exit "$status"

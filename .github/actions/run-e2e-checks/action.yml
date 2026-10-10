@@ -69,7 +69,7 @@ runs:
       shell: bash
       run: |
         started=$SECONDS
-        if npm run test:e2e -- --project=chromium; then
+        if npm run test:e2e -- --project=chromium --workers=2; then
           status=0
         else
           status=$?

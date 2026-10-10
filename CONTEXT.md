@@ -105,3 +105,7 @@ _Avoid_: Staging, Preview
 **Production**:
 `main` の変更を公開する環境。本番ユーザーの認証・Task・Focus Sessionを扱い、PreviewやE2E environmentから分離されている。
 _Avoid_: Live preview, Staging
+
+**CI/CD**:
+ソースコード変更を自動で検証し、PreviewまたはProductionへ反映する一連の活動。CIは変更を統合する前に検証する工程、CDは検証済みの変更を配布環境へ反映する工程を指す。
+_Avoid_: Build（全工程を指す呼び方として）

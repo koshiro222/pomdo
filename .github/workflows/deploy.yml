@@ -97,6 +97,22 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=pomdo --branch=main --commit-hash=${{ github.sha }}
 
+      - name: Verify production health
+        env:
+          HEALTH_URL: https://pomdo.pages.dev/api/health
+        run: |
+          set -eu
+          for attempt in $(seq 1 12); do
+            if response="$(curl --silent --show-error --fail "$HEALTH_URL")" \
+              && printf '%s' "$response" | jq --exit-status '.status == "ok" and .db == "connected"' >/dev/null; then
+              printf 'Production health check passed: %s\n' "$response"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'Production health check failed after 12 attempts.'
+          exit 1
+
       - name: Write deployment summary
         env:
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}

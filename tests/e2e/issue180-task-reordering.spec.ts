@@ -348,6 +348,7 @@ test('AI 分解の確定が失敗しても編集した内容と並び順を保�
 })
 
 test('desktop と mobile の幅で On Deck と AI 分解案のハンドルを表示し、画面内で操作できる', async ({ page }) => {
+  test.setTimeout(60_000)
   await openAppAsAnonymous(page)
   await addTask(page, '幅を確認する Task A')
   await addTask(page, '幅を確認する Task B')

@@ -2,18 +2,6 @@
 design-concept.html
 ui-prototype.html
 
-# Audio files (download separately, see public/audio/README.md)
-public/audio/*.mp3
-public/audio/*.ogg
-public/audio/*.wav
-
-# Background images (download separately)
-public/bg/*.jpg
-public/bg/*.jpeg
-public/bg/*.png
-public/bg/*.gif
-public/bg/*.webp
-
 # Dependencies
 node_modules/
 .pnp
@@ -29,7 +17,7 @@ dist-ssr/
 .env.local
 .env.*.local
 *.local
-.dev.vars
+.dev.vars*
 
 # Logs
 logs
@@ -64,8 +52,6 @@ lerna-debug.log*
 HANDOVER.md
 memo.md
 .playwright-cli/
-ai-rules/
-CLAUDE.md
 
 # Playwright
 test-results/

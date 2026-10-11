@@ -1,0 +1,73 @@
+name: Run static quality checks
+description: 静的品質確認を実行し、各処理の所要時間を記録する
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: npm
+
+    - name: Initialize timing summary
+      shell: bash
+      run: |
+        {
+          echo '### 静的品質確認の所要時間'
+          echo
+          echo '| 処理 | 所要時間（秒） | 終了コード |'
+          echo '| --- | ---: | ---: |'
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        started=$SECONDS
+        if npm ci; then
+          status=0
+        else
+          status=$?
+        fi
+        elapsed=$((SECONDS - started))
+        printf '| npm ci | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
+        exit "$status"
+
+    - name: Lint
+      shell: bash
+      run: |
+        started=$SECONDS
+        if npm run lint; then
+          status=0
+        else
+          status=$?
+        fi
+        elapsed=$((SECONDS - started))
+        printf '| lint | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
+        exit "$status"
+
+    - name: Typecheck
+      shell: bash
+      run: |
+        started=$SECONDS
+        if npm run typecheck; then
+          status=0
+        else
+          status=$?
+        fi
+        elapsed=$((SECONDS - started))
+        printf '| typecheck | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
+        exit "$status"
+
+    - name: Vitest with coverage
+      shell: bash
+      run: |
+        started=$SECONDS
+        if npm run test:coverage; then
+          status=0
+        else
+          status=$?
+        fi
+        elapsed=$((SECONDS - started))
+        printf '| Vitest + coverage | %s | %s |\n' "$elapsed" "$status" >> "$GITHUB_STEP_SUMMARY"
+        exit "$status"

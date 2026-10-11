@@ -1,0 +1,90 @@
+import { expect, test } from '@playwright/test'
+import { openAppAsAnonymous, setServerNowFromBrowserClock } from './helpers/auth'
+
+test('LPから匿名で始めて、TaskとFocusの一連の流れを操作できる', async ({ page }) => {
+  test.setTimeout(60_000)
+  await page.route('https://pub-7e2638ec617c45a7a55b30232114a3a0.r2.dev/pomdo-demo.mp4', (route) => route.abort())
+  const fixedNow = new Date('2026-09-04T09:00:00+09:00')
+  await page.clock.install({ time: fixedNow })
+  await page.addInitScript((value) => localStorage.setItem('pomdo-e2e-now', value), fixedNow.toISOString())
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: 'ひとつずつ、前に進める。' })).toBeVisible()
+  await expect(page.getByRole('link', { name: '使ってみる' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '数字を追わない' })).toBeVisible()
+  const firstPillarHeading = page.locator('.pillar-heading').first()
+  const firstPillarIcon = await firstPillarHeading.locator('svg').boundingBox()
+  const firstPillarTitle = await firstPillarHeading.getByRole('heading').boundingBox()
+  expect(firstPillarIcon).not.toBeNull()
+  expect(firstPillarTitle).not.toBeNull()
+  expect(firstPillarIcon!.x + firstPillarIcon!.width).toBeLessThanOrEqual(firstPillarTitle!.x)
+  expect(firstPillarIcon!.y).toBeLessThan(firstPillarTitle!.y + firstPillarTitle!.height)
+  expect(firstPillarIcon!.y + firstPillarIcon!.height).toBeGreaterThan(firstPillarTitle!.y)
+  await page.getByRole('link', { name: '使ってみる' }).click()
+  await expect(page).toHaveURL(/\/app$/)
+  await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible({ timeout: 15_000 })
+
+  await page.getByLabel('タスクを追加').fill('請求書を確認する')
+  await page.getByRole('button', { name: '追加' }).first().click()
+  await expect(page.getByText('請求書を確認する')).toBeVisible()
+
+  await setServerNowFromBrowserClock(page)
+  await page.getByRole('button', { name: '15' }).click()
+  await page.getByRole('button', { name: '▶ はじめる' }).click()
+  await expect(page.getByRole('button', { name: 'ストップ' })).toBeVisible()
+  // 完了判定は endsAt と現在時刻から行うため、中間tickを省略して終了時刻を越える。
+  await page.clock.fastForward('00:15:01')
+  await expect(page.getByText('ひと区切り。少し休みますか？')).toBeVisible()
+  await page.getByRole('button', { name: 'もう1本' }).click()
+
+  await setServerNowFromBrowserClock(page)
+  await page.getByRole('button', { name: '▶ はじめる' }).click()
+  await page.clock.runFor('00:00:30')
+  await page.getByRole('button', { name: 'ストップ' }).click()
+  await expect(page.getByRole('button', { name: '▶ はじめる' })).toBeVisible()
+
+  await setServerNowFromBrowserClock(page)
+  await page.getByRole('button', { name: '▶ はじめる' }).click()
+  // 停止時刻がちょうど60秒境界になると、ブラウザのイベント処理順で59秒扱いになり得るため1秒余裕を持たせる。
+  await page.clock.runFor('00:01:01')
+  await page.getByRole('button', { name: 'ストップ' }).click()
+  await expect(page.getByRole('button', { name: '▶ はじめる' })).toBeVisible()
+  await page.getByRole('link', { name: /振り返りを見る/ }).click()
+  await expect(page.getByRole('heading', { name: '今日の振り返り' })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText('合計集中時間')).toBeVisible()
+  await expect(page.getByText('16分')).toBeVisible()
+})
+
+test('NextからNowへ移動し、Nowが空ならNextタスクでFocusを開始できる', async ({ page }) => {
+  await openAppAsAnonymous(page)
+  await expect(page.getByText('Now', { exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Next' })).toBeVisible()
+
+  await page.getByLabel('タスクを追加').first().fill('次のタスク')
+  await page.getByRole('button', { name: '追加' }).first().click()
+  await expect(page.getByText('次のタスク')).toBeVisible()
+
+  await page.getByRole('button', { name: '次のタスクのメニュー' }).click()
+  await page.getByRole('menuitem', { name: 'Move to Now' }).click()
+  await expect(page.getByRole('heading', { name: '次のタスク' })).toBeVisible()
+  await expect(page.getByText('Pomdo を5分だけ触ってみる')).toBeVisible()
+
+  await page.locator('.now-card').getByRole('button', { name: '完了' }).click()
+  await expect(page.getByText('今は、決めなくて大丈夫。')).toBeVisible()
+  await expect(page.getByText('Next から1つ選ぶか、このまま集中できます。')).toBeVisible()
+  await page.locator('.task-suggestion').getByRole('button', { name: 'あとで' }).click()
+  await page.getByRole('button', { name: 'このまま集中する' }).click()
+  await page.getByRole('button', { name: 'Nextから1つ選ぶ' }).click()
+  await expect(page.getByRole('button', { name: 'ストップ' })).toBeVisible()
+})
+
+test("Task行のメニューから完了し、Today's Doneでは選択できない", async ({ page }) => {
+  await openAppAsAnonymous(page)
+  await page.getByLabel('タスクを追加').first().fill('メニューから完了するTask')
+  await page.getByRole('button', { name: '追加' }).first().click()
+  await page.getByRole('button', { name: 'メニューから完了するTaskのメニュー' }).click()
+  await page.getByRole('menuitem', { name: '完了' }).click()
+
+  await page.getByRole('button', { name: /今日完了したこと/ }).click()
+  await expect(page.getByRole('button', { name: 'メニューから完了するTaskを完了' })).toBeDisabled()
+  await expect(page.getByRole('checkbox', { name: 'メニューから完了するTaskを削除対象に選択' })).not.toBeVisible()
+})

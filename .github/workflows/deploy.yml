@@ -1,36 +1,111 @@
-name: Deploy
+name: Production deploy
 
 on:
   push:
     branches: [main]
 
-jobs:
-  deploy:
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
+concurrency:
+  group: pomdo-production
+  cancel-in-progress: false
 
+permissions:
+  contents: read
+  actions: read
+  deployments: write
+
+jobs:
+  quality-static:
+    name: Quality gate / Static checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          ref: ${{ github.sha }}
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Run static quality checks
+        uses: ./.github/actions/run-quality-checks
 
-      - name: Build
-        run: npm run build
+  quality-e2e:
+    name: Quality gate / E2E checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: pomdo-e2e-${{ github.repository }}
+      cancel-in-progress: false
+    environment: e2e
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Run Chromium E2E checks
+        uses: ./.github/actions/run-e2e-checks
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+
+  build:
+    name: Quality gate / Build
+    needs: [quality-static, quality-e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    outputs:
+      build_artifact_name: ${{ steps.build.outputs.artifact_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Build distribution
+        id: build
+        uses: ./.github/actions/build-dist
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+  deploy:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Download verified build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.build_artifact_name }}
+          path: dist
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        env:
-          LANG: C.UTF-8
-          LC_ALL: C.UTF-8
+        id: deploy
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=pomdo --branch=${{ github.ref_name }} --commit-hash=${{ github.sha }}
+          command: pages deploy dist --project-name=pomdo --branch=main --commit-hash=${{ github.sha }}
+
+      - name: Write deployment summary
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+          ALIAS_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url }}
+        run: |
+          {
+            echo '## Production deploy'
+            echo
+            echo "- commit: `${GITHUB_SHA}`"
+            echo "- deployment URL: ${DEPLOYMENT_URL}"
+            echo "- alias URL: ${ALIAS_URL:-https://pomdo.pages.dev}"
+          } >> "$GITHUB_STEP_SUMMARY"

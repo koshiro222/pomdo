@@ -1,0 +1,13 @@
+{
+  "name": "Pomdo",
+  "short_name": "Pomdo",
+  "start_url": "/",
+  "display": "browser",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

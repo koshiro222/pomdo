@@ -1,0 +1,43 @@
+import { expect, test } from '@playwright/test'
+import { openAppAsAnonymous } from './helpers/auth'
+
+test('NowのTaskをpreviewで編集してから分解を確定し、リロード後も結果を保持する', async ({ page }) => {
+  await openAppAsAnonymous(page)
+  await page.getByLabel('タスクを追加').fill('通常のTask')
+  await page.getByRole('button', { name: '追加' }).click()
+  await page.getByRole('button', { name: '編集' }).click()
+  await page.getByRole('button', { name: 'AIで分解する' }).click()
+
+  await expect(page.getByRole('heading', { name: 'タスクを分解' })).toBeVisible()
+  await expect(page.getByLabel('分解案のタイトル').first()).toHaveValue('目的と完了条件を確認する')
+  await expect(page.getByLabel('分解案のメモ').first()).toHaveValue('何をもって完了とするかを短く整理する')
+  await expect(page.locator('.now-card h1', { hasText: 'Pomdo を5分だけ触ってみる' })).toBeVisible()
+
+  const firstTitle = page.getByLabel('分解案のタイトル').first()
+  await firstTitle.fill('編集した最初のTask')
+  await page.getByLabel('分解案のメモ').first().fill('編集したメモ')
+  await page.getByRole('button', { name: '必要な材料を集めるをこの分解案を削除' }).click()
+  const keyboardDragHandle = page.getByRole('button', { name: '最小の実行単位に着手するをドラッグして並べ替え' })
+  await keyboardDragHandle.press('Space')
+  await keyboardDragHandle.press('ArrowUp')
+  await keyboardDragHandle.press('Space')
+  await page.getByRole('button', { name: '分解を確定する' }).click()
+
+  await expect(page.getByRole('heading', { name: 'タスクを分解' })).not.toBeVisible()
+  await expect(page.getByText('最小の実行単位に着手する').first()).toBeVisible()
+  await expect(page.getByText('0 / 1 本').first()).toBeVisible()
+  await expect(page.locator('.now-card h1', { hasText: 'Pomdo を5分だけ触ってみる' })).not.toBeVisible()
+
+  await page.reload()
+  await expect(page.getByText('最小の実行単位に着手する').first()).toBeVisible()
+  await expect(page.getByText('編集した最初のTask')).toBeVisible()
+  await expect(page.locator('.now-card h1', { hasText: 'Pomdo を5分だけ触ってみる' })).not.toBeVisible()
+
+  await page.getByRole('checkbox', { name: '編集した最初のTaskを削除対象に選択' }).check()
+  await page.getByRole('button', { name: '選択した1件のタスクを削除' }).click()
+  await page.getByRole('button', { name: '1件を削除する' }).click()
+  await expect(page.getByRole('heading', { name: '今は、決めなくて大丈夫。' })).toBeVisible()
+  await expect(page.getByText('編集した最初のTask')).not.toBeVisible()
+  await expect(page.getByText('通常のTask')).toBeVisible()
+  await expect(page.locator('.task-title', { hasText: '最小の実行単位に着手する' })).toBeVisible()
+})

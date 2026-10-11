@@ -1,0 +1,39 @@
+name: Build distribution
+description: 検証済みcommitのProduction buildを作成してArtifactへ保存する
+
+outputs:
+  artifact_name:
+    description: 作成したbuild Artifact名
+    value: ${{ steps.build-metadata.outputs.build_artifact_name }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: npm
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
+
+    - name: Build
+      shell: bash
+      run: npm run build
+
+    - name: Set build metadata
+      id: build-metadata
+      shell: bash
+      env:
+        BUILD_ARTIFACT_NAME: pomdo-dist-${{ github.sha }}
+      run: printf 'build_artifact_name=%s\n' "$BUILD_ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
+
+    - name: Upload build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: pomdo-dist-${{ github.sha }}
+        path: dist/
+        if-no-files-found: error
+        retention-days: 30

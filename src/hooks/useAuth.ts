@@ -1,43 +1,39 @@
 import { useCallback } from 'react'
 import { authClient } from '../lib/auth'
-import type { AuthUser } from '../core/store/auth'
 
-export type { AuthUser }
-
-// Role値の実行時検証を行う型ガード
-function isValidRole(value: string): value is 'user' | 'admin' {
-  return value === 'user' || value === 'admin'
+export type AuthUser = {
+  id: string
+  name: string
+  email: string
+  image: string | null
+  isAnonymous: boolean
+  timezone: string
+  soundMuted: boolean
+  soundVolume: number
+  theme: 'system' | 'light' | 'dark'
 }
 
 export function useAuth() {
   const { data: session, isPending } = authClient.useSession()
-
-  const user: AuthUser | null = session?.user
-    ? {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
-        image: session.user.image ?? null,
-        emailVerified: session.user.emailVerified,
-        role: (isValidRole(session.user.role ?? '') ? session.user.role! : 'user') as 'user' | 'admin',
-      }
-    : null
-
+  const user = session?.user ? (() => {
+    const rawUser = session.user as typeof session.user & Partial<AuthUser>
+    return {
+      id: rawUser.id,
+      name: rawUser.name,
+      email: rawUser.email,
+      image: rawUser.image ?? null,
+      isAnonymous: rawUser.isAnonymous === true,
+      timezone: rawUser.timezone ?? 'UTC',
+      soundMuted: rawUser.soundMuted === true,
+      soundVolume: rawUser.soundVolume ?? 0.7,
+      theme: rawUser.theme === 'light' || rawUser.theme === 'dark' ? rawUser.theme : 'system',
+    } satisfies AuthUser
+  })() : null
   const login = useCallback(() => {
-    authClient.signIn.social({ provider: 'google', callbackURL: '/' })
+    void authClient.signIn.social({ provider: 'google', callbackURL: '/app' })
   }, [])
+  const signInAnonymous = useCallback(() => authClient.signIn.anonymous(), [])
+  const logout = useCallback(async () => { await authClient.signOut() }, [])
 
-  const logout = useCallback(async () => {
-    await authClient.signOut()
-  }, [])
-
-  const isAdmin = user?.role === 'admin'
-
-  return {
-    user,
-    loading: isPending,
-    login,
-    logout,
-    isAdmin,
-  }
+  return { user, loading: isPending, login, signInAnonymous, logout, isAnonymous: user?.isAnonymous === true }
 }

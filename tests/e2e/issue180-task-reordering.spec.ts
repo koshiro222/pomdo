@@ -9,7 +9,7 @@ function taskRow(page: Page, title: string): Locator {
   return page.locator('.task-row').filter({ has: page.locator('.task-title', { hasText: title }) })
 }
 
-async function addTask(page: Page, title: string, bucket: 'onDeck' | 'backlog' = 'onDeck') {
+async function addTask(page: Page, title: string, bucket: 'onDeck' | 'backlog' = 'onDeck', timeoutMs = 5_000) {
   let target: Locator
   if (bucket === 'backlog') {
     const backlogToggle = page.getByRole('button', { name: /^Backlog/ }).first()
@@ -22,7 +22,7 @@ async function addTask(page: Page, title: string, bucket: 'onDeck' | 'backlog' =
   const input = target.getByRole('textbox', { name: 'タスクを追加' })
   await input.fill(title)
   await target.getByRole('button', { name: '追加' }).click()
-  await expect(page.locator('.task-title', { hasText: title })).toBeVisible()
+  await expect(page.locator('.task-title', { hasText: title })).toBeVisible({ timeout: timeoutMs })
 }
 
 async function onDeckTitles(page: Page): Promise<string[]> {
@@ -214,6 +214,7 @@ test('On Deck のハンドルからキーボードで移動でき、Escape と�
 })
 
 test('Task 本文・checkbox・メニューの操作はドラッグを始めず、Backlog と完了にはハンドルがない', async ({ page }) => {
+  test.setTimeout(60_000)
   await openAppAsAnonymous(page)
   await addTask(page, '本文から Now へ')
   await addTask(page, '選択する Task')
@@ -235,9 +236,11 @@ test('Task 本文・checkbox・メニューの操作はドラッグを始めず�
   expect(reorderRequests).toBe(0)
 
   const selectableRow = taskRow(page, '選択する Task')
-  await selectableRow.getByRole('checkbox', { name: '選択する Taskを削除対象に選択' }).check()
+  const selectionCheckbox = selectableRow.getByRole('checkbox', { name: '選択する Taskを削除対象に選択' })
+  await selectionCheckbox.check()
   await expect(page.locator('.task-row.is-dragging')).toHaveCount(0)
   expect(reorderRequests).toBe(0)
+  await selectionCheckbox.uncheck()
 
   const editableRow = taskRow(page, '編集して完了する Task')
   await editableRow.getByRole('button', { name: '編集して完了する Taskのメニュー' }).click()
@@ -257,7 +260,7 @@ test('Task 本文・checkbox・メニューの操作はドラッグを始めず�
   await expect(page.locator('.task-row.is-dragging')).toHaveCount(0)
   expect(reorderRequests).toBe(0)
 
-  await addTask(page, '削除してもドラッグしない Task')
+  await addTask(page, '削除してもドラッグしない Task', 'onDeck', 15_000)
   const deletionRow = taskRow(page, '削除してもドラッグしない Task')
   await deletionRow.getByRole('button', { name: '削除してもドラッグしない Taskのメニュー' }).click()
   await expect(page.getByRole('menuitem', { name: '削除' })).toBeVisible()

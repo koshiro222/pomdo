@@ -35,12 +35,5 @@ export default defineConfig({
     url: 'http://localhost:8788/api/health',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
-    env: {
-      E2E_TEST_MODE: 'true',
-      BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET || 'e2e-local-only-secret-change-me',
-      BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || 'http://localhost:5173',
-      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || 'e2e-client-id',
-      GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || 'e2e-client-secret',
-    },
   },
 })

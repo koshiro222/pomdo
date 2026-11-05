@@ -46,7 +46,7 @@ jobs:
   quality-e2e:
     name: Quality gate / E2E checks
     needs: guard-develop
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     concurrency:
       group: pomdo-e2e-${{ github.repository }}
